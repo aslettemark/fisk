@@ -32,14 +32,16 @@ const BLACK_ROOK: u8 = WHITE_ROOK | (1 << 7);
 const BLACK_QUEEN: u8 = WHITE_QUEEN | (1 << 7);
 const BLACK_KING: u8 = WHITE_KING | (1 << 7);
 
+#[derive(Copy, Clone)]
 pub struct Board {
     pub halfturn: u16,
     pub en_passant: u64,
     bitboard: BitBoard,
-    pieces: Vec<Piece>,
+    pieces: [Piece; 32],
     pub castling: u8,
 }
 
+#[derive(Copy, Clone)]
 struct BitBoard {
     // little-endian https://www.chessprogramming.org/Square_Mapping_Considerations
     // bit 0 is a1, bit 7 is f1, bit 63 is h8
@@ -59,6 +61,7 @@ struct BitBoard {
     pub black_knights: u64,
 }
 
+#[derive(Copy, Clone)]
 struct Piece {
     pub kind: u8,
     pub position: u64,
@@ -76,30 +79,31 @@ impl Piece {
 impl Board {
     // Create default chess board
     pub fn new() -> Board {
-        let mut ps: Vec<Piece> = Vec::with_capacity(32);
+        let placeholder = Piece::new(EMPTY_SQUARE, 0);
+        let mut ps = [placeholder; 32];
 
         for i in 0..8 {
-            ps.push(Piece::new(WHITE_PAWN, ROW_2 & (FILE_A << i)));
-            ps.push(Piece::new(BLACK_PAWN, ROW_7 & (FILE_A << i)));
+            ps[i] = Piece::new(WHITE_PAWN, ROW_2 & (FILE_A << i));
+            ps[i + 8] = Piece::new(BLACK_PAWN, ROW_7 & (FILE_A << i));
         }
 
-        ps.push(Piece::new(WHITE_KING, ROW_1 & FILE_E));
-        ps.push(Piece::new(WHITE_QUEEN, ROW_1 & FILE_D));
-        ps.push(Piece::new(WHITE_BISHOP, ROW_1 & FILE_C));
-        ps.push(Piece::new(WHITE_BISHOP, ROW_1 & FILE_F));
-        ps.push(Piece::new(WHITE_KNIGHT, ROW_1 & FILE_B));
-        ps.push(Piece::new(WHITE_KNIGHT, ROW_1 & FILE_G));
-        ps.push(Piece::new(WHITE_ROOK, ROW_1 & FILE_A));
-        ps.push(Piece::new(WHITE_ROOK, ROW_1 & FILE_H));
+        ps[16] = Piece::new(WHITE_KING, ROW_1 & FILE_E);
+        ps[17] = Piece::new(WHITE_QUEEN, ROW_1 & FILE_D);
+        ps[18] = Piece::new(WHITE_BISHOP, ROW_1 & FILE_C);
+        ps[19] = Piece::new(WHITE_BISHOP, ROW_1 & FILE_F);
+        ps[20] = Piece::new(WHITE_KNIGHT, ROW_1 & FILE_B);
+        ps[21] = Piece::new(WHITE_KNIGHT, ROW_1 & FILE_G);
+        ps[22] = Piece::new(WHITE_ROOK, ROW_1 & FILE_A);
+        ps[23] = Piece::new(WHITE_ROOK, ROW_1 & FILE_H);
 
-        ps.push(Piece::new(BLACK_KING, ROW_8 & FILE_E));
-        ps.push(Piece::new(BLACK_QUEEN, ROW_8 & FILE_D));
-        ps.push(Piece::new(BLACK_BISHOP, ROW_8 & FILE_C));
-        ps.push(Piece::new(BLACK_BISHOP, ROW_8 & FILE_F));
-        ps.push(Piece::new(BLACK_KNIGHT, ROW_8 & FILE_B));
-        ps.push(Piece::new(BLACK_KNIGHT, ROW_8 & FILE_G));
-        ps.push(Piece::new(BLACK_ROOK, ROW_8 & FILE_A));
-        ps.push(Piece::new(BLACK_ROOK, ROW_8 & FILE_H));
+        ps[24] = Piece::new(BLACK_KING, ROW_8 & FILE_E);
+        ps[25] = Piece::new(BLACK_QUEEN, ROW_8 & FILE_D);
+        ps[26] = Piece::new(BLACK_BISHOP, ROW_8 & FILE_C);
+        ps[27] = Piece::new(BLACK_BISHOP, ROW_8 & FILE_F);
+        ps[28] = Piece::new(BLACK_KNIGHT, ROW_8 & FILE_B);
+        ps[29] = Piece::new(BLACK_KNIGHT, ROW_8 & FILE_G);
+        ps[30] = Piece::new(BLACK_ROOK, ROW_8 & FILE_A);
+        ps[31] = Piece::new(BLACK_ROOK, ROW_8 & FILE_H);
 
         Board {
             halfturn: 0,
@@ -121,6 +125,38 @@ impl Board {
             pieces: ps,
             castling: 0b11101110,
         }
+    }
+
+    pub fn generate_successors(self) -> Vec<Board> {
+        let white = self.halfturn % 2 == 0;
+        let mut states = Vec::new();
+
+        for piece in self.pieces.iter() {
+            // TODO Keep pieces ordered with empty square pieces at the end to abort entire
+            // iteration when an empty square is found.
+            if piece.kind == EMPTY_SQUARE {
+                continue;
+            }
+
+            let white_piece = piece.kind & (1 << 7) == 0;
+            if (white_piece && !white) || (!white_piece && white) {
+                continue;
+            }
+
+            if piece.kind == WHITE_PAWN {
+                let pos_front = piece.position << 8;
+                let kind_front = self.kind_at(pos_front);
+                if kind_front == EMPTY_SQUARE {
+                    let new: Board = self.clone();
+                    //TODO modify state
+                    states.push(new);
+                }
+            }
+
+            //TODO remaining kinds
+        }
+
+        return states;
     }
 
     pub fn print(&self) {
@@ -171,12 +207,10 @@ impl Board {
         if pos & b.white_pawns != 0 {
             return WHITE_PAWN;
         }
-        if pos & b.white_queen != 0 {
-            return WHITE_QUEEN;
+        if pos & b.black_pawns != 0 {
+            return BLACK_PAWN;
         }
-        if pos & b.white_king != 0 {
-            return WHITE_KING;
-        }
+
         if pos & b.white_bishops != 0 {
             return WHITE_BISHOP;
         }
@@ -186,16 +220,6 @@ impl Board {
         if pos & b.white_rooks != 0 {
             return WHITE_ROOK;
         }
-
-        if pos & b.black_pawns != 0 {
-            return BLACK_PAWN;
-        }
-        if pos & b.black_queen != 0 {
-            return BLACK_QUEEN;
-        }
-        if pos & b.black_king != 0 {
-            return BLACK_KING;
-        }
         if pos & b.black_bishops != 0 {
             return BLACK_BISHOP;
         }
@@ -204,6 +228,21 @@ impl Board {
         }
         if pos & b.black_rooks != 0 {
             return BLACK_ROOK;
+        }
+
+
+        if pos & b.white_queen != 0 {
+            return WHITE_QUEEN;
+        }
+        if pos & b.white_king != 0 {
+            return WHITE_KING;
+        }
+
+        if pos & b.black_queen != 0 {
+            return BLACK_QUEEN;
+        }
+        if pos & b.black_king != 0 {
+            return BLACK_KING;
         }
 
         return EMPTY_SQUARE;
