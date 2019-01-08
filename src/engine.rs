@@ -39,8 +39,8 @@ pub struct Piece {
 impl Piece {
     pub fn new(kind: u8, position: u64) -> Piece {
         Piece {
-            kind: kind,
-            position: position,
+            kind,
+            position,
         }
     }
 }
@@ -96,11 +96,6 @@ impl Board {
         }
     }
 
-    pub fn from_fen(fen: &str) -> Board {
-        // TODO create Board from Forsyth–Edwards Notation
-        // https://en.wikipedia.org/wiki/Forsyth-Edwards_Notation
-        panic!();
-    }
 
     pub fn generate_successors(&self) -> Vec<Board> {
         let white = self.halfturn % 2 == 0;
