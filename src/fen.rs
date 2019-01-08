@@ -1,19 +1,30 @@
 use crate::constants::*;
 use crate::engine::{BitBoard, Board, Piece};
 
+pub const FEN_DEFAULT_BOARD: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
 /// Create Board from Forsyth–Edwards Notation
 /// https://en.wikipedia.org/wiki/Forsyth-Edwards_Notation
 pub fn board_from_fen(fen: &str) -> Board {
-    let split = fen.split_whitespace().collect::<Vec<_>>();
-    if split.len() != 8 {
+    let split: Vec<&str> = fen.split_whitespace().collect::<Vec<_>>();
+    if split.len() < 4 {
         panic!("Misformed FEN string");
     }
+    let movedata = split.len() == 8;
 
     let board = split.get(0).unwrap();
     let (bitboard, pieces) = parse_board_string(board);
 
+    let fullmove = if movedata { split.get(5).unwrap().parse::<u16>().unwrap() } else { 1 };
+    let mut halfmove = (fullmove - 1) * 2;
+    let white = split.get(1).unwrap() == &"w";
+
+    if !white {
+        halfmove += 1;
+    }
+
     Board {
-        halfturn: 0, //TODO
+        halfturn: halfmove,
         en_passant: 0, //TODO
         bitboard,
         pieces,
@@ -46,20 +57,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
         panic!("Missing board row(s)");
     }
 
-    let mut bb = BitBoard {
-        white_pawns: 0,
-        white_queen: 0,
-        white_king: 0,
-        white_rooks: 0,
-        white_bishops: 0,
-        white_knights: 0,
-        black_pawns: 0,
-        black_queen: 0,
-        black_king: 0,
-        black_rooks: 0,
-        black_bishops: 0,
-        black_knights: 0,
-    };
+    let mut bb = BitBoard::empty();
 
     let placeholder = Piece {
         kind: EMPTY_SQUARE,
@@ -71,8 +69,12 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
     for (i, pieces_str) in board_rows.iter().enumerate() {
         let row = 7 - i;
         let row_mask = 0xFF << (row * 8);
-        for (j, c) in pieces_str.chars().enumerate() {
+
+        let mut j = 0;
+        for c in pieces_str.chars() {
             if c.is_digit(10) {
+                println!("{}", c);
+                j = j + c.to_digit(10).unwrap() - 1;
                 continue;
             }
             let kind = fen_kind(c);
@@ -100,10 +102,35 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
                 position: pos,
             };
             piece_i += 1;
+            j += 1;
         }
-
-        println!("{}, {}", row, pieces_str);
-        println!("{:b}", pieces.get(0).unwrap().kind);
     }
     return (bb, pieces);
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_board_fen() {
+        let a = board_from_fen(FEN_DEFAULT_BOARD);
+        assert_eq!(a.halfturn, 0, "No turns have been made");
+        assert_eq!(a.en_passant, 0, "No en passant in initial state");
+        assert_eq!(a.bitboard.white_pawns & ROW_2, ROW_2, "Row 2 is filled with white pawns");
+        assert_eq!(a.bitboard.black_pawns & ROW_7, ROW_7, "Row 7 is filled with black pawns");
+
+        for p in a.pieces.iter() {
+            assert_ne!(p.kind, EMPTY_SQUARE, "Piece list is filled");
+        }
+    }
+
+    #[test]
+    fn compare_board_constructor_fen() {
+        let a = Board::new();
+        let b = board_from_fen(FEN_DEFAULT_BOARD);
+
+        assert_eq!(a.bitboard, b.bitboard);
+    }
 }

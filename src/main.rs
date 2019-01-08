@@ -1,5 +1,5 @@
 use crate::engine::Board;
-use crate::fen::board_from_fen;
+use crate::fen::*;
 
 mod engine;
 mod move_generation;
@@ -12,11 +12,11 @@ fn main() {
     a.print();
 
     println!("--------------");
-    let succ = a.generate_successors();
+    /*let succ = a.generate_successors();
     for s in succ.iter() {
-        //s.print();
-        //println!();
-    }
-    let b = board_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR a a a b b b b");
+        s.print();
+        println!();
+    }*/
+    let b = board_from_fen(FEN_DEFAULT_BOARD);
     b.print();
 }

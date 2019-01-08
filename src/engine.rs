@@ -10,7 +10,7 @@ pub struct Board {
     pub castling: u8,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct BitBoard {
     // little-endian https://www.chessprogramming.org/Square_Mapping_Considerations
     // bit 0 is a1, bit 7 is f1, bit 63 is h8
@@ -30,10 +30,29 @@ pub struct BitBoard {
     pub black_knights: u64,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Piece {
     pub kind: u8,
     pub position: u64,
+}
+
+impl BitBoard {
+    pub fn empty() -> BitBoard {
+        BitBoard {
+            white_pawns: 0,
+            white_queen: 0,
+            white_king: 0,
+            white_rooks: 0,
+            white_bishops: 0,
+            white_knights: 0,
+            black_pawns: 0,
+            black_queen: 0,
+            black_king: 0,
+            black_rooks: 0,
+            black_bishops: 0,
+            black_knights: 0,
+        }
+    }
 }
 
 impl Piece {
@@ -215,32 +234,3 @@ impl Board {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_test() {
-        assert!(true);
-    }
-
-    #[test]
-    fn test_default_board_movegen() {
-        let a = Board::new();
-        let succ = a.generate_successors();
-        assert_eq!(succ.len(), 16); // 16 moves as of right now: only white pawns
-
-        let mut count_en_passant = 0;
-        for s in succ.iter() {
-            if s.en_passant != 0 {
-                count_en_passant += 1;
-                assert_ne!(s.en_passant & ROW_3, 0); // white pawn en passant appears on row 3
-            }
-        }
-        assert_eq!(count_en_passant, 8); // 8 of the pawn moves should produce an en passant square
-
-        for s in succ.iter() {
-            assert_eq!(s.generate_successors().len(), 0);
-        }
-    }
-}

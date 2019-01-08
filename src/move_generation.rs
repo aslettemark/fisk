@@ -17,6 +17,7 @@ pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
         };
         new.pieces[pawn_piece_index] = p;
         outvec.push(new);
+        //TODO turn into queen, rook, bishop, knight if row == 8
     }
 
     if kind_front == EMPTY_SQUARE && (position & ROW_2 != 0) {
@@ -87,4 +88,64 @@ pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
     }
 
     //TODO en passant capture
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::fen::*;
+
+    use super::*;
+
+    #[test]
+    fn test_test() {
+        assert!(true);
+    }
+
+    #[test]
+    fn test_default_board_movegen() {
+        test_starting_board_movegen(Board::new());
+        test_starting_board_movegen(board_from_fen(FEN_DEFAULT_BOARD));
+    }
+
+    #[test]
+    fn test_basic_pawn_moves() {
+        let a = board_from_fen("8/8/8/8/8/6p1/5P2/8 w KQkq -");
+        let succ = a.generate_successors();
+        assert_eq!(succ.len(), 3);
+
+        let b = board_from_fen("8/8/8/8/6p1/5P2/8/8 w KQkq -");
+        let succ = b.generate_successors();
+        assert_eq!(succ.len(), 2);
+    }
+
+    /* TODO
+    #[test]
+    fn test_white_pawn_en_passant() {
+        let a = board_from_fen("8/8/8/5Pp1/8/8/8/8 w - g6");
+        let succ = a.generate_successors();
+        assert_eq!(succ.len(), 2);
+
+        let b = board_from_fen("8/8/8/5Pp1/8/8/8/8 w - e6");
+        let succ = b.generate_successors();
+        assert_eq!(succ.len(), 2);
+    }
+    */
+
+    fn test_starting_board_movegen(a: Board) {
+        let succ = a.generate_successors();
+        assert_eq!(succ.len(), 16); // 16 moves as of right now: only white pawns
+
+        let mut count_en_passant = 0;
+        for s in succ.iter() {
+            if s.en_passant != 0 {
+                count_en_passant += 1;
+                assert_ne!(s.en_passant & ROW_3, 0); // white pawn en passant appears on row 3
+            }
+        }
+        assert_eq!(count_en_passant, 8); // 8 of the pawn moves should produce an en passant square
+
+        for s in succ.iter() {
+            assert_eq!(s.generate_successors().len(), 0);
+        }
+    }
 }
