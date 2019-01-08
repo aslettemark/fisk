@@ -1,48 +1,18 @@
-const ROW_1: u64 = 0xFF;
-const ROW_2: u64 = ROW_1 << 8;
-const ROW_3: u64 = ROW_1 << (8 * 2);
-const ROW_4: u64 = ROW_1 << (8 * 3);
-const ROW_5: u64 = ROW_1 << (8 * 4);
-const ROW_6: u64 = ROW_1 << (8 * 5);
-const ROW_7: u64 = ROW_1 << (8 * 6);
-const ROW_8: u64 = ROW_1 << (8 * 7);
+use crate::move_generation::white_pawn_moves;
 
-const FILE_A: u64 = 0x0101010101010101;
-const FILE_B: u64 = FILE_A << 1;
-const FILE_C: u64 = FILE_A << 2;
-const FILE_D: u64 = FILE_A << 3;
-const FILE_E: u64 = FILE_A << 4;
-const FILE_F: u64 = FILE_A << 5;
-const FILE_G: u64 = FILE_A << 6;
-const FILE_H: u64 = FILE_A << 7;
-
-const EMPTY_SQUARE: u8 = 0;
-
-const WHITE_PAWN: u8 = 1;
-const WHITE_BISHOP: u8 = 1 << 1;
-const WHITE_KNIGHT: u8 = 1 << 2;
-const WHITE_ROOK: u8 = 1 << 3;
-const WHITE_QUEEN: u8 = 1 << 4;
-const WHITE_KING: u8 = 1 << 5;
-
-const BLACK_PAWN: u8 = WHITE_PAWN | (1 << 7);
-const BLACK_BISHOP: u8 = WHITE_BISHOP | (1 << 7);
-const BLACK_KNIGHT: u8 = WHITE_KNIGHT | (1 << 7);
-const BLACK_ROOK: u8 = WHITE_ROOK | (1 << 7);
-const BLACK_QUEEN: u8 = WHITE_QUEEN | (1 << 7);
-const BLACK_KING: u8 = WHITE_KING | (1 << 7);
+use super::constants::*;
 
 #[derive(Copy, Clone)]
 pub struct Board {
     pub halfturn: u16,
     pub en_passant: u64,
-    bitboard: BitBoard,
-    pieces: [Piece; 32],
+    pub bitboard: BitBoard,
+    pub pieces: [Piece; 32],
     pub castling: u8,
 }
 
 #[derive(Copy, Clone)]
-struct BitBoard {
+pub struct BitBoard {
     // little-endian https://www.chessprogramming.org/Square_Mapping_Considerations
     // bit 0 is a1, bit 7 is f1, bit 63 is h8
 
@@ -62,7 +32,7 @@ struct BitBoard {
 }
 
 #[derive(Copy, Clone)]
-struct Piece {
+pub struct Piece {
     pub kind: u8,
     pub position: u64,
 }
@@ -127,11 +97,17 @@ impl Board {
         }
     }
 
-    pub fn generate_successors(self) -> Vec<Board> {
+    pub fn from_fen(fen: &str) -> Board {
+        // TODO create Board from Forsyth–Edwards Notation
+        // https://en.wikipedia.org/wiki/Forsyth-Edwards_Notation
+        panic!();
+    }
+
+    pub fn generate_successors(&self) -> Vec<Board> {
         let white = self.halfturn % 2 == 0;
         let mut states = Vec::new();
 
-        for piece in self.pieces.iter() {
+        for (i, piece) in self.pieces.iter().enumerate() {
             // TODO Keep pieces ordered with empty square pieces at the end to abort entire
             // iteration when an empty square is found.
             if piece.kind == EMPTY_SQUARE {
@@ -143,17 +119,13 @@ impl Board {
                 continue;
             }
 
-            if piece.kind == WHITE_PAWN {
-                let pos_front = piece.position << 8;
-                let kind_front = self.kind_at(pos_front);
-                if kind_front == EMPTY_SQUARE {
-                    let new: Board = self.clone();
-                    //TODO modify state
-                    states.push(new);
-                }
-            }
+            let position = piece.position;
 
-            //TODO remaining kinds
+            match piece.kind {
+                WHITE_PAWN => white_pawn_moves(&self, position, i, &mut states),
+                //TODO remaining kinds
+                _ => {}
+            }
         }
 
         return states;
@@ -202,7 +174,7 @@ impl Board {
         }
     }
 
-    fn kind_at(&self, pos: u64) -> u8 {
+    pub fn kind_at(&self, pos: u64) -> u8 {
         let b = &self.bitboard;
         if pos & b.white_pawns != 0 {
             return WHITE_PAWN;
@@ -246,5 +218,26 @@ impl Board {
         }
 
         return EMPTY_SQUARE;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_test() {
+        assert!(true);
+    }
+
+    #[test]
+    fn test_default_board_movegen() {
+        let a = Board::new();
+        let succ = a.generate_successors();
+        assert_eq!(succ.len(), 16); // 16 moves as of right now: only white pawns
+
+        for s in succ.iter() {
+            assert_eq!(s.generate_successors().len(), 0);
+        }
     }
 }
