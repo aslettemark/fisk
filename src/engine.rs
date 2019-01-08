@@ -1,6 +1,5 @@
+use crate::constants::*;
 use crate::move_generation::white_pawn_moves;
-
-use super::constants::*;
 
 #[derive(Copy, Clone)]
 pub struct Board {
@@ -235,6 +234,15 @@ mod tests {
         let a = Board::new();
         let succ = a.generate_successors();
         assert_eq!(succ.len(), 16); // 16 moves as of right now: only white pawns
+
+        let mut count_en_passant = 0;
+        for s in succ.iter() {
+            if s.en_passant != 0 {
+                count_en_passant += 1;
+                assert_ne!(s.en_passant & ROW_3, 0); // white pawn en passant appears on row 3
+            }
+        }
+        assert_eq!(count_en_passant, 8); // 8 of the pawn moves should produce an en passant square
 
         for s in succ.iter() {
             assert_eq!(s.generate_successors().len(), 0);

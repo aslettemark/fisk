@@ -1,5 +1,5 @@
-use super::constants::*;
-use super::engine::{Board, Piece};
+use crate::constants::*;
+use crate::engine::{Board, Piece};
 
 pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, outvec: &mut Vec<Board>) {
     //a white pawn cannot exist on row 8
@@ -62,6 +62,7 @@ pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
             };
             new.pieces[pawn_piece_index] = p;
 
+            // TODO consider putting this in the piece list iteration, where a specific board may be identified
             let mut bb = new.bitboard;
             bb.black_pawns ^= capture_pos;
             bb.black_bishops ^= capture_pos;
@@ -71,7 +72,15 @@ pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
             bb.black_king ^= capture_pos;
             new.bitboard = bb;
 
-            //TODO remove black piece from piece list (simple iteration and comparison on position field)
+            for (i, p) in new.pieces.iter().enumerate() {
+                if p.position == capture_pos {
+                    new.pieces[i] = Piece {
+                        kind: EMPTY_SQUARE,
+                        position: capture_pos, // Doesn't really matter...
+                    };
+                    break;
+                }
+            }
 
             outvec.push(new);
         }
