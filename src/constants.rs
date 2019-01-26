@@ -33,3 +33,7 @@ pub const BLACK_KNIGHT: u8 = WHITE_KNIGHT | BLACK_BIT;
 pub const BLACK_ROOK: u8 = WHITE_ROOK | BLACK_BIT;
 pub const BLACK_QUEEN: u8 = WHITE_QUEEN | BLACK_BIT;
 pub const BLACK_KING: u8 = WHITE_KING | BLACK_BIT;
+
+pub const fn get_row_mask(row: usize) -> u64 {
+    0xFF << (row as u64) * 8
+}

@@ -59,21 +59,16 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
 
     let mut bb = BitBoard::empty();
 
-    let placeholder = Piece {
-        kind: EMPTY_SQUARE,
-        position: 0,
-    };
-    let mut pieces = [placeholder; 32]; // Limitation: only supports positions with <= 32 pieces
+    let mut pieces = [Piece { kind: EMPTY_SQUARE, position: 0 }; 32]; // Limitation: only supports positions with <= 32 pieces
     let mut piece_i: usize = 0;
 
     for (i, pieces_str) in board_rows.iter().enumerate() {
         let row = 7 - i;
-        let row_mask = 0xFF << (row * 8);
+        let row_mask = get_row_mask(row);
 
         let mut j = 0;
         for c in pieces_str.chars() {
             if c.is_digit(10) {
-                println!("{}", c);
                 j = j + c.to_digit(10).unwrap() - 1;
                 continue;
             }

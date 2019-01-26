@@ -90,6 +90,25 @@ pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
     //TODO en passant capture
 }
 
+pub fn rook_moves(board: &Board, position: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
+    file_slide_moves(board, position, pawn_piece_index, white, outvec);
+    row_slide_moves(board, position, pawn_piece_index, white, outvec);
+}
+
+fn file_slide_moves(board: &Board, position: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
+    //TODO
+    if position & ROW_8 == 0 { //Not in row 8, ie can move upwards
+
+    }
+    if position & ROW_1 == 0 { //Not in row 1, ie can move downwards
+
+    }
+}
+
+fn row_slide_moves(board: &Board, position: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
+//TODO
+}
+
 #[cfg(test)]
 mod tests {
     use crate::fen::*;
@@ -133,6 +152,7 @@ mod tests {
 
     fn test_starting_board_movegen(a: Board) {
         let succ = a.generate_successors();
+        //TODO should eventually be 2*8 + 2*2
         assert_eq!(succ.len(), 16); // 16 moves as of right now: only white pawns
 
         let mut count_en_passant = 0;

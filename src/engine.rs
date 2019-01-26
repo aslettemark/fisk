@@ -1,5 +1,5 @@
 use crate::constants::*;
-use crate::move_generation::white_pawn_moves;
+use crate::move_generation::*;
 
 #[derive(Copy, Clone)]
 pub struct Board {
@@ -37,7 +37,7 @@ pub struct Piece {
 }
 
 impl BitBoard {
-    pub fn empty() -> BitBoard {
+    pub const fn empty() -> BitBoard {
         BitBoard {
             white_pawns: 0,
             white_queen: 0,
@@ -67,8 +67,7 @@ impl Piece {
 impl Board {
     // Create default chess board
     pub fn new() -> Board {
-        let placeholder = Piece::new(EMPTY_SQUARE, 0);
-        let mut ps = [placeholder; 32];
+        let mut ps = [Piece { kind: EMPTY_SQUARE, position: 0 }; 32];
 
         for i in 0..8 {
             ps[i] = Piece::new(WHITE_PAWN, ROW_2 & (FILE_A << i));
@@ -136,6 +135,8 @@ impl Board {
 
             match piece.kind {
                 WHITE_PAWN => white_pawn_moves(&self, position, i, &mut states),
+                WHITE_ROOK | BLACK_ROOK => rook_moves(&self, position, i, white, &mut states),
+
                 //TODO remaining kinds
                 _ => {}
             }
