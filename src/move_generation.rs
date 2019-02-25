@@ -65,12 +65,12 @@ pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
 
             // TODO consider putting this in the piece list iteration, where a specific board may be identified
             let mut bb = new.bitboard;
-            bb.black_pawns ^= capture_pos;
-            bb.black_bishops ^= capture_pos;
-            bb.black_rooks ^= capture_pos;
-            bb.black_knights ^= capture_pos;
-            bb.black_queen ^= capture_pos;
-            bb.black_king ^= capture_pos;
+            bb.black_pawns &= !capture_pos;
+            bb.black_bishops &= !capture_pos;
+            bb.black_rooks &= !capture_pos;
+            bb.black_knights &= !capture_pos;
+            bb.black_queen &= !capture_pos;
+            bb.black_king &= !capture_pos;
             new.bitboard = bb;
 
             for (i, p) in new.pieces.iter().enumerate() {
@@ -98,10 +98,8 @@ pub fn rook_moves(board: &Board, position: u64, pawn_piece_index: usize, white: 
 fn file_slide_moves(board: &Board, position: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
     //TODO
     if position & ROW_8 == 0 { //Not in row 8, ie can move upwards
-
     }
     if position & ROW_1 == 0 { //Not in row 1, ie can move downwards
-
     }
 }
 

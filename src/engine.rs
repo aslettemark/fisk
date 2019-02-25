@@ -53,6 +53,14 @@ impl BitBoard {
             black_knights: 0,
         }
     }
+
+    pub fn white_coverage(&self) -> u64 {
+        self.white_king | self.white_queen | self.white_knights | self.white_rooks | self.white_bishops | self.white_pawns
+    }
+
+    pub fn black_coverage(&self) -> u64 {
+        self.black_king | self.black_queen | self.black_knights | self.black_rooks | self.black_bishops | self.black_pawns
+    }
 }
 
 impl Piece {
