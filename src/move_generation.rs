@@ -1,3 +1,5 @@
+extern crate bitintr;
+use bitintr::Tzcnt;
 use crate::constants::*;
 use crate::engine::{Board, Piece};
 
@@ -105,6 +107,12 @@ fn file_slide_moves(board: &Board, position: u64, pawn_piece_index: usize, white
 
 fn row_slide_moves(board: &Board, position: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
 //TODO
+}
+
+#[inline]
+fn get_knight_possible_targets(pos: u64) -> [u64; 8] {
+    let trailing = pos.tzcnt() as usize;
+    return KNIGHT_ATTACK[trailing];
 }
 
 #[cfg(test)]

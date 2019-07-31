@@ -1,6 +1,7 @@
 use crate::constants::*;
 use crate::move_generation::*;
 
+
 #[derive(Copy, Clone)]
 pub struct Board {
     pub halfturn: u16,
@@ -77,9 +78,10 @@ impl Board {
     pub fn new() -> Board {
         let mut ps = [Piece { kind: EMPTY_SQUARE, position: 0 }; 32];
 
-        for i in 0..8 {
-            ps[i] = Piece::new(WHITE_PAWN, ROW_2 & (FILE_A << i));
-            ps[i + 8] = Piece::new(BLACK_PAWN, ROW_7 & (FILE_A << i));
+        for i in 0usize..8 {
+            let iu = i as u64;
+            ps[i] = Piece::new(WHITE_PAWN, ROW_2 & (FILE_A << iu));
+            ps[i + 8] = Piece::new(BLACK_PAWN, ROW_7 & (FILE_A << iu));
         }
 
         ps[16] = Piece::new(WHITE_KING, ROW_1 & FILE_E);

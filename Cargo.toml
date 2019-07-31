@@ -5,3 +5,4 @@ authors = ["Aksel Slettemark <akselslettemark@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+bitintr = "0.3.0"

@@ -11,7 +11,7 @@ fn main() {
     let a: Board = Board::new();
     a.print();
 
-    println!("--------------");
+    println!("------------------------------------");
     /*let succ = a.generate_successors();
     for s in succ.iter() {
         s.print();
@@ -19,4 +19,10 @@ fn main() {
     }*/
     let b = board_from_fen(FEN_DEFAULT_BOARD);
     b.print();
+    println!("------------------------------------");
+    let succ = b.generate_successors();
+    for s in succ.iter() {
+        s.print();
+        println!();
+    }
 }
