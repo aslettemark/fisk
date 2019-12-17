@@ -77,8 +77,6 @@ fn generate_knight_attacks() -> [[u64; 8]; 64] {
 
 fn get_knight_attacks(trailing: u64) -> [u64; 8] {
     // https://www.chessprogramming.org/Knight_Pattern
-    let pos: u64 = 1 << trailing;
-
     let file_index = (trailing % 8) as isize;
     let mut file_mask: u64 = 0;
     for i in max(file_index - 2, 0)..min(file_index + 2, 7) + 1 {

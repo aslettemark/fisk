@@ -136,8 +136,8 @@ impl Board {
                 continue;
             }
 
-            let white_piece = piece.kind & (1 << 7) == 0;
-            if (white_piece && !white) || (!white_piece && white) {
+            let white_piece = piece.kind & BLACK_BIT == 0;
+            if white ^ white_piece {
                 continue;
             }
 
@@ -146,6 +146,7 @@ impl Board {
             match piece.kind {
                 WHITE_PAWN => white_pawn_moves(&self, position, i, &mut states),
                 WHITE_ROOK | BLACK_ROOK => rook_moves(&self, position, i, white, &mut states),
+                WHITE_KNIGHT | BLACK_KNIGHT => knight_moves(&self, position, i, white, &mut states),
 
                 //TODO remaining kinds
                 _ => {}

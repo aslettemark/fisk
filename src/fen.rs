@@ -69,7 +69,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
         let mut j = 0;
         for c in pieces_str.chars() {
             if c.is_digit(10) {
-                j = j + c.to_digit(10).unwrap() - 1;
+                j = j + c.to_digit(10).unwrap();
                 continue;
             }
             let kind = fen_kind(c);
@@ -92,10 +92,8 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
                 _ => ()
             };
 
-            pieces[piece_i] = Piece {
-                kind,
-                position: pos,
-            };
+            pieces[piece_i].kind = kind;
+            pieces[piece_i].position = pos;
             piece_i += 1;
             j += 1;
         }
