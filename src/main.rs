@@ -1,6 +1,3 @@
-use crate::engine::Board;
-use crate::fen::*;
-
 #[macro_use]
 extern crate lazy_static;
 
@@ -9,8 +6,13 @@ mod move_generation;
 mod constants;
 mod fen;
 
+use crate::constants::*;
+use crate::engine::Board;
+use crate::fen::*;
+
 fn main() {
     println!("Hello, world!");
+    lazy_static::initialize(&KNIGHT_ATTACK);
     let a: Board = Board::new();
     a.print();
 
