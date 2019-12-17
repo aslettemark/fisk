@@ -1,6 +1,9 @@
 use crate::engine::Board;
 use crate::fen::*;
 
+#[macro_use]
+extern crate lazy_static;
+
 mod engine;
 mod move_generation;
 mod constants;

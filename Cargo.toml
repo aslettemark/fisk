@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 bitintr = "0.3.0"
+lazy_static = "1.4.0"

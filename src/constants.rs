@@ -1,3 +1,7 @@
+extern crate bitintr;
+
+use std::cmp::{min, max};
+
 pub const ROW_1: u64 = 0xFF;
 pub const ROW_2: u64 = ROW_1 << 8;
 pub const ROW_3: u64 = ROW_2 << 8;
@@ -54,93 +58,70 @@ pub const BLACK_ROOK: u8 = WHITE_ROOK | BLACK_BIT;
 pub const BLACK_QUEEN: u8 = WHITE_QUEEN | BLACK_BIT;
 pub const BLACK_KING: u8 = WHITE_KING | BLACK_BIT;
 
-pub const KNIGHT_ATTACK: [[u64; 8]; 64] = generate_knight_attacks();
+lazy_static! {
+    pub static ref KNIGHT_ATTACK: [[u64; 8]; 64] = generate_knight_attacks();
+}
 
 pub const fn get_row_mask(row: usize) -> u64 {
     0xFF << (row as u64) * 8
 }
 
-const fn generate_knight_attacks() -> [[u64; 8]; 64] {
+fn generate_knight_attacks() -> [[u64; 8]; 64] {
     let mut attacks: [[u64; 8]; 64] = [[0; 8]; 64];
-    /*for i in 0..64 { // TODO uncomment when iterating in const fn is stable
-        attacks[i] = get_knight_attacks(1 << (i as u64));
-    }*/
-
-    // Y I K E S
-    attacks[0] = get_knight_attacks(1 << (0 as u64));
-    attacks[1] = get_knight_attacks(1 << (1 as u64));
-    attacks[2] = get_knight_attacks(1 << (2 as u64));
-    attacks[3] = get_knight_attacks(1 << (3 as u64));
-    attacks[4] = get_knight_attacks(1 << (4 as u64));
-    attacks[5] = get_knight_attacks(1 << (5 as u64));
-    attacks[6] = get_knight_attacks(1 << (6 as u64));
-    attacks[7] = get_knight_attacks(1 << (7 as u64));
-    attacks[8] = get_knight_attacks(1 << (8 as u64));
-    attacks[9] = get_knight_attacks(1 << (9 as u64));
-    attacks[10] = get_knight_attacks(1 << (10 as u64));
-    attacks[11] = get_knight_attacks(1 << (11 as u64));
-    attacks[12] = get_knight_attacks(1 << (12 as u64));
-    attacks[13] = get_knight_attacks(1 << (13 as u64));
-    attacks[14] = get_knight_attacks(1 << (14 as u64));
-    attacks[15] = get_knight_attacks(1 << (15 as u64));
-
-    attacks[16] = get_knight_attacks(1 << (16 as u64));
-    attacks[17] = get_knight_attacks(1 << (17 as u64));
-    attacks[18] = get_knight_attacks(1 << (18 as u64));
-    attacks[19] = get_knight_attacks(1 << (19 as u64));
-    attacks[20] = get_knight_attacks(1 << (20 as u64));
-    attacks[21] = get_knight_attacks(1 << (21 as u64));
-    attacks[22] = get_knight_attacks(1 << (22 as u64));
-    attacks[23] = get_knight_attacks(1 << (23 as u64));
-    attacks[24] = get_knight_attacks(1 << (24 as u64));
-    attacks[25] = get_knight_attacks(1 << (25 as u64));
-    attacks[26] = get_knight_attacks(1 << (26 as u64));
-    attacks[27] = get_knight_attacks(1 << (27 as u64));
-    attacks[28] = get_knight_attacks(1 << (28 as u64));
-    attacks[29] = get_knight_attacks(1 << (29 as u64));
-    attacks[30] = get_knight_attacks(1 << (30 as u64));
-    attacks[31] = get_knight_attacks(1 << (31 as u64));
-
-    attacks[32] = get_knight_attacks(1 << (32 as u64));
-    attacks[33] = get_knight_attacks(1 << (33 as u64));
-    attacks[34] = get_knight_attacks(1 << (34 as u64));
-    attacks[35] = get_knight_attacks(1 << (35 as u64));
-    attacks[36] = get_knight_attacks(1 << (36 as u64));
-    attacks[37] = get_knight_attacks(1 << (37 as u64));
-    attacks[38] = get_knight_attacks(1 << (38 as u64));
-    attacks[39] = get_knight_attacks(1 << (39 as u64));
-    attacks[40] = get_knight_attacks(1 << (40 as u64));
-    attacks[41] = get_knight_attacks(1 << (41 as u64));
-    attacks[42] = get_knight_attacks(1 << (42 as u64));
-    attacks[43] = get_knight_attacks(1 << (43 as u64));
-    attacks[44] = get_knight_attacks(1 << (44 as u64));
-    attacks[45] = get_knight_attacks(1 << (45 as u64));
-    attacks[46] = get_knight_attacks(1 << (46 as u64));
-    attacks[47] = get_knight_attacks(1 << (47 as u64));
-
-    attacks[48] = get_knight_attacks(1 << (48 as u64));
-    attacks[49] = get_knight_attacks(1 << (49 as u64));
-    attacks[50] = get_knight_attacks(1 << (50 as u64));
-    attacks[51] = get_knight_attacks(1 << (51 as u64));
-    attacks[52] = get_knight_attacks(1 << (52 as u64));
-    attacks[53] = get_knight_attacks(1 << (53 as u64));
-    attacks[54] = get_knight_attacks(1 << (54 as u64));
-    attacks[55] = get_knight_attacks(1 << (55 as u64));
-    attacks[56] = get_knight_attacks(1 << (56 as u64));
-    attacks[57] = get_knight_attacks(1 << (57 as u64));
-    attacks[58] = get_knight_attacks(1 << (58 as u64));
-    attacks[59] = get_knight_attacks(1 << (59 as u64));
-    attacks[60] = get_knight_attacks(1 << (60 as u64));
-    attacks[61] = get_knight_attacks(1 << (61 as u64));
-    attacks[62] = get_knight_attacks(1 << (62 as u64));
-    attacks[63] = get_knight_attacks(1 << (63 as u64));
+    for i in 0..64 {
+        attacks[i] = get_knight_attacks(i as u64);
+    }
 
     return attacks;
 }
 
-const fn get_knight_attacks(pos: u64) -> [u64; 8] {
-    //https://www.chessprogramming.org/Knight_Pattern
-    // TODO
+fn get_knight_attacks(trailing: u64) -> [u64; 8] {
+    // https://www.chessprogramming.org/Knight_Pattern
+    let pos: u64 = 1 << trailing;
 
-    [0; 8]
+    let file_index = (trailing % 8) as isize;
+    let mut file_mask: u64 = 0;
+    for i in max(file_index - 2, 0)..min(file_index + 2, 7) + 1 {
+        file_mask |= FILES[i as usize];
+    }
+
+    let rank_index = (trailing / 8) as isize;
+    let mut rank_mask: u64 = 0;
+    for i in max(rank_index - 2, 0)..min(rank_index + 2, 7) + 1 {
+        rank_mask |= ROWS[i as usize];
+    }
+
+    let mask = file_mask & rank_mask;
+    let attack_offsets: [isize; 8] = [-17, -15, -10, -6, 6, 10, 15, 17];
+    let mut attacks: [u64; 8] = [0; 8];
+    for (i, offset) in attack_offsets.iter().enumerate() {
+        let bit = trailing as isize + offset;
+        if bit >= 0 && bit < 64 {
+            attacks[i] = (1 << (bit as u64)) & mask;
+        }
+    }
+    attacks
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_n_attacks(trailing: u64, n_attacks: u64) {
+        let attacks = get_knight_attacks(trailing);
+        let mut n = 0;
+        for a in attacks.iter() {
+            if *a != 0 {
+                n += 1;
+            }
+        }
+        assert_eq!(n, n_attacks);
+    }
+
+    #[test]
+    fn test_knight_attacks() {
+        test_n_attacks(0, 2);
+        test_n_attacks(63, 2);
+        test_n_attacks(27, 8);
+    }
 }
