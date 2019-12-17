@@ -7,3 +7,5 @@ edition = "2018"
 [dependencies]
 bitintr = "0.3.0"
 lazy_static = "1.4.0"
+clap = "2.33.0"
+time = "0.1.42"

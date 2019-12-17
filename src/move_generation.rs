@@ -1,7 +1,6 @@
 extern crate bitintr;
 
-use bitintr::Tzcnt;
-use bitintr::Popcnt;
+use bitintr::*;
 use crate::constants::*;
 use crate::engine::{Board, Piece};
 
@@ -109,7 +108,7 @@ fn get_knight_possible_targets(pos: u64) -> [u64; 8] {
 pub fn knight_moves(board: &Board, position: u64, piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
     let targets = get_knight_possible_targets(position);
 
-    for t in targets.iter() {
+    for t in &targets {
         if *t == 0 {
             continue;
         }
@@ -216,7 +215,7 @@ mod tests {
         assert_eq!(succ.len(), 20);
 
         let mut count_en_passant = 0;
-        for s in succ.iter() {
+        for s in &succ {
             if s.en_passant != 0 {
                 count_en_passant += 1;
                 assert_ne!(s.en_passant & ROW_3, 0); // white pawn en passant appears on row 3
@@ -224,7 +223,7 @@ mod tests {
         }
         assert_eq!(count_en_passant, 8); // 8 of the pawn moves should produce an en passant square
 
-        for s in succ.iter() {
+        for s in &succ {
             assert_eq!(s.generate_successors().len(), 4); // Black doesn't have pawns yet
         }
     }
@@ -237,7 +236,7 @@ mod tests {
 
     fn test_alive(board: &Board, n_alive: u64) {
         let mut alive = 0;
-        for p in board.pieces.iter() {
+        for p in &board.pieces {
             if p.kind != EMPTY_SQUARE {
                 alive += 1;
             }
@@ -268,7 +267,7 @@ mod tests {
             let a = board_from_fen("7n/5P2/4P3/8/8/8/8/8 b - - 0 1");
             let succ = a.generate_successors();
             assert_eq!(succ.len(), 2);
-            for s in succ.iter() {
+            for s in &succ {
                 if s.bitboard.white_pawns != a.bitboard.white_pawns {
                     assert_eq!(s.bitboard.white_coverage().popcnt(), 1);
                     test_alive(s, 2);

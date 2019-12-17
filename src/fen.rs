@@ -69,7 +69,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
         let mut j = 0;
         for c in pieces_str.chars() {
             if c.is_digit(10) {
-                j = j + c.to_digit(10).unwrap();
+                j += c.to_digit(10).unwrap();
                 continue;
             }
             let kind = fen_kind(c);
