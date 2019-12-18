@@ -145,6 +145,7 @@ impl Board {
 
             match piece.kind {
                 WHITE_PAWN => white_pawn_moves(&self, position, i, &mut states),
+                BLACK_PAWN => black_pawn_moves(&self, position, i, &mut states),
                 WHITE_ROOK | BLACK_ROOK => rook_moves(&self, position, i, white, &mut states),
                 WHITE_KNIGHT | BLACK_KNIGHT => knight_moves(&self, position, i, white, &mut states),
 

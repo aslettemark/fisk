@@ -4,16 +4,19 @@ use bitintr::*;
 use crate::constants::*;
 use crate::engine::{Board, Piece};
 
-fn pawn_capture_pos(board: &Board, pawn_pos: u64, capture_pos: u64, pawn_piece_index: usize, outvec: &mut Vec<Board>) {
+fn pawn_capture_pos(board: &Board, pawn_pos: u64, capture_pos: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
     let kind = board.kind_at(capture_pos);
 
-    let black_piece = kind & BLACK_BIT != 0;
-    if black_piece {
+    if kind == EMPTY_SQUARE {
+        return;
+    }
+
+    let white_piece = kind & BLACK_BIT == 0;
+    if white ^ white_piece {
         //capture
         let mut new = board.clone();
         new.en_passant = 0;
         new.halfturn += 1;
-        new.bitboard.white_pawns = (new.bitboard.white_pawns ^ pawn_pos) | capture_pos;
 
         for (i, p) in new.pieces.iter().enumerate() {
             if p.position == capture_pos {
@@ -25,14 +28,29 @@ fn pawn_capture_pos(board: &Board, pawn_pos: u64, capture_pos: u64, pawn_piece_i
 
         new.pieces[pawn_piece_index].position = capture_pos;
 
-        // TODO consider putting this in the piece list iteration, where a specific board may be identified
-        let mut bb = &mut new.bitboard;
-        bb.black_pawns &= !capture_pos;
-        bb.black_bishops &= !capture_pos;
-        bb.black_rooks &= !capture_pos;
-        bb.black_knights &= !capture_pos;
-        bb.black_queen &= !capture_pos;
-        bb.black_king &= !capture_pos;
+        if white {
+            new.bitboard.white_pawns = (new.bitboard.white_pawns ^ pawn_pos) | capture_pos;
+
+            // TODO consider putting this in the piece list iteration, where a specific board may be identified
+            let mut bb = &mut new.bitboard;
+            bb.black_pawns &= !capture_pos;
+            bb.black_bishops &= !capture_pos;
+            bb.black_rooks &= !capture_pos;
+            bb.black_knights &= !capture_pos;
+            bb.black_queen &= !capture_pos;
+            bb.black_king &= !capture_pos;
+        } else {
+            new.bitboard.black_pawns = (new.bitboard.black_pawns ^ pawn_pos) | capture_pos;
+
+            // TODO consider putting this in the piece list iteration, where a specific board may be identified
+            let mut bb = &mut new.bitboard;
+            bb.white_pawns &= !capture_pos;
+            bb.white_bishops &= !capture_pos;
+            bb.white_rooks &= !capture_pos;
+            bb.white_knights &= !capture_pos;
+            bb.white_queen &= !capture_pos;
+            bb.white_king &= !capture_pos;
+        }
 
         outvec.push(new);
     }
@@ -62,22 +80,56 @@ pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
             new.en_passant = pos_front; // Setting en passant to where another pawn can capture
             new.halfturn += 1;
             new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | pos_twofront;
-            let p = Piece {
-                kind: WHITE_PAWN,
-                position: pos_twofront,
-            };
-            new.pieces[pawn_piece_index] = p;
+            new.pieces[pawn_piece_index].position = pos_twofront;
             outvec.push(new);
         }
     }
 
     if position & FILE_A == 0 {
         // white pawn capture left
-        pawn_capture_pos(&board, position, position << 7, pawn_piece_index, outvec);
+        pawn_capture_pos(&board, position, position << 7, pawn_piece_index, true, outvec);
     }
     if position & FILE_H == 0 {
         // capture right
-        pawn_capture_pos(&board, position, position << 9, pawn_piece_index, outvec);
+        pawn_capture_pos(&board, position, position << 9, pawn_piece_index, true, outvec);
+    }
+    //TODO en passant capture
+}
+
+pub fn black_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, outvec: &mut Vec<Board>) {
+    //a black pawn cannot exist on row 0
+    let pos_front = position >> 8;
+    let kind_front = board.kind_at(pos_front);
+    if kind_front == EMPTY_SQUARE {
+        // pawn short forward move
+        let mut new: Board = board.clone();
+        new.en_passant = 0; //No en passant in a short pawn move
+        new.halfturn += 1;
+        new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_front;
+        new.pieces[pawn_piece_index].position = pos_front;
+        outvec.push(new);
+        //TODO turn into queen, rook, bishop, knight if row == 0
+    }
+
+    if kind_front == EMPTY_SQUARE && (position & ROW_7 != 0) {
+        // pawn double square move
+        let pos_twofront = pos_front >> 8;
+        if board.kind_at(pos_twofront) == EMPTY_SQUARE {
+            //All clear, sir
+            let mut new = board.clone();
+            new.en_passant = pos_front; // Setting en passant to where another pawn can capture
+            new.halfturn += 1;
+            new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_twofront;
+            new.pieces[pawn_piece_index].position = pos_twofront;
+            outvec.push(new);
+        }
+    }
+
+    if position & FILE_A == 0 {
+        pawn_capture_pos(&board, position, position >> 9, pawn_piece_index, false, outvec);
+    }
+    if position & FILE_H == 0 {
+        pawn_capture_pos(&board, position, position >> 7, pawn_piece_index, false, outvec);
     }
     //TODO en passant capture
 }
@@ -175,6 +227,18 @@ mod tests {
 
     use super::*;
 
+    fn test_alive(board: &Board, n_alive: u64) {
+        let mut alive = 0;
+        for p in &board.pieces {
+            if p.kind != EMPTY_SQUARE {
+                alive += 1;
+            }
+        }
+        assert_eq!(alive, n_alive);
+        let cover = board.bitboard.white_coverage() | board.bitboard.black_coverage();
+        assert_eq!(cover.popcnt(), alive);
+    }
+
     #[test]
     fn test_test() {
         assert!(true);
@@ -195,6 +259,12 @@ mod tests {
         let b = board_from_fen("8/8/8/8/6p1/5P2/8/8 w KQkq -");
         let succ = b.generate_successors();
         assert_eq!(succ.len(), 2);
+
+        let c = board_from_fen("8/8/8/3p4/2QR4/8/8/8 b - - 0 1");
+        let succ = c.generate_successors();
+        assert_eq!(succ.len(), 1);
+        test_alive(&succ[0], 2);
+        assert_eq!(succ[0].bitboard.white_queen, 0);
     }
 
     /* TODO
@@ -224,7 +294,12 @@ mod tests {
         assert_eq!(count_en_passant, 8); // 8 of the pawn moves should produce an en passant square
 
         for s in &succ {
-            assert_eq!(s.generate_successors().len(), 4); // Black doesn't have pawns yet
+            let ss = s.generate_successors();
+            for s in &ss {
+                s.print();
+                println!();
+            }
+            assert_eq!(ss.len(), 20);
         }
     }
 
@@ -232,18 +307,6 @@ mod tests {
     fn test_locked_knight() {
         let a = board_from_fen("8/8/8/1P1P4/P3P3/2N5/P3P3/1P1P4 w - - 0 1");
         assert_eq!(a.generate_successors().len(), 8);
-    }
-
-    fn test_alive(board: &Board, n_alive: u64) {
-        let mut alive = 0;
-        for p in &board.pieces {
-            if p.kind != EMPTY_SQUARE {
-                alive += 1;
-            }
-        }
-        assert_eq!(alive, n_alive);
-        let cover = board.bitboard.white_coverage() | board.bitboard.black_coverage();
-        assert_eq!(cover.popcnt(), alive);
     }
 
     #[test]

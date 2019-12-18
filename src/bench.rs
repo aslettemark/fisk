@@ -17,5 +17,5 @@ pub fn bench_movegen_default(depth: i32) {
     let t2 = time::get_time();
     let time = t2 - t1;
     println!("{} nodes within depth {} from starting position (took {}s {}ms)", nodes, depth, time.num_seconds(), time.num_milliseconds() % 1000);
-    println!("{} nodes/sec", 1000 * (nodes as f64 / time.num_milliseconds() as f64) as i64);
+    println!("{} nodes/sec", 1000 * (nodes as f64 / (time.num_milliseconds() + 1) as f64) as i64);
 }
