@@ -1,6 +1,7 @@
 extern crate bitintr;
 
 use bitintr::*;
+
 use crate::constants::*;
 use crate::engine::{Board, Piece};
 

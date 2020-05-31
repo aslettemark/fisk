@@ -1,7 +1,6 @@
 use crate::constants::*;
 use crate::move_generation::*;
 
-
 #[derive(Copy, Clone)]
 pub struct Board {
     pub halfturn: u16,
@@ -160,12 +159,10 @@ impl Board {
     pub fn print(&self) {
         println!(" A B C D E F G H");
 
-        for i in 0..8 {
-            let row = ROW_1 << (8 * (7 - i));
+        for (i, row) in ROWS.iter().enumerate() {
             print!("{}", 7 - i + 1);
 
-            for j in 0..8 {
-                let file = FILE_A << j;
+            for file in &FILES {
                 let pos = row & file;
                 let c = self.piece_representation(self.kind_at(pos));
 
@@ -201,6 +198,8 @@ impl Board {
     }
 
     pub fn kind_at(&self, pos: u64) -> u8 {
+        //TODO: There should be a faster way to do this
+        // Idea 1: Try merging bitboards, binary search? (possibly large overhead)
         let b = &self.bitboard;
         if pos & b.white_pawns != 0 {
             return WHITE_PAWN;
