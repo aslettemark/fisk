@@ -12,8 +12,9 @@ pub struct Board {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct BitBoard {
-    // little-endian https://www.chessprogramming.org/Square_Mapping_Considerations
-    // bit 0 is a1, bit 7 is f1, bit 63 is h8
+    // Little-Endian Rank-File (LERF) https://www.chessprogramming.org/Square_Mapping_Considerations
+    // bit 0 is a1, bit 7 is h1, bit 63 is h8
+    // TODO: Consider having array(s) of u64 to reduce branching when checking side, ie pawns[white]
 
     pub white_pawns: u64,
     pub white_queen: u64,
@@ -54,12 +55,21 @@ impl BitBoard {
         }
     }
 
+    #[inline]
     pub fn white_coverage(&self) -> u64 {
         self.white_king | self.white_queen | self.white_knights | self.white_rooks | self.white_bishops | self.white_pawns
     }
 
+    #[inline]
     pub fn black_coverage(&self) -> u64 {
         self.black_king | self.black_queen | self.black_knights | self.black_rooks | self.black_bishops | self.black_pawns
+    }
+
+    #[inline]
+    pub fn coverage(&self) -> u64 {
+        // Might be a silly premature opt to not trust the codegen for doing white_cover | black_cover
+        self.white_king | self.white_queen | self.white_knights | self.white_rooks | self.white_bishops | self.white_pawns
+            | self.black_king | self.black_queen | self.black_knights | self.black_rooks | self.black_bishops | self.black_pawns
     }
 }
 
@@ -123,6 +133,12 @@ impl Board {
         }
     }
 
+    pub fn clone_and_advance(&self, en_passant: u64) -> Board {
+        let mut new = self.clone();
+        new.en_passant = en_passant;
+        new.halfturn += 1;
+        return new;
+    }
 
     pub fn generate_successors(&self) -> Vec<Board> {
         let white = self.halfturn % 2 == 0;

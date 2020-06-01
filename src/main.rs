@@ -19,6 +19,8 @@ use crate::bench::*;
 
 fn main() {
     lazy_static::initialize(&KNIGHT_ATTACK);
+    lazy_static::initialize(&FILE_ATTACK);
+    lazy_static::initialize(&RANK_ATTACK);
 
     let opts = App::new("Fisk")
         .version("0.1.0")

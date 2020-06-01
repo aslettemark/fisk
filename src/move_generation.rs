@@ -5,6 +5,16 @@ use bitintr::*;
 use crate::constants::*;
 use crate::engine::{Board, Piece};
 
+fn delete_piece(capture_pos: u64, piece_list: & mut[Piece; 32]) {
+    for (i, p) in piece_list.iter().enumerate() {
+        if p.position == capture_pos {
+            piece_list[i].kind = EMPTY_SQUARE;
+            piece_list[i].position = 0;
+            break;
+        }
+    }
+}
+
 fn pawn_capture_pos(board: &Board, pawn_pos: u64, capture_pos: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
     let kind = board.kind_at(capture_pos);
 
@@ -15,18 +25,9 @@ fn pawn_capture_pos(board: &Board, pawn_pos: u64, capture_pos: u64, pawn_piece_i
     let white_piece = kind & BLACK_BIT == 0;
     if white ^ white_piece {
         //capture
-        let mut new = board.clone();
-        new.en_passant = 0;
-        new.halfturn += 1;
+        let mut new = board.clone_and_advance(0);
 
-        for (i, p) in new.pieces.iter().enumerate() {
-            if p.position == capture_pos {
-                new.pieces[i].kind = EMPTY_SQUARE;
-                new.pieces[i].position = 0;
-                break;
-            }
-        }
-
+        delete_piece(capture_pos, &mut new.pieces);
         new.pieces[pawn_piece_index].position = capture_pos;
 
         if white {
@@ -63,9 +64,7 @@ pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
     let kind_front = board.kind_at(pos_front);
     if kind_front == EMPTY_SQUARE {
         // pawn short forward move
-        let mut new: Board = board.clone();
-        new.en_passant = 0; //No en passant in a short pawn move
-        new.halfturn += 1;
+        let mut new = board.clone_and_advance(0);
         new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | pos_front;
         new.pieces[pawn_piece_index].position = pos_front;
         outvec.push(new);
@@ -77,9 +76,7 @@ pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
         let pos_twofront = pos_front << 8;
         if board.kind_at(pos_twofront) == EMPTY_SQUARE {
             //All clear, sir
-            let mut new = board.clone();
-            new.en_passant = pos_front; // Setting en passant to where another pawn can capture
-            new.halfturn += 1;
+            let mut new = board.clone_and_advance(pos_front);
             new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | pos_twofront;
             new.pieces[pawn_piece_index].position = pos_twofront;
             outvec.push(new);
@@ -103,9 +100,7 @@ pub fn black_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
     let kind_front = board.kind_at(pos_front);
     if kind_front == EMPTY_SQUARE {
         // pawn short forward move
-        let mut new: Board = board.clone();
-        new.en_passant = 0; //No en passant in a short pawn move
-        new.halfturn += 1;
+        let mut new = board.clone_and_advance(0);
         new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_front;
         new.pieces[pawn_piece_index].position = pos_front;
         outvec.push(new);
@@ -117,9 +112,7 @@ pub fn black_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
         let pos_twofront = pos_front >> 8;
         if board.kind_at(pos_twofront) == EMPTY_SQUARE {
             //All clear, sir
-            let mut new = board.clone();
-            new.en_passant = pos_front; // Setting en passant to where another pawn can capture
-            new.halfturn += 1;
+            let mut new = board.clone_and_advance(pos_front);
             new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_twofront;
             new.pieces[pawn_piece_index].position = pos_twofront;
             outvec.push(new);
@@ -167,9 +160,7 @@ pub fn knight_moves(board: &Board, position: u64, piece_index: usize, white: boo
         }
         let target_kind = board.kind_at(*t);
         if target_kind == EMPTY_SQUARE {
-            let mut new = board.clone();
-            new.en_passant = 0;
-            new.halfturn += 1;
+            let mut new = board.clone_and_advance(0);
             new.pieces[piece_index].position = *t;
 
             if white {
@@ -183,16 +174,8 @@ pub fn knight_moves(board: &Board, position: u64, piece_index: usize, white: boo
             let target_white = (target_kind & BLACK_BIT) == 0;
             if white ^ target_white {
                 let capture_pos = *t;
-                let mut new = board.clone();
-                new.en_passant = 0;
-                new.halfturn += 1;
-                for (i, p) in new.pieces.iter().enumerate() {
-                    if p.position == capture_pos {
-                        new.pieces[i].kind = EMPTY_SQUARE;
-                        new.pieces[i].position = 0;
-                        break;
-                    }
-                }
+                let mut new = board.clone_and_advance(0);
+                delete_piece(capture_pos, &mut new.pieces);
                 new.pieces[piece_index].position = capture_pos;
 
                 let mut bb = &mut new.bitboard;
@@ -236,7 +219,7 @@ mod tests {
             }
         }
         assert_eq!(alive, n_alive);
-        let cover = board.bitboard.white_coverage() | board.bitboard.black_coverage();
+        let cover = board.bitboard.coverage();
         assert_eq!(cover.popcnt(), alive);
     }
 

@@ -64,7 +64,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
 
     for (i, pieces_str) in board_rows.iter().enumerate() {
         let row = 7 - i;
-        let row_mask = get_row_mask(row);
+        let row_mask = ROWS[row];
 
         let mut j = 0;
         for c in pieces_str.chars() {

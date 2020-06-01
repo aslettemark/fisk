@@ -1,6 +1,4 @@
-extern crate bitintr;
-
-use std::cmp::{min, max};
+use std::cmp::{max, min};
 
 pub const ROW_1: u64 = 0xFF;
 pub const ROW_2: u64 = ROW_1 << 8;
@@ -60,10 +58,26 @@ pub const BLACK_KING: u8 = WHITE_KING | BLACK_BIT;
 
 lazy_static! {
     pub static ref KNIGHT_ATTACK: [[u64; 8]; 64] = generate_knight_attacks();
+    pub static ref FILE_ATTACK: [u64; 64] = generate_file_attacks();
+    pub static ref RANK_ATTACK: [u64; 64] = generate_rank_attacks();
 }
 
-pub const fn get_row_mask(row: usize) -> u64 {
-    0xFF << (row as u64) * 8
+fn generate_file_attacks() -> [u64; 64] {
+    let mut attacks = [0 as u64; 64];
+    for i in 0..64 {
+        let file_index = (i % 8);
+        attacks[i] = FILES[file_index] & !(1 << i as u64); //zero out the occupied position
+    }
+    return attacks;
+}
+
+fn generate_rank_attacks() -> [u64; 64] {
+    let mut attacks = [0 as u64; 64];
+    for i in 0..64 {
+        let rank_index = (i / 8);
+        attacks[i] = ROWS[rank_index] & !(1 << i as u64); //zero out the occupied position
+    }
+    return attacks;
 }
 
 fn generate_knight_attacks() -> [[u64; 8]; 64] {
@@ -93,7 +107,7 @@ fn get_knight_attacks(trailing: u64) -> [u64; 8] {
     let attack_offsets: [isize; 8] = [-17, -15, -10, -6, 6, 10, 15, 17];
     let mut attacks: [u64; 8] = [0; 8];
     for (i, offset) in attack_offsets.iter().enumerate() {
-        let bit = trailing as isize + offset;
+        let bit = trailing as isize + *offset;
         if bit >= 0 && bit < 64 {
             attacks[i] = (1 << (bit as u64)) & mask;
         }
@@ -103,10 +117,12 @@ fn get_knight_attacks(trailing: u64) -> [u64; 8] {
 
 #[cfg(test)]
 mod tests {
+    use bitintr::*;
+
     use super::*;
 
-    fn test_n_attacks(trailing: u64, n_attacks: u64) {
-        let attacks = get_knight_attacks(trailing);
+    fn test_knight_n_attacks(trailing: usize, n_attacks: u64) {
+        let attacks = KNIGHT_ATTACK[trailing];
         let mut n = 0;
         for a in attacks.iter() {
             if *a != 0 {
@@ -118,8 +134,19 @@ mod tests {
 
     #[test]
     fn test_knight_attacks() {
-        test_n_attacks(0, 2);
-        test_n_attacks(63, 2);
-        test_n_attacks(27, 8);
+        test_knight_n_attacks(0, 2);
+        test_knight_n_attacks(63, 2);
+        test_knight_n_attacks(27, 8);
+    }
+
+    #[test]
+    fn test_rook_attacks() {
+        for i in 0..64usize {
+            let ra = RANK_ATTACK[i];
+            let fa = FILE_ATTACK[i];
+            assert_eq!(ra.popcnt(), 7);
+            assert_eq!(fa.popcnt(), 7);
+            assert_eq!((ra | fa).popcnt(), 14); // No overlap
+        }
     }
 }
