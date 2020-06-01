@@ -8,6 +8,7 @@ pub struct Board {
     pub bitboard: BitBoard,
     pub pieces: [Piece; 32],
     pub castling: u8,
+    pub white_to_move: bool,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -130,6 +131,7 @@ impl Board {
             },
             pieces: ps,
             castling: 0b11101110,
+            white_to_move: true
         }
     }
 
@@ -137,11 +139,12 @@ impl Board {
         let mut new = self.clone();
         new.en_passant = en_passant;
         new.halfturn += 1;
+        new.white_to_move = !self.white_to_move;
         return new;
     }
 
     pub fn generate_successors(&self) -> Vec<Board> {
-        let white = self.halfturn % 2 == 0;
+        let white = self.white_to_move;
         let mut states = Vec::new();
 
         for (i, piece) in self.pieces.iter().enumerate() {
@@ -163,6 +166,7 @@ impl Board {
                 BLACK_PAWN => black_pawn_moves(&self, position, i, &mut states),
                 WHITE_ROOK | BLACK_ROOK => rook_moves(&self, position, i, white, &mut states),
                 WHITE_KNIGHT | BLACK_KNIGHT => knight_moves(&self, position, i, white, &mut states),
+                WHITE_KING | BLACK_KING => king_moves(&self, position, i, white, &mut states),
 
                 //TODO remaining kinds
                 _ => {}

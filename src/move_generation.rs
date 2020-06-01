@@ -3,9 +3,9 @@ extern crate bitintr;
 use bitintr::*;
 
 use crate::constants::*;
-use crate::engine::{Board, Piece};
+use crate::engine::{BitBoard, Board, Piece};
 
-fn delete_piece(capture_pos: u64, piece_list: & mut[Piece; 32]) {
+fn delete_piece(capture_pos: u64, piece_list: &mut [Piece; 32]) {
     for (i, p) in piece_list.iter().enumerate() {
         if p.position == capture_pos {
             piece_list[i].kind = EMPTY_SQUARE;
@@ -13,6 +13,24 @@ fn delete_piece(capture_pos: u64, piece_list: & mut[Piece; 32]) {
             break;
         }
     }
+}
+
+fn unset_white_piece(capture_pos: u64, bb: &mut BitBoard) {
+    bb.white_pawns &= !capture_pos;
+    bb.white_bishops &= !capture_pos;
+    bb.white_rooks &= !capture_pos;
+    bb.white_knights &= !capture_pos;
+    bb.white_queen &= !capture_pos;
+    bb.white_king &= !capture_pos;
+}
+
+fn unset_black_piece(capture_pos: u64, bb: &mut BitBoard) {
+    bb.black_pawns &= !capture_pos;
+    bb.black_bishops &= !capture_pos;
+    bb.black_rooks &= !capture_pos;
+    bb.black_knights &= !capture_pos;
+    bb.black_queen &= !capture_pos;
+    bb.black_king &= !capture_pos;
 }
 
 fn pawn_capture_pos(board: &Board, pawn_pos: u64, capture_pos: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
@@ -34,24 +52,12 @@ fn pawn_capture_pos(board: &Board, pawn_pos: u64, capture_pos: u64, pawn_piece_i
             new.bitboard.white_pawns = (new.bitboard.white_pawns ^ pawn_pos) | capture_pos;
 
             // TODO consider putting this in the piece list iteration, where a specific board may be identified
-            let mut bb = &mut new.bitboard;
-            bb.black_pawns &= !capture_pos;
-            bb.black_bishops &= !capture_pos;
-            bb.black_rooks &= !capture_pos;
-            bb.black_knights &= !capture_pos;
-            bb.black_queen &= !capture_pos;
-            bb.black_king &= !capture_pos;
+            unset_black_piece(capture_pos, &mut new.bitboard);
         } else {
             new.bitboard.black_pawns = (new.bitboard.black_pawns ^ pawn_pos) | capture_pos;
 
             // TODO consider putting this in the piece list iteration, where a specific board may be identified
-            let mut bb = &mut new.bitboard;
-            bb.white_pawns &= !capture_pos;
-            bb.white_bishops &= !capture_pos;
-            bb.white_rooks &= !capture_pos;
-            bb.white_knights &= !capture_pos;
-            bb.white_queen &= !capture_pos;
-            bb.white_king &= !capture_pos;
+            unset_white_piece(capture_pos, &mut new.bitboard);
         }
 
         outvec.push(new);
@@ -182,21 +188,11 @@ pub fn knight_moves(board: &Board, position: u64, piece_index: usize, white: boo
                 if white {
                     bb.white_knights = (bb.white_knights ^ position) | capture_pos;
 
-                    bb.black_pawns &= !capture_pos;
-                    bb.black_bishops &= !capture_pos;
-                    bb.black_rooks &= !capture_pos;
-                    bb.black_knights &= !capture_pos;
-                    bb.black_queen &= !capture_pos;
-                    bb.black_king &= !capture_pos;
+                    unset_black_piece(capture_pos, &mut new.bitboard);
                 } else {
                     bb.black_knights = (bb.black_knights ^ position) | capture_pos;
 
-                    bb.white_pawns &= !capture_pos;
-                    bb.white_bishops &= !capture_pos;
-                    bb.white_rooks &= !capture_pos;
-                    bb.white_knights &= !capture_pos;
-                    bb.white_queen &= !capture_pos;
-                    bb.white_king &= !capture_pos;
+                    unset_white_piece(capture_pos, &mut new.bitboard);
                 }
 
                 outvec.push(new);
@@ -205,11 +201,62 @@ pub fn knight_moves(board: &Board, position: u64, piece_index: usize, white: boo
     }
 }
 
+pub fn king_moves(board: &Board, position: u64, piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
+    let trailing = position.tzcnt() as usize;
+    let targets: [u64; 8] = KING_ATTACK[trailing];
+    for t in &targets {
+        if *t == 0 {
+            continue;
+        }
+        let target_kind = board.kind_at(*t);
+        if target_kind == EMPTY_SQUARE {
+            let mut new = board.clone_and_advance(0);
+            new.pieces[piece_index].position = *t;
+            if white {
+                new.bitboard.white_king = (new.bitboard.white_king ^ position) | *t;
+            } else {
+                new.bitboard.black_king = (new.bitboard.black_king ^ position) | *t;
+            }
+            outvec.push(new);
+            continue;
+        }
+
+        let target_white = (target_kind & BLACK_BIT) == 0;
+        if !(white ^ target_white) {
+            // Can't capture our own pieces
+            continue;
+        }
+
+        // Capture
+        let capture_pos = *t;
+        let mut new = board.clone_and_advance(0);
+        delete_piece(capture_pos, &mut new.pieces);
+        new.pieces[piece_index].position = capture_pos;
+
+        let mut bb = &mut new.bitboard;
+        if white {
+            bb.white_king = (bb.white_king ^ position) | capture_pos;
+            unset_black_piece(capture_pos, &mut new.bitboard);
+        } else {
+            bb.black_king = (bb.black_king ^ position) | capture_pos;
+            unset_white_piece(capture_pos, &mut new.bitboard);
+        }
+
+        outvec.push(new);
+    }
+
+    //TODO: castling
+}
+
 #[cfg(test)]
 mod tests {
     use crate::fen::*;
 
     use super::*;
+
+    fn succ(fen: &str) -> Vec<Board> {
+        return board_from_fen(fen).generate_successors();
+    }
 
     fn test_alive(board: &Board, n_alive: u64) {
         let mut alive = 0;
@@ -326,5 +373,60 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_king_movement() {
+        {
+            let s1 = succ("8/8/8/8/3K4/8/8/8 w - - 0 1");
+            assert_eq!(s1.len(), 8);
+            let mut cumulative = 0u64;
+            for s in &s1 {
+                assert_eq!(s.bitboard.white_coverage().popcnt(), 1);
+                assert_eq!(s.bitboard.black_coverage(), 0);
+
+                let king_mask = s.bitboard.white_king;
+                assert_eq!(cumulative & king_mask, 0); // All 8 moves are different
+                cumulative &= king_mask;
+            }
+        }
+        {
+            let s2 = succ("8/8/8/8/3k4/8/8/8 b - - 0 1");
+            assert_eq!(s2.len(), 8);
+            let mut cumulative = 0u64;
+            for s in &s2 {
+                assert_eq!(s.bitboard.black_coverage().popcnt(), 1);
+                assert_eq!(s.bitboard.white_coverage(), 0);
+
+                let king_mask = s.bitboard.white_king;
+                assert_eq!(cumulative & king_mask, 0); // All 8 moves are different
+                cumulative &= king_mask;
+            }
+        }
+
+        let s3 = succ("8/8/8/8/8/8/PPP5/1K6 w - - 0 1");
+        assert_eq!(s3.len(), 8);
+
+        let s4 = succ("8/8/8/8/7k/8/8/8 b - - 0 1");
+        assert_eq!(s4.len(), 5);
+
+        let s4 = succ("8/8/8/8/7k/8/8/8 w - - 0 1");
+        assert_eq!(s4.len(), 0);
+    }
+
+    #[test]
+    fn test_king_capture() {
+        let s1 = succ("8/8/8/8/7k/7P/8/8 b - - 0 1");
+        assert_eq!(s1.len(), 5);
+
+        let s2 = succ("8/8/8/6RR/5RRk/6RR/8/8 b - - 0 1");
+        assert_eq!(s2.len(), 5);
+        for s in &s2 {
+            assert_ne!(s.bitboard.black_coverage(), 0);
+            test_alive(s, 6);
+        }
+
+        let s3 = succ("8/8/8/8/8/1rr5/1Kr5/1r6 w - - 0 1");
+        assert_eq!(s3.len(), 8);
     }
 }

@@ -60,6 +60,41 @@ lazy_static! {
     pub static ref KNIGHT_ATTACK: [[u64; 8]; 64] = generate_knight_attacks();
     pub static ref FILE_ATTACK: [u64; 64] = generate_file_attacks();
     pub static ref RANK_ATTACK: [u64; 64] = generate_rank_attacks();
+    pub static ref KING_ATTACK: [[u64; 8]; 64] = generate_king_attacks();
+}
+
+fn generate_king_attacks() -> [[u64; 8]; 64] {
+    let mut attacks: [[u64; 8]; 64] = [[0; 8]; 64];
+    for i in 0..64 {
+        attacks[i] = get_king_attacks(i as u64);
+    }
+
+    return attacks;
+}
+
+fn get_king_attacks(trailing: u64) -> [u64; 8] {
+    let file_index = (trailing % 8) as isize;
+    let mut file_mask: u64 = 0;
+    for i in max(file_index - 1, 0)..min(file_index + 1, 7) + 1 {
+        file_mask |= FILES[i as usize];
+    }
+
+    let rank_index = (trailing / 8) as isize;
+    let mut rank_mask: u64 = 0;
+    for i in max(rank_index - 1, 0)..min(rank_index + 1, 7) + 1 {
+        rank_mask |= ROWS[i as usize];
+    }
+
+    let mask = file_mask & rank_mask;
+    let attack_offsets: [isize; 8] = [-9, -8, -7, -1, 1, 7, 8, 9];
+    let mut attacks: [u64; 8] = [0; 8];
+    for (i, offset) in attack_offsets.iter().enumerate() {
+        let bit = trailing as isize + *offset;
+        if bit >= 0 && bit < 64 {
+            attacks[i] = (1 << (bit as u64)) & mask;
+        }
+    }
+    return attacks;
 }
 
 fn generate_file_attacks() -> [u64; 64] {
@@ -121,8 +156,8 @@ mod tests {
 
     use super::*;
 
-    fn test_knight_n_attacks(trailing: usize, n_attacks: u64) {
-        let attacks = KNIGHT_ATTACK[trailing];
+    fn test_table_n_attacks(trailing: usize, n_attacks: u64, table: &[[u64; 8]; 64]) {
+        let attacks = table[trailing];
         let mut n = 0;
         for a in attacks.iter() {
             if *a != 0 {
@@ -133,10 +168,19 @@ mod tests {
     }
 
     #[test]
-    fn test_knight_attacks() {
-        test_knight_n_attacks(0, 2);
-        test_knight_n_attacks(63, 2);
-        test_knight_n_attacks(27, 8);
+    fn test_knight_attack_table() {
+        test_table_n_attacks(0, 2, &KNIGHT_ATTACK);
+        test_table_n_attacks(63, 2, &KNIGHT_ATTACK);
+        test_table_n_attacks(27, 8, &KNIGHT_ATTACK);
+        test_table_n_attacks(4, 4, &KNIGHT_ATTACK);
+    }
+
+    #[test]
+    fn test_king_attack_table() {
+        test_table_n_attacks(0, 3, &KING_ATTACK);
+        test_table_n_attacks(63, 3, &KING_ATTACK);
+        test_table_n_attacks(1, 5, &KING_ATTACK);
+        test_table_n_attacks(9, 8, &KING_ATTACK);
     }
 
     #[test]

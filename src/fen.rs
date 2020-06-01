@@ -16,12 +16,8 @@ pub fn board_from_fen(fen: &str) -> Board {
     let (bitboard, pieces) = parse_board_string(board);
 
     let fullmove = if movedata { split.get(5).unwrap().parse::<u16>().unwrap() } else { 1 };
-    let mut halfmove = (fullmove - 1) * 2;
+    let halfmove = (fullmove - 1) * 2;  //TODO Half-moves are broken! See FEN spec
     let white = split.get(1).unwrap() == &"w";
-
-    if !white {
-        halfmove += 1;
-    }
 
     Board {
         halfturn: halfmove,
@@ -29,6 +25,7 @@ pub fn board_from_fen(fen: &str) -> Board {
         bitboard,
         pieces,
         castling: 0, //TODO
+        white_to_move: white
     }
 }
 
@@ -66,10 +63,10 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
         let row = 7 - i;
         let row_mask = ROWS[row];
 
-        let mut j = 0;
+        let mut j = 0u64;
         for c in pieces_str.chars() {
             if c.is_digit(10) {
-                j += c.to_digit(10).unwrap();
+                j += c.to_digit(10).unwrap() as u64;
                 continue;
             }
             let kind = fen_kind(c);
