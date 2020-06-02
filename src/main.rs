@@ -59,7 +59,7 @@ fn debug() {
         s.print();
         println!();
     }*/
-    let b = board_from_fen(FEN_DEFAULT_BOARD);
+    let b = Board::from_fen(FEN_DEFAULT_BOARD);
     b.print();
     println!("------------------------------------");
     let succ = b.generate_successors();
@@ -68,7 +68,7 @@ fn debug() {
         println!();
     }
 
-    let c = board_from_fen("rnbqkbnr/pppppppp/8/8/1R6/8/PP4PP/RNBQKBNR w KQkq - 0 1");
+    let c = Board::from_fen("rnbqkbnr/pppppppp/8/8/1R6/8/PP4PP/RNBQKBNR w KQkq - 0 1");
     c.print();
 
 }

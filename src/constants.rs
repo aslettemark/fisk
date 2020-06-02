@@ -100,7 +100,7 @@ fn get_king_attacks(trailing: u64) -> [u64; 8] {
 fn generate_file_attacks() -> [u64; 64] {
     let mut attacks = [0 as u64; 64];
     for i in 0..64 {
-        let file_index = (i % 8);
+        let file_index = i % 8;
         attacks[i] = FILES[file_index] & !(1 << i as u64); //zero out the occupied position
     }
     return attacks;
@@ -109,7 +109,7 @@ fn generate_file_attacks() -> [u64; 64] {
 fn generate_rank_attacks() -> [u64; 64] {
     let mut attacks = [0 as u64; 64];
     for i in 0..64 {
-        let rank_index = (i / 8);
+        let rank_index = i / 8;
         attacks[i] = ROWS[rank_index] & !(1 << i as u64); //zero out the occupied position
     }
     return attacks;

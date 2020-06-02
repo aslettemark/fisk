@@ -255,7 +255,7 @@ mod tests {
     use super::*;
 
     fn succ(fen: &str) -> Vec<Board> {
-        return board_from_fen(fen).generate_successors();
+        return Board::from_fen(fen).generate_successors();
     }
 
     fn test_alive(board: &Board, n_alive: u64) {
@@ -278,20 +278,20 @@ mod tests {
     #[test]
     fn test_default_board_movegen() {
         test_starting_board_movegen(Board::new());
-        test_starting_board_movegen(board_from_fen(FEN_DEFAULT_BOARD));
+        test_starting_board_movegen(Board::from_fen(FEN_DEFAULT_BOARD));
     }
 
     #[test]
     fn test_basic_pawn_moves() {
-        let a = board_from_fen("8/8/8/8/8/6p1/5P2/8 w KQkq -");
+        let a = Board::from_fen("8/8/8/8/8/6p1/5P2/8 w KQkq -");
         let succ = a.generate_successors();
         assert_eq!(succ.len(), 3);
 
-        let b = board_from_fen("8/8/8/8/6p1/5P2/8/8 w KQkq -");
+        let b = Board::from_fen("8/8/8/8/6p1/5P2/8/8 w KQkq -");
         let succ = b.generate_successors();
         assert_eq!(succ.len(), 2);
 
-        let c = board_from_fen("8/8/8/3p4/2QR4/8/8/8 b - - 0 1");
+        let c = Board::from_fen("8/8/8/3p4/2QR4/8/8/8 b - - 0 1");
         let succ = c.generate_successors();
         assert_eq!(succ.len(), 1);
         test_alive(&succ[0], 2);
@@ -301,11 +301,11 @@ mod tests {
     /* TODO
     #[test]
     fn test_white_pawn_en_passant() {
-        let a = board_from_fen("8/8/8/5Pp1/8/8/8/8 w - g6");
+        let a = Board::from_fen("8/8/8/5Pp1/8/8/8/8 w - g6");
         let succ = a.generate_successors();
         assert_eq!(succ.len(), 2);
 
-        let b = board_from_fen("8/8/8/5Pp1/8/8/8/8 w - e6");
+        let b = Board::from_fen("8/8/8/5Pp1/8/8/8/8 w - e6");
         let succ = b.generate_successors();
         assert_eq!(succ.len(), 2);
     }
@@ -336,14 +336,14 @@ mod tests {
 
     #[test]
     fn test_locked_knight() {
-        let a = board_from_fen("8/8/8/1P1P4/P3P3/2N5/P3P3/1P1P4 w - - 0 1");
+        let a = Board::from_fen("8/8/8/1P1P4/P3P3/2N5/P3P3/1P1P4 w - - 0 1");
         assert_eq!(a.generate_successors().len(), 8);
     }
 
     #[test]
     fn test_white_knight_capture() {
         {
-            let a = board_from_fen("8/6p1/8/8/1k6/1P6/2p5/N7 w - - 0 1");
+            let a = Board::from_fen("8/6p1/8/8/1k6/1P6/2p5/N7 w - - 0 1");
             let succ = a.generate_successors();
             assert_eq!(succ.len(), 1);
             let b = succ.get(0).unwrap();
@@ -358,7 +358,7 @@ mod tests {
             //assert_eq!(b.generate_successors().len(), 9); // TODO enable (black king, black pawn)
         }
         {
-            let a = board_from_fen("7n/5P2/4P3/8/8/8/8/8 b - - 0 1");
+            let a = Board::from_fen("7n/5P2/4P3/8/8/8/8/8 b - - 0 1");
             let succ = a.generate_successors();
             assert_eq!(succ.len(), 2);
             for s in &succ {

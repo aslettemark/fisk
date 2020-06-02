@@ -3,29 +3,31 @@ use crate::engine::{BitBoard, Board, Piece};
 
 pub const FEN_DEFAULT_BOARD: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-/// Create Board from Forsyth–Edwards Notation
-/// https://en.wikipedia.org/wiki/Forsyth-Edwards_Notation
-pub fn board_from_fen(fen: &str) -> Board {
-    let split: Vec<&str> = fen.split_whitespace().collect::<Vec<_>>();
-    if split.len() < 4 {
-        panic!("Misformed FEN string");
-    }
-    let movedata = split.len() == 8;
+impl Board {
+    /// Create Board from Forsyth–Edwards Notation
+    /// https://en.wikipedia.org/wiki/Forsyth-Edwards_Notation
+    pub fn from_fen(fen: &str) -> Board {
+        let split: Vec<&str> = fen.split_whitespace().collect::<Vec<_>>();
+        if split.len() < 4 {
+            panic!("Misformed FEN string");
+        }
+        let movedata = split.len() == 8;
 
-    let board = split.get(0).unwrap();
-    let (bitboard, pieces) = parse_board_string(board);
+        let board = split.get(0).unwrap();
+        let (bitboard, pieces) = parse_board_string(board);
 
-    let fullmove = if movedata { split.get(5).unwrap().parse::<u16>().unwrap() } else { 1 };
-    let halfmove = (fullmove - 1) * 2;  //TODO Half-moves are broken! See FEN spec
-    let white = split.get(1).unwrap() == &"w";
+        let fullmove = if movedata { split.get(5).unwrap().parse::<u16>().unwrap() } else { 1 };
+        let halfmove = (fullmove - 1) * 2;  //TODO Half-moves are broken! See FEN spec
+        let white = split.get(1).unwrap() == &"w";
 
-    Board {
-        halfturn: halfmove,
-        en_passant: 0, //TODO
-        bitboard,
-        pieces,
-        castling: 0, //TODO
-        white_to_move: white
+        Board {
+            halfturn: halfmove,
+            en_passant: 0, //TODO
+            bitboard,
+            pieces,
+            castling: 0, //TODO
+            white_to_move: white,
+        }
     }
 }
 
@@ -105,7 +107,7 @@ mod tests {
 
     #[test]
     fn test_default_board_fen() {
-        let a = board_from_fen(FEN_DEFAULT_BOARD);
+        let a = Board::from_fen(FEN_DEFAULT_BOARD);
         assert_eq!(a.halfturn, 0, "No turns have been made");
         assert_eq!(a.en_passant, 0, "No en passant in initial state");
         assert_eq!(a.bitboard.white_pawns & ROW_2, ROW_2, "Row 2 is filled with white pawns");
@@ -119,7 +121,7 @@ mod tests {
     #[test]
     fn compare_board_constructor_fen() {
         let a = Board::new();
-        let b = board_from_fen(FEN_DEFAULT_BOARD);
+        let b = Board::from_fen(FEN_DEFAULT_BOARD);
 
         assert_eq!(a.bitboard, b.bitboard);
     }
