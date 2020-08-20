@@ -1,9 +1,10 @@
 use crate::constants::*;
 use crate::move_generation::*;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Board {
-    pub halfturn: u16,
+    pub halfmove_clock: u16,
+    pub fullmove_counter: u16,
     pub en_passant: u64,
     pub bitboard: BitBoard,
     pub pieces: [Piece; 32],
@@ -132,7 +133,8 @@ impl Board {
         ps[31] = Piece::new(BLACK_ROOK, ROW_8 & FILE_H);
 
         Board {
-            halfturn: 0,
+            halfmove_clock: 0,
+            fullmove_counter: 1,
             en_passant: 0,
             bitboard: BitBoard {
                 white_pawns: ROW_2,
@@ -154,11 +156,21 @@ impl Board {
         }
     }
 
-    pub fn clone_and_advance(&self, en_passant: u64) -> Board {
+    pub fn clone_and_advance(&self, en_passant: u64, reset_halfmove: bool) -> Board {
         let mut new = *self;
         new.en_passant = en_passant;
-        new.halfturn += 1;
-        new.white_to_move = !self.white_to_move;
+        new.white_to_move = !new.white_to_move;
+
+        if reset_halfmove {
+            new.halfmove_clock = 0;
+        } else {
+            new.halfmove_clock += 1;
+        }
+
+        if new.white_to_move {
+            new.fullmove_counter += 1;
+        }
+
         new
     }
 

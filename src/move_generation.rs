@@ -50,7 +50,7 @@ fn pawn_capture_pos(
     let white_piece = kind & BLACK_BIT == 0;
     if white ^ white_piece {
         //capture
-        let mut new = board.clone_and_advance(0);
+        let mut new = board.clone_and_advance(0, true);
 
         delete_piece(capture_pos, &mut new.pieces);
         new.pieces[pawn_piece_index].position = capture_pos;
@@ -82,7 +82,7 @@ pub fn white_pawn_moves(
     let kind_front = board.kind_at(pos_front);
     if kind_front == EMPTY_SQUARE {
         // pawn short forward move
-        let mut new = board.clone_and_advance(0);
+        let mut new = board.clone_and_advance(0, true);
         new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | pos_front;
         new.pieces[pawn_piece_index].position = pos_front;
         outvec.push(new);
@@ -94,7 +94,7 @@ pub fn white_pawn_moves(
         let pos_twofront = pos_front << 8;
         if board.kind_at(pos_twofront) == EMPTY_SQUARE {
             //All clear, sir
-            let mut new = board.clone_and_advance(pos_front);
+            let mut new = board.clone_and_advance(pos_front, true);
             new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | pos_twofront;
             new.pieces[pawn_piece_index].position = pos_twofront;
             outvec.push(new);
@@ -137,7 +137,7 @@ pub fn black_pawn_moves(
     let kind_front = board.kind_at(pos_front);
     if kind_front == EMPTY_SQUARE {
         // pawn short forward move
-        let mut new = board.clone_and_advance(0);
+        let mut new = board.clone_and_advance(0, true);
         new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_front;
         new.pieces[pawn_piece_index].position = pos_front;
         outvec.push(new);
@@ -149,7 +149,7 @@ pub fn black_pawn_moves(
         let pos_twofront = pos_front >> 8;
         if board.kind_at(pos_twofront) == EMPTY_SQUARE {
             //All clear, sir
-            let mut new = board.clone_and_advance(pos_front);
+            let mut new = board.clone_and_advance(pos_front, true);
             new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_twofront;
             new.pieces[pawn_piece_index].position = pos_twofront;
             outvec.push(new);
@@ -234,7 +234,7 @@ pub fn knight_moves(
         }
         let target_kind = board.kind_at(*t);
         if target_kind == EMPTY_SQUARE {
-            let mut new = board.clone_and_advance(0);
+            let mut new = board.clone_and_advance(0, false);
             new.pieces[piece_index].position = *t;
 
             if white {
@@ -248,7 +248,7 @@ pub fn knight_moves(
             let target_white = (target_kind & BLACK_BIT) == 0;
             if white ^ target_white {
                 let capture_pos = *t;
-                let mut new = board.clone_and_advance(0);
+                let mut new = board.clone_and_advance(0, true);
                 delete_piece(capture_pos, &mut new.pieces);
                 new.pieces[piece_index].position = capture_pos;
 
@@ -284,7 +284,7 @@ pub fn king_moves(
         }
         let target_kind = board.kind_at(*t);
         if target_kind == EMPTY_SQUARE {
-            let mut new = board.clone_and_advance(0);
+            let mut new = board.clone_and_advance(0, false);
             new.pieces[piece_index].position = *t;
             if white {
                 new.bitboard.white_king = (new.bitboard.white_king ^ position) | *t;
@@ -303,7 +303,7 @@ pub fn king_moves(
 
         // Capture
         let capture_pos = *t;
-        let mut new = board.clone_and_advance(0);
+        let mut new = board.clone_and_advance(0, true);
         delete_piece(capture_pos, &mut new.pieces);
         new.pieces[piece_index].position = capture_pos;
 
@@ -324,12 +324,34 @@ pub fn king_moves(
 
 #[cfg(test)]
 mod tests {
-    use crate::fen::*;
-
     use super::*;
 
+    fn fen(fen: &str) -> Board {
+        Board::from_fen(fen).unwrap()
+    }
+
     fn succ(fen: &str) -> Vec<Board> {
-        Board::from_fen(fen).generate_successors()
+        let b = Board::from_fen(fen).unwrap();
+        let succ = b.generate_successors();
+
+        for s in &succ {
+            assert_ne!(b.bitboard, s.bitboard);
+
+            let pawn_move = (s.bitboard.white_pawns != b.bitboard.white_pawns)
+                || (s.bitboard.black_pawns != b.bitboard.black_pawns);
+            let has_captured = (b.bitboard.white_coverage() != s.bitboard.white_coverage())
+                && (b.bitboard.black_coverage() != s.bitboard.black_coverage())
+                && (b.bitboard.coverage().popcnt() > s.bitboard.coverage().popcnt());
+
+            if s.halfmove_clock == 0 {
+                assert!(pawn_move || has_captured);
+            } else {
+                assert!(!pawn_move);
+                assert!(!has_captured);
+            }
+        }
+
+        succ
     }
 
     fn test_alive(board: &Board, n_alive: u64) {
@@ -347,20 +369,20 @@ mod tests {
     #[test]
     fn test_default_board_movegen() {
         test_starting_board_movegen(Board::new());
-        test_starting_board_movegen(Board::from_fen(FEN_DEFAULT_BOARD));
+        test_starting_board_movegen(fen(crate::fen::FEN_DEFAULT_BOARD));
     }
 
     #[test]
     fn test_basic_pawn_moves() {
-        let a = Board::from_fen("8/8/8/8/8/6p1/5P2/8 w KQkq -");
+        let a = fen("8/8/8/8/8/6p1/5P2/8 w KQkq -");
         let succ = a.generate_successors();
         assert_eq!(succ.len(), 3);
 
-        let b = Board::from_fen("8/8/8/8/6p1/5P2/8/8 w KQkq -");
+        let b = fen("8/8/8/8/6p1/5P2/8/8 w KQkq -");
         let succ = b.generate_successors();
         assert_eq!(succ.len(), 2);
 
-        let c = Board::from_fen("8/8/8/3p4/2QR4/8/8/8 b - - 0 1");
+        let c = fen("8/8/8/3p4/2QR4/8/8/8 b - - 0 1");
         let succ = c.generate_successors();
         assert_eq!(succ.len(), 1);
         test_alive(&succ[0], 2);
@@ -405,17 +427,18 @@ mod tests {
 
     #[test]
     fn test_locked_knight() {
-        let a = Board::from_fen("8/8/8/1P1P4/P3P3/2N5/P3P3/1P1P4 w - - 0 1");
+        let a = fen("8/8/8/1P1P4/P3P3/2N5/P3P3/1P1P4 w - - 0 1");
         assert_eq!(a.generate_successors().len(), 8);
     }
 
     #[test]
     fn test_white_knight_capture() {
         {
-            let a = Board::from_fen("8/6p1/8/8/1k6/1P6/2p5/N7 w - - 0 1");
+            let a = fen("8/6p1/8/8/1k6/1P6/2p5/N7 w - - 0 1");
             let succ = a.generate_successors();
             assert_eq!(succ.len(), 1);
             let b = succ.get(0).unwrap();
+            assert_eq!(b.halfmove_clock, 0);
             let bb = b.bitboard;
             assert_ne!(bb.white_pawns, 0);
             assert_ne!(bb.black_pawns, 0);
@@ -427,7 +450,7 @@ mod tests {
             //assert_eq!(b.generate_successors().len(), 9); // TODO enable (black king, black pawn)
         }
         {
-            let a = Board::from_fen("7n/5P2/4P3/8/8/8/8/8 b - - 0 1");
+            let a = fen("7n/5P2/4P3/8/8/8/8/8 b - - 0 1");
             let succ = a.generate_successors();
             assert_eq!(succ.len(), 2);
             for s in &succ {
@@ -456,7 +479,7 @@ mod tests {
 
                 let king_mask = s.bitboard.white_king;
                 assert_eq!(cumulative & king_mask, 0); // All 8 moves are different
-                cumulative &= king_mask;
+                cumulative |= king_mask;
             }
         }
         {
@@ -469,7 +492,7 @@ mod tests {
 
                 let king_mask = s.bitboard.white_king;
                 assert_eq!(cumulative & king_mask, 0); // All 8 moves are different
-                cumulative &= king_mask;
+                cumulative |= king_mask;
             }
         }
 
@@ -479,8 +502,8 @@ mod tests {
         let s4 = succ("8/8/8/8/7k/8/8/8 b - - 0 1");
         assert_eq!(s4.len(), 5);
 
-        let s4 = succ("8/8/8/8/7k/8/8/8 w - - 0 1");
-        assert_eq!(s4.len(), 0);
+        let s5 = succ("8/8/8/8/7k/8/8/8 w - - 0 1");
+        assert_eq!(s5.len(), 0);
     }
 
     #[test]
