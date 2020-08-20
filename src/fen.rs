@@ -9,14 +9,14 @@ impl Board {
     pub fn from_fen(fen: &str) -> Board {
         let split: Vec<&str> = fen.split_whitespace().collect::<Vec<_>>();
         if split.len() < 4 {
-            panic!("Misformed FEN string");
+            panic!("Malformed FEN string");
         }
-        let movedata = split.len() == 8;
+        let has_move_data = split.len() == 8;
 
         let board = split.get(0).unwrap();
         let (bitboard, pieces) = parse_board_string(board);
 
-        let fullmove = if movedata {
+        let fullmove = if has_move_data {
             split.get(5).unwrap().parse::<u16>().unwrap()
         } else {
             1
@@ -55,7 +55,7 @@ fn fen_kind(piece: char) -> u8 {
 }
 
 fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
-    let board_rows: Vec<&str> = board.split("/").collect::<Vec<_>>();
+    let board_rows: Vec<&str> = board.split('/').collect::<Vec<_>>();
     if board_rows.len() != 8 {
         panic!("Missing board row(s)");
     }
@@ -104,7 +104,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
             j += 1;
         }
     }
-    return (bb, pieces);
+    (bb, pieces)
 }
 
 #[cfg(test)]

@@ -216,8 +216,7 @@ fn row_slide_moves(
 
 #[inline]
 fn get_knight_possible_targets(pos: u64) -> [u64; 8] {
-    let trailing = pos.tzcnt() as usize;
-    return KNIGHT_ATTACK[trailing];
+    KNIGHT_ATTACK[pos.tzcnt() as usize]
 }
 
 pub fn knight_moves(
@@ -330,7 +329,7 @@ mod tests {
     use super::*;
 
     fn succ(fen: &str) -> Vec<Board> {
-        return Board::from_fen(fen).generate_successors();
+        Board::from_fen(fen).generate_successors()
     }
 
     fn test_alive(board: &Board, n_alive: u64) {
@@ -343,11 +342,6 @@ mod tests {
         assert_eq!(alive, n_alive);
         let cover = board.bitboard.coverage();
         assert_eq!(cover.popcnt(), alive);
-    }
-
-    #[test]
-    fn test_test() {
-        assert!(true);
     }
 
     #[test]

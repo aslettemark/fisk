@@ -155,11 +155,11 @@ impl Board {
     }
 
     pub fn clone_and_advance(&self, en_passant: u64) -> Board {
-        let mut new = self.clone();
+        let mut new = *self;
         new.en_passant = en_passant;
         new.halfturn += 1;
         new.white_to_move = !self.white_to_move;
-        return new;
+        new
     }
 
     pub fn generate_successors(&self) -> Vec<Board> {
@@ -192,7 +192,7 @@ impl Board {
             }
         }
 
-        return states;
+        states
     }
 
     pub fn print(&self) {
@@ -280,6 +280,6 @@ impl Board {
             return BLACK_KING;
         }
 
-        return EMPTY_SQUARE;
+        EMPTY_SQUARE
     }
 }
