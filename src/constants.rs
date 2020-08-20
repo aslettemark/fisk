@@ -8,16 +8,7 @@ pub const ROW_5: u64 = ROW_4 << 8;
 pub const ROW_6: u64 = ROW_5 << 8;
 pub const ROW_7: u64 = ROW_6 << 8;
 pub const ROW_8: u64 = ROW_7 << 8;
-pub const ROWS: [u64; 8] = [
-    ROW_1,
-    ROW_2,
-    ROW_3,
-    ROW_4,
-    ROW_5,
-    ROW_6,
-    ROW_7,
-    ROW_8
-];
+pub const ROWS: [u64; 8] = [ROW_1, ROW_2, ROW_3, ROW_4, ROW_5, ROW_6, ROW_7, ROW_8];
 
 pub const FILE_A: u64 = 0x0101010101010101;
 pub const FILE_B: u64 = FILE_A << 1;
@@ -28,14 +19,7 @@ pub const FILE_F: u64 = FILE_A << 5;
 pub const FILE_G: u64 = FILE_A << 6;
 pub const FILE_H: u64 = FILE_A << 7;
 pub const FILES: [u64; 8] = [
-    FILE_A,
-    FILE_B,
-    FILE_C,
-    FILE_D,
-    FILE_E,
-    FILE_F,
-    FILE_G,
-    FILE_H
+    FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H,
 ];
 
 pub const EMPTY_SQUARE: u8 = 0;

@@ -16,8 +16,12 @@ impl Board {
         let board = split.get(0).unwrap();
         let (bitboard, pieces) = parse_board_string(board);
 
-        let fullmove = if movedata { split.get(5).unwrap().parse::<u16>().unwrap() } else { 1 };
-        let halfmove = (fullmove - 1) * 2;  //TODO Half-moves are broken! See FEN spec
+        let fullmove = if movedata {
+            split.get(5).unwrap().parse::<u16>().unwrap()
+        } else {
+            1
+        };
+        let halfmove = (fullmove - 1) * 2; //TODO Half-moves are broken! See FEN spec
         let white = split.get(1).unwrap() == &"w";
 
         Board {
@@ -46,7 +50,7 @@ fn fen_kind(piece: char) -> u8 {
         'Q' => WHITE_QUEEN,
         'K' => WHITE_KING,
         'P' => WHITE_PAWN,
-        _ => panic!("Invalid piece: {}", piece)
+        _ => panic!("Invalid piece: {}", piece),
     }
 }
 
@@ -58,7 +62,10 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
 
     let mut bb = BitBoard::empty();
 
-    let mut pieces = [Piece { kind: EMPTY_SQUARE, position: 0 }; 32]; // Limitation: only supports positions with <= 32 pieces
+    let mut pieces = [Piece {
+        kind: EMPTY_SQUARE,
+        position: 0,
+    }; 32]; // Limitation: only supports positions with <= 32 pieces
     let mut piece_i: usize = 0;
 
     for (i, pieces_str) in board_rows.iter().enumerate() {
@@ -88,7 +95,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
                 BLACK_ROOK => bb.black_rooks ^= pos,
                 BLACK_QUEEN => bb.black_queen ^= pos,
                 BLACK_KING => bb.black_king ^= pos,
-                _ => ()
+                _ => (),
             };
 
             pieces[piece_i].kind = kind;
@@ -100,7 +107,6 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
     return (bb, pieces);
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -110,8 +116,16 @@ mod tests {
         let a = Board::from_fen(FEN_DEFAULT_BOARD);
         assert_eq!(a.halfturn, 0, "No turns have been made");
         assert_eq!(a.en_passant, 0, "No en passant in initial state");
-        assert_eq!(a.bitboard.white_pawns & ROW_2, ROW_2, "Row 2 is filled with white pawns");
-        assert_eq!(a.bitboard.black_pawns & ROW_7, ROW_7, "Row 7 is filled with black pawns");
+        assert_eq!(
+            a.bitboard.white_pawns & ROW_2,
+            ROW_2,
+            "Row 2 is filled with white pawns"
+        );
+        assert_eq!(
+            a.bitboard.black_pawns & ROW_7,
+            ROW_7,
+            "Row 7 is filled with black pawns"
+        );
 
         for p in a.pieces.iter() {
             assert_ne!(p.kind, EMPTY_SQUARE, "Piece list is filled");

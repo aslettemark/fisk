@@ -33,7 +33,14 @@ fn unset_black_piece(capture_pos: u64, bb: &mut BitBoard) {
     bb.black_king &= !capture_pos;
 }
 
-fn pawn_capture_pos(board: &Board, pawn_pos: u64, capture_pos: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
+fn pawn_capture_pos(
+    board: &Board,
+    pawn_pos: u64,
+    capture_pos: u64,
+    pawn_piece_index: usize,
+    white: bool,
+    outvec: &mut Vec<Board>,
+) {
     let kind = board.kind_at(capture_pos);
 
     if kind == EMPTY_SQUARE {
@@ -64,7 +71,12 @@ fn pawn_capture_pos(board: &Board, pawn_pos: u64, capture_pos: u64, pawn_piece_i
     }
 }
 
-pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, outvec: &mut Vec<Board>) {
+pub fn white_pawn_moves(
+    board: &Board,
+    position: u64,
+    pawn_piece_index: usize,
+    outvec: &mut Vec<Board>,
+) {
     //a white pawn cannot exist on row 8
     let pos_front = position << 8;
     let kind_front = board.kind_at(pos_front);
@@ -91,16 +103,35 @@ pub fn white_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
 
     if position & FILE_A == 0 {
         // white pawn capture left
-        pawn_capture_pos(&board, position, position << 7, pawn_piece_index, true, outvec);
+        pawn_capture_pos(
+            &board,
+            position,
+            position << 7,
+            pawn_piece_index,
+            true,
+            outvec,
+        );
     }
     if position & FILE_H == 0 {
         // capture right
-        pawn_capture_pos(&board, position, position << 9, pawn_piece_index, true, outvec);
+        pawn_capture_pos(
+            &board,
+            position,
+            position << 9,
+            pawn_piece_index,
+            true,
+            outvec,
+        );
     }
     //TODO en passant capture
 }
 
-pub fn black_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, outvec: &mut Vec<Board>) {
+pub fn black_pawn_moves(
+    board: &Board,
+    position: u64,
+    pawn_piece_index: usize,
+    outvec: &mut Vec<Board>,
+) {
     //a black pawn cannot exist on row 0
     let pos_front = position >> 8;
     let kind_front = board.kind_at(pos_front);
@@ -126,20 +157,46 @@ pub fn black_pawn_moves(board: &Board, position: u64, pawn_piece_index: usize, o
     }
 
     if position & FILE_A == 0 {
-        pawn_capture_pos(&board, position, position >> 9, pawn_piece_index, false, outvec);
+        pawn_capture_pos(
+            &board,
+            position,
+            position >> 9,
+            pawn_piece_index,
+            false,
+            outvec,
+        );
     }
     if position & FILE_H == 0 {
-        pawn_capture_pos(&board, position, position >> 7, pawn_piece_index, false, outvec);
+        pawn_capture_pos(
+            &board,
+            position,
+            position >> 7,
+            pawn_piece_index,
+            false,
+            outvec,
+        );
     }
     //TODO en passant capture
 }
 
-pub fn rook_moves(board: &Board, position: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
+pub fn rook_moves(
+    board: &Board,
+    position: u64,
+    pawn_piece_index: usize,
+    white: bool,
+    outvec: &mut Vec<Board>,
+) {
     file_slide_moves(board, position, pawn_piece_index, white, outvec);
     row_slide_moves(board, position, pawn_piece_index, white, outvec);
 }
 
-fn file_slide_moves(board: &Board, position: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
+fn file_slide_moves(
+    board: &Board,
+    position: u64,
+    pawn_piece_index: usize,
+    white: bool,
+    outvec: &mut Vec<Board>,
+) {
     //TODO
     if position & ROW_8 == 0 { //Not in row 8, ie can move upwards
     }
@@ -147,8 +204,14 @@ fn file_slide_moves(board: &Board, position: u64, pawn_piece_index: usize, white
     }
 }
 
-fn row_slide_moves(board: &Board, position: u64, pawn_piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
-//TODO
+fn row_slide_moves(
+    board: &Board,
+    position: u64,
+    pawn_piece_index: usize,
+    white: bool,
+    outvec: &mut Vec<Board>,
+) {
+    //TODO
 }
 
 #[inline]
@@ -157,7 +220,13 @@ fn get_knight_possible_targets(pos: u64) -> [u64; 8] {
     return KNIGHT_ATTACK[trailing];
 }
 
-pub fn knight_moves(board: &Board, position: u64, piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
+pub fn knight_moves(
+    board: &Board,
+    position: u64,
+    piece_index: usize,
+    white: bool,
+    outvec: &mut Vec<Board>,
+) {
     let targets = get_knight_possible_targets(position);
 
     for t in &targets {
@@ -201,7 +270,13 @@ pub fn knight_moves(board: &Board, position: u64, piece_index: usize, white: boo
     }
 }
 
-pub fn king_moves(board: &Board, position: u64, piece_index: usize, white: bool, outvec: &mut Vec<Board>) {
+pub fn king_moves(
+    board: &Board,
+    position: u64,
+    piece_index: usize,
+    white: bool,
+    outvec: &mut Vec<Board>,
+) {
     let trailing = position.tzcnt() as usize;
     let targets: [u64; 8] = KING_ATTACK[trailing];
     for t in &targets {

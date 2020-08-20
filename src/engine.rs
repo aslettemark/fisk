@@ -16,7 +16,6 @@ pub struct BitBoard {
     // Little-Endian Rank-File (LERF) https://www.chessprogramming.org/Square_Mapping_Considerations
     // bit 0 is a1, bit 7 is h1, bit 63 is h8
     // TODO: Consider having array(s) of u64 to reduce branching when checking side, ie pawns[white]
-
     pub white_pawns: u64,
     pub white_queen: u64,
     pub white_king: u64,
@@ -58,35 +57,55 @@ impl BitBoard {
 
     #[inline]
     pub fn white_coverage(&self) -> u64 {
-        self.white_king | self.white_queen | self.white_knights | self.white_rooks | self.white_bishops | self.white_pawns
+        self.white_king
+            | self.white_queen
+            | self.white_knights
+            | self.white_rooks
+            | self.white_bishops
+            | self.white_pawns
     }
 
     #[inline]
     pub fn black_coverage(&self) -> u64 {
-        self.black_king | self.black_queen | self.black_knights | self.black_rooks | self.black_bishops | self.black_pawns
+        self.black_king
+            | self.black_queen
+            | self.black_knights
+            | self.black_rooks
+            | self.black_bishops
+            | self.black_pawns
     }
 
     #[inline]
     pub fn coverage(&self) -> u64 {
         // Might be a silly premature opt to not trust the codegen for doing white_cover | black_cover
-        self.white_king | self.white_queen | self.white_knights | self.white_rooks | self.white_bishops | self.white_pawns
-            | self.black_king | self.black_queen | self.black_knights | self.black_rooks | self.black_bishops | self.black_pawns
+        self.white_king
+            | self.white_queen
+            | self.white_knights
+            | self.white_rooks
+            | self.white_bishops
+            | self.white_pawns
+            | self.black_king
+            | self.black_queen
+            | self.black_knights
+            | self.black_rooks
+            | self.black_bishops
+            | self.black_pawns
     }
 }
 
 impl Piece {
     pub fn new(kind: u8, position: u64) -> Piece {
-        Piece {
-            kind,
-            position,
-        }
+        Piece { kind, position }
     }
 }
 
 impl Board {
     // Create default chess board
     pub fn new() -> Board {
-        let mut ps = [Piece { kind: EMPTY_SQUARE, position: 0 }; 32];
+        let mut ps = [Piece {
+            kind: EMPTY_SQUARE,
+            position: 0,
+        }; 32];
 
         for i in 0usize..8 {
             let iu = i as u64;
@@ -131,7 +150,7 @@ impl Board {
             },
             pieces: ps,
             castling: 0b11101110,
-            white_to_move: true
+            white_to_move: true,
         }
     }
 
@@ -213,7 +232,7 @@ impl Board {
             BLACK_ROOK => '♜',
             BLACK_QUEEN => '♛',
             BLACK_KING => '♚',
-            _ => ' '
+            _ => ' ',
         }
     }
 
@@ -247,7 +266,6 @@ impl Board {
             return BLACK_ROOK;
         }
 
-
         if pos & b.white_queen != 0 {
             return WHITE_QUEEN;
         }
@@ -265,4 +283,3 @@ impl Board {
         return EMPTY_SQUARE;
     }
 }
-
