@@ -1,3 +1,4 @@
+use crate::constants;
 use crate::constants::*;
 use crate::move_generation::*;
 
@@ -156,7 +157,6 @@ impl Board {
         }
     }
 
-
     pub fn clone_and_advance(&self, en_passant: u64, reset_halfmove: bool) -> Board {
         let mut new = *self;
         new.en_passant = en_passant;
@@ -193,12 +193,19 @@ impl Board {
 
             let position = piece.position;
 
+            // TODO remove constants:: (intellij thinks it's binding variables otherwise)
             match piece.kind {
-                WHITE_PAWN => white_pawn_moves(&self, position, i, &mut states),
-                BLACK_PAWN => black_pawn_moves(&self, position, i, &mut states),
-                WHITE_ROOK | BLACK_ROOK => rook_moves(&self, position, i, white, &mut states),
-                WHITE_KNIGHT | BLACK_KNIGHT => knight_moves(&self, position, i, white, &mut states),
-                WHITE_KING | BLACK_KING => king_moves(&self, position, i, white, &mut states),
+                constants::WHITE_PAWN => white_pawn_moves(&self, position, i, &mut states),
+                constants::BLACK_PAWN => black_pawn_moves(&self, position, i, &mut states),
+                constants::WHITE_ROOK | constants::BLACK_ROOK => {
+                    rook_moves(&self, position, i, white, &mut states)
+                }
+                constants::WHITE_KNIGHT | constants::BLACK_KNIGHT => {
+                    knight_moves(&self, position, i, white, &mut states)
+                }
+                constants::WHITE_KING | constants::BLACK_KING => {
+                    king_moves(&self, position, i, white, &mut states)
+                }
 
                 //TODO remaining kinds
                 _ => {}
@@ -233,18 +240,18 @@ impl Board {
 
     fn piece_representation(&self, kind: u8) -> char {
         match kind {
-            WHITE_PAWN => '♙',
-            WHITE_BISHOP => '♗',
-            WHITE_KNIGHT => '♘',
-            WHITE_ROOK => '♖',
-            WHITE_QUEEN => '♕',
-            WHITE_KING => '♔',
-            BLACK_PAWN => '♟',
-            BLACK_BISHOP => '♝',
-            BLACK_KNIGHT => '♞',
-            BLACK_ROOK => '♜',
-            BLACK_QUEEN => '♛',
-            BLACK_KING => '♚',
+            constants::WHITE_PAWN => '♙',
+            constants::WHITE_BISHOP => '♗',
+            constants::WHITE_KNIGHT => '♘',
+            constants::WHITE_ROOK => '♖',
+            constants::WHITE_QUEEN => '♕',
+            constants::WHITE_KING => '♔',
+            constants::BLACK_PAWN => '♟',
+            constants::BLACK_BISHOP => '♝',
+            constants::BLACK_KNIGHT => '♞',
+            constants::BLACK_ROOK => '♜',
+            constants::BLACK_QUEEN => '♛',
+            constants::BLACK_KING => '♚',
             _ => ' ',
         }
     }

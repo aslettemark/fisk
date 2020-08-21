@@ -1,6 +1,6 @@
+use fisk::constants::*;
 use fisk::engine::Board;
 use fisk::fen::FEN_DEFAULT_BOARD;
-use fisk::constants::*;
 
 #[test]
 fn test_default_board_fen() {
