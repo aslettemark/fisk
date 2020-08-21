@@ -156,6 +156,7 @@ impl Board {
         }
     }
 
+
     pub fn clone_and_advance(&self, en_passant: u64, reset_halfmove: bool) -> Board {
         let mut new = *self;
         new.en_passant = en_passant;
@@ -293,5 +294,11 @@ impl Board {
         }
 
         EMPTY_SQUARE
+    }
+}
+
+impl Default for Board {
+    fn default() -> Self {
+        Self::new()
     }
 }

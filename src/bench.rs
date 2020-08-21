@@ -1,4 +1,4 @@
-use crate::engine::Board;
+use fisk::engine::Board;
 
 fn count_nodes(board: &Board, depth: i32) -> u32 {
     if depth == 0 {

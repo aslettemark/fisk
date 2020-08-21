@@ -1,21 +1,19 @@
-#[macro_use]
-extern crate lazy_static;
-
 extern crate clap;
+extern crate lazy_static;
 extern crate time;
 
-mod bench;
-mod constants;
-mod engine;
-mod fen;
-mod move_generation;
+use std::io;
+use std::io::Write;
 
 use clap::{App, Arg, SubCommand};
 
+use fisk::constants::*;
+use fisk::engine::Board;
+use fisk::fen::*;
+
 use crate::bench::*;
-use crate::constants::*;
-use crate::engine::Board;
-use crate::fen::*;
+
+mod bench;
 
 fn main() {
     lazy_static::initialize(&KNIGHT_ATTACK);
@@ -42,7 +40,8 @@ fn main() {
                         .takes_value(true),
                 ),
         )
-        .subcommand(SubCommand::with_name("debug").about("Debug"));
+        .subcommand(SubCommand::with_name("debug").about("Debug"))
+        .subcommand(SubCommand::with_name("interactive").about("Interactive"));
     let matches = opts.get_matches();
 
     match matches.subcommand_name() {
@@ -57,8 +56,39 @@ fn main() {
                 .unwrap(),
         ),
         Some("debug") => debug(),
+        Some("interactive") => interactive(),
         None => debug(),
         _ => unreachable!(),
+    }
+}
+
+fn generate_and_print(fen_string: String) -> Result<(), ()> {
+    let board = Board::from_fen(&*fen_string)?;
+
+    let succ = board.generate_successors();
+    for s in &succ {
+        s.print();
+        println!();
+    }
+
+    println!("{} succesors", succ.len());
+
+    Ok(())
+}
+
+fn interactive() {
+    loop {
+        println!("> Generate successors from FEN string");
+        print!("> ");
+        io::stdout().flush().unwrap();
+        let mut input = String::new();
+        match io::stdin().read_line(&mut input) {
+            Ok(_) => match generate_and_print(input) {
+                Ok(_) => (),
+                Err(_) => println!("Could not parse FEN string"),
+            },
+            Err(e) => println!("error: {}", e),
+        }
     }
 }
 
