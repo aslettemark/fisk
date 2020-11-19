@@ -7,9 +7,10 @@ edition = "2018"
 [dependencies]
 bitintr = "0.3.0"
 lazy_static = "1.4.0"
-clap = "2.33.0"
-time = "0.1.42"
+clap = "2.33.3"
+time = "0.1.44"
 
 [profile.release]
 opt-level = 3
 codegen-units = 1
+lto = true

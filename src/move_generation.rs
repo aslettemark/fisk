@@ -3,35 +3,7 @@ extern crate bitintr;
 use bitintr::*;
 
 use crate::constants::*;
-use crate::engine::{BitBoard, Board, Piece};
-
-fn delete_piece(capture_pos: u64, piece_list: &mut [Piece; 32]) {
-    for (i, p) in piece_list.iter().enumerate() {
-        if p.position == capture_pos {
-            piece_list[i].kind = EMPTY_SQUARE;
-            piece_list[i].position = 0;
-            break;
-        }
-    }
-}
-
-fn unset_white_piece(capture_pos: u64, bb: &mut BitBoard) {
-    bb.white_pawns &= !capture_pos;
-    bb.white_bishops &= !capture_pos;
-    bb.white_rooks &= !capture_pos;
-    bb.white_knights &= !capture_pos;
-    bb.white_queen &= !capture_pos;
-    bb.white_king &= !capture_pos;
-}
-
-fn unset_black_piece(capture_pos: u64, bb: &mut BitBoard) {
-    bb.black_pawns &= !capture_pos;
-    bb.black_bishops &= !capture_pos;
-    bb.black_rooks &= !capture_pos;
-    bb.black_knights &= !capture_pos;
-    bb.black_queen &= !capture_pos;
-    bb.black_king &= !capture_pos;
-}
+use crate::engine::Board;
 
 fn pawn_capture_pos(
     board: &Board,
@@ -42,33 +14,34 @@ fn pawn_capture_pos(
     outvec: &mut Vec<Board>,
 ) {
     let kind = board.kind_at(capture_pos);
-
     if kind == EMPTY_SQUARE {
+        // TODO optimize the check for emptiness?
         return;
     }
 
     let white_piece = kind & BLACK_BIT == 0;
-    if white ^ white_piece {
-        //capture
-        let mut new = board.clone_and_advance(0, true);
-
-        delete_piece(capture_pos, &mut new.pieces);
-        new.pieces[pawn_piece_index].position = capture_pos;
-
-        if white {
-            new.bitboard.white_pawns = (new.bitboard.white_pawns ^ pawn_pos) | capture_pos;
-
-            // TODO consider putting this in the piece list iteration, where a specific board may be identified
-            unset_black_piece(capture_pos, &mut new.bitboard);
-        } else {
-            new.bitboard.black_pawns = (new.bitboard.black_pawns ^ pawn_pos) | capture_pos;
-
-            // TODO consider putting this in the piece list iteration, where a specific board may be identified
-            unset_white_piece(capture_pos, &mut new.bitboard);
-        }
-
-        outvec.push(new);
+    if !(white ^ white_piece) {
+        return;
     }
+
+    //capture
+    let mut new = board.clone_and_advance(0, true);
+    new.delete_piece(capture_pos);
+    new.pieces[pawn_piece_index].position = capture_pos;
+
+    if white {
+        new.bitboard.white_pawns = (new.bitboard.white_pawns ^ pawn_pos) | capture_pos;
+
+        // TODO consider putting this in the piece list iteration, where a specific board may be identified
+        new.bitboard.unset_black_piece(capture_pos);
+    } else {
+        new.bitboard.black_pawns = (new.bitboard.black_pawns ^ pawn_pos) | capture_pos;
+
+        // TODO consider putting this in the piece list iteration, where a specific board may be identified
+        new.bitboard.unset_white_piece(capture_pos);
+    }
+
+    outvec.push(new);
 }
 
 pub fn white_pawn_moves(
@@ -249,18 +222,18 @@ pub fn knight_moves(
             if white ^ target_white {
                 let capture_pos = *t;
                 let mut new = board.clone_and_advance(0, true);
-                delete_piece(capture_pos, &mut new.pieces);
+                new.delete_piece(capture_pos);
                 new.pieces[piece_index].position = capture_pos;
 
                 let mut bb = &mut new.bitboard;
                 if white {
                     bb.white_knights = (bb.white_knights ^ position) | capture_pos;
 
-                    unset_black_piece(capture_pos, &mut new.bitboard);
+                    new.bitboard.unset_black_piece(capture_pos);
                 } else {
                     bb.black_knights = (bb.black_knights ^ position) | capture_pos;
 
-                    unset_white_piece(capture_pos, &mut new.bitboard);
+                    new.bitboard.unset_white_piece(capture_pos);
                 }
 
                 outvec.push(new);
@@ -304,16 +277,16 @@ pub fn king_moves(
         // Capture
         let capture_pos = *t;
         let mut new = board.clone_and_advance(0, true);
-        delete_piece(capture_pos, &mut new.pieces);
+        new.delete_piece(capture_pos);
         new.pieces[piece_index].position = capture_pos;
 
         let mut bb = &mut new.bitboard;
         if white {
             bb.white_king = (bb.white_king ^ position) | capture_pos;
-            unset_black_piece(capture_pos, &mut new.bitboard);
+            new.bitboard.unset_black_piece(capture_pos);
         } else {
             bb.black_king = (bb.black_king ^ position) | capture_pos;
-            unset_white_piece(capture_pos, &mut new.bitboard);
+            new.bitboard.unset_white_piece(capture_pos);
         }
 
         outvec.push(new);

@@ -40,6 +40,7 @@ pub struct Piece {
 }
 
 impl BitBoard {
+    #[inline]
     pub const fn empty() -> BitBoard {
         BitBoard {
             white_pawns: 0,
@@ -93,11 +94,42 @@ impl BitBoard {
             | self.black_bishops
             | self.black_pawns
     }
+
+    #[inline]
+    pub fn unset_white_piece(&mut self, capture_pos: u64) {
+        self.white_pawns &= !capture_pos;
+        self.white_bishops &= !capture_pos;
+        self.white_rooks &= !capture_pos;
+        self.white_knights &= !capture_pos;
+        self.white_queen &= !capture_pos;
+        self.white_king &= !capture_pos;
+    }
+
+    #[inline]
+    pub fn unset_black_piece(&mut self, capture_pos: u64) {
+        self.black_pawns &= !capture_pos;
+        self.black_bishops &= !capture_pos;
+        self.black_rooks &= !capture_pos;
+        self.black_knights &= !capture_pos;
+        self.black_queen &= !capture_pos;
+        self.black_king &= !capture_pos;
+    }
 }
 
 impl Piece {
+    #[inline]
     pub fn new(kind: u8, position: u64) -> Piece {
         Piece { kind, position }
+    }
+
+    #[inline]
+    pub fn is_white(&self) -> bool {
+        (self.kind & BLACK_BIT) == 0
+    }
+
+    #[inline]
+    pub fn is_empty_square(&self) -> bool {
+        self.kind == EMPTY_SQUARE
     }
 }
 
@@ -182,12 +214,11 @@ impl Board {
         for (i, piece) in self.pieces.iter().enumerate() {
             // TODO Keep pieces ordered with empty square pieces at the end to abort entire
             // iteration when an empty square is found.
-            if piece.kind == EMPTY_SQUARE {
+            if piece.is_empty_square() {
                 continue;
             }
 
-            let white_piece = piece.kind & BLACK_BIT == 0;
-            if white ^ white_piece {
+            if white ^ piece.is_white() {
                 continue;
             }
 
@@ -213,6 +244,17 @@ impl Board {
         }
 
         states
+    }
+
+    pub fn delete_piece(&mut self, capture_pos: u64) {
+        let mut piece_list = &mut self.pieces;
+        for (i, p) in piece_list.iter().enumerate() {
+            if p.position == capture_pos {
+                piece_list[i].kind = EMPTY_SQUARE;
+                piece_list[i].position = 0;
+                break;
+            }
+        }
     }
 
     pub fn print(&self) {
@@ -259,6 +301,7 @@ impl Board {
     pub fn kind_at(&self, pos: u64) -> u8 {
         //TODO: There should be a faster way to do this
         // Idea 1: Try merging bitboards, binary search? (possibly large overhead)
+        // Idea 2: profile, sort cases, special case for empty?
         let b = &self.bitboard;
         if pos & b.white_pawns != 0 {
             return WHITE_PAWN;
