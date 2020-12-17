@@ -207,40 +207,51 @@ impl Board {
         new
     }
 
+    #[inline]
+    fn piece_moves(
+        &self,
+        white: bool,
+        piece_index: usize,
+        piece: &Piece,
+        mut outvec: &mut Vec<Board>,
+    ) {
+        // TODO Keep pieces ordered with empty square pieces at the end to abort entire
+        // iteration when an empty square is found.
+        if piece.is_empty_square() {
+            return;
+        }
+
+        if white ^ piece.is_white() {
+            return;
+        }
+
+        let position = piece.position;
+
+        // TODO remove constants:: (intellij thinks it's binding variables otherwise)
+        match piece.kind {
+            constants::WHITE_PAWN => white_pawn_moves(&self, position, piece_index, &mut outvec),
+            constants::BLACK_PAWN => black_pawn_moves(&self, position, piece_index, &mut outvec),
+            constants::WHITE_ROOK | constants::BLACK_ROOK => {
+                rook_moves(&self, position, piece_index, white, &mut outvec)
+            }
+            constants::WHITE_KNIGHT | constants::BLACK_KNIGHT => {
+                knight_moves(&self, position, piece_index, white, &mut outvec)
+            }
+            constants::WHITE_KING | constants::BLACK_KING => {
+                king_moves(&self, position, piece_index, white, &mut outvec)
+            }
+
+            //TODO remaining kinds
+            _ => {}
+        }
+    }
+
     pub fn generate_successors(&self) -> Vec<Board> {
         let white = self.white_to_move;
         let mut states = Vec::new();
 
         for (i, piece) in self.pieces.iter().enumerate() {
-            // TODO Keep pieces ordered with empty square pieces at the end to abort entire
-            // iteration when an empty square is found.
-            if piece.is_empty_square() {
-                continue;
-            }
-
-            if white ^ piece.is_white() {
-                continue;
-            }
-
-            let position = piece.position;
-
-            // TODO remove constants:: (intellij thinks it's binding variables otherwise)
-            match piece.kind {
-                constants::WHITE_PAWN => white_pawn_moves(&self, position, i, &mut states),
-                constants::BLACK_PAWN => black_pawn_moves(&self, position, i, &mut states),
-                constants::WHITE_ROOK | constants::BLACK_ROOK => {
-                    rook_moves(&self, position, i, white, &mut states)
-                }
-                constants::WHITE_KNIGHT | constants::BLACK_KNIGHT => {
-                    knight_moves(&self, position, i, white, &mut states)
-                }
-                constants::WHITE_KING | constants::BLACK_KING => {
-                    king_moves(&self, position, i, white, &mut states)
-                }
-
-                //TODO remaining kinds
-                _ => {}
-            }
+            self.piece_moves(white, i, piece, &mut states);
         }
 
         states
@@ -254,6 +265,14 @@ impl Board {
                 piece_list[i].position = 0;
                 break;
             }
+        }
+    }
+
+    pub fn iter_successors(&self) -> SuccessorIter {
+        SuccessorIter {
+            board: self,
+            buf: vec![],
+            piece_index: 0,
         }
     }
 
@@ -350,5 +369,44 @@ impl Board {
 impl Default for Board {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+pub struct SuccessorIter<'a> {
+    board: &'a Board,
+    buf: Vec<Board>,
+    piece_index: usize,
+}
+
+impl<'a> Iterator for SuccessorIter<'a> {
+    type Item = Board;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if !self.buf.is_empty() {
+            let board = self.buf.swap_remove(0);
+            return Some(board);
+        }
+
+        let piece_list = &self.board.pieces;
+        while self.piece_index < 32 {
+            let piece = piece_list[self.piece_index];
+            if piece.is_empty_square() {
+                self.piece_index += 1;
+                continue;
+            }
+
+            self.board.piece_moves(
+                self.board.white_to_move,
+                self.piece_index,
+                &piece,
+                &mut self.buf,
+            );
+            self.piece_index += 1;
+
+            if !self.buf.is_empty() {
+                return Some(self.buf.swap_remove(0));
+            }
+        }
+        None
     }
 }

@@ -198,3 +198,13 @@ fn test_king_capture() {
     let s3 = succ("8/8/8/8/8/1rr5/1Kr5/1r6 w - - 0 1");
     assert_eq!(s3.len(), 8);
 }
+
+#[test]
+fn test_iter() {
+    let b = Board::new();
+
+    let s1 = b.generate_successors();
+    let s2 = b.iter_successors().collect::<Vec<Board>>();
+
+    assert_eq!(s1.len(), s2.len());
+}
