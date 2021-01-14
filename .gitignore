@@ -2,4 +2,6 @@
 **/*.rs.bk
 *.iml
 .idea/
+*.svg
+perf.data*
 

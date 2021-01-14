@@ -271,7 +271,7 @@ impl Board {
     pub fn iter_successors(&self) -> SuccessorIter {
         SuccessorIter {
             board: self,
-            buf: vec![],
+            buf: Vec::with_capacity(16),
             piece_index: 0,
         }
     }

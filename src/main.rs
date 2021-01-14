@@ -38,6 +38,12 @@ fn main() {
                         .short("s")
                         .default_value("default")
                         .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("Use iterator")
+                        .long("iterator")
+                        .takes_value(false)
+                        .help("Run benchmark using iterator internally"),
                 ),
         )
         .subcommand(SubCommand::with_name("debug").about("Debug"))
@@ -54,6 +60,7 @@ fn main() {
                 .unwrap_or("5")
                 .parse::<i32>()
                 .unwrap(),
+            matches.subcommand().1.unwrap().is_present("Use iterator"),
         ),
         Some("debug") => debug(),
         Some("interactive") => interactive(),
