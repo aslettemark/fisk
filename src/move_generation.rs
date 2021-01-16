@@ -27,7 +27,7 @@ fn pawn_capture_pos(
     //capture
     let mut new = board.clone_and_advance(0, true);
     new.delete_piece(capture_pos);
-    new.pieces[pawn_piece_index].position = capture_pos;
+    new.piece_positions[pawn_piece_index] = capture_pos;
 
     if white {
         new.bitboard.white_pawns = (new.bitboard.white_pawns ^ pawn_pos) | capture_pos;
@@ -57,7 +57,7 @@ pub fn white_pawn_moves(
         // pawn short forward move
         let mut new = board.clone_and_advance(0, true);
         new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | pos_front;
-        new.pieces[pawn_piece_index].position = pos_front;
+        new.piece_positions[pawn_piece_index] = pos_front;
         outvec.push(new);
         //TODO turn into queen, rook, bishop, knight if row == 8
     }
@@ -69,7 +69,7 @@ pub fn white_pawn_moves(
             //All clear, sir
             let mut new = board.clone_and_advance(pos_front, true);
             new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | pos_twofront;
-            new.pieces[pawn_piece_index].position = pos_twofront;
+            new.piece_positions[pawn_piece_index] = pos_twofront;
             outvec.push(new);
         }
     }
@@ -112,7 +112,7 @@ pub fn black_pawn_moves(
         // pawn short forward move
         let mut new = board.clone_and_advance(0, true);
         new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_front;
-        new.pieces[pawn_piece_index].position = pos_front;
+        new.piece_positions[pawn_piece_index] = pos_front;
         outvec.push(new);
         //TODO turn into queen, rook, bishop, knight if row == 0
     }
@@ -124,7 +124,7 @@ pub fn black_pawn_moves(
             //All clear, sir
             let mut new = board.clone_and_advance(pos_front, true);
             new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_twofront;
-            new.pieces[pawn_piece_index].position = pos_twofront;
+            new.piece_positions[pawn_piece_index] = pos_twofront;
             outvec.push(new);
         }
     }
@@ -208,7 +208,7 @@ pub fn knight_moves(
         let target_kind = board.kind_at(*t);
         if target_kind == EMPTY_SQUARE {
             let mut new = board.clone_and_advance(0, false);
-            new.pieces[piece_index].position = *t;
+            new.piece_positions[piece_index] = *t;
 
             if white {
                 new.bitboard.white_knights = (new.bitboard.white_knights ^ position) | *t;
@@ -223,7 +223,7 @@ pub fn knight_moves(
                 let capture_pos = *t;
                 let mut new = board.clone_and_advance(0, true);
                 new.delete_piece(capture_pos);
-                new.pieces[piece_index].position = capture_pos;
+                new.piece_positions[piece_index] = capture_pos;
 
                 let mut bb = &mut new.bitboard;
                 if white {
@@ -258,7 +258,7 @@ pub fn king_moves(
         let target_kind = board.kind_at(*t);
         if target_kind == EMPTY_SQUARE {
             let mut new = board.clone_and_advance(0, false);
-            new.pieces[piece_index].position = *t;
+            new.piece_positions[piece_index] = *t;
             if white {
                 new.bitboard.white_king = (new.bitboard.white_king ^ position) | *t;
                 new.disqualify_white_castling();
@@ -280,7 +280,7 @@ pub fn king_moves(
         let capture_pos = *t;
         let mut new = board.clone_and_advance(0, true);
         new.delete_piece(capture_pos);
-        new.pieces[piece_index].position = capture_pos;
+        new.piece_positions[piece_index] = capture_pos;
 
         let mut bb = &mut new.bitboard;
         if white {

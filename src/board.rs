@@ -17,7 +17,8 @@ struct Flags(u64);
 pub struct Board {
     pub en_passant: u64,
     pub bitboard: BitBoard,
-    pub pieces: [Piece; 32], // TODO Vec?
+    pub piece_positions: [u64; 32],
+    pub piece_kinds: [u8; 32],
     flags: Flags,
 }
 
@@ -39,12 +40,6 @@ pub struct BitBoard {
     pub black_rooks: u64,
     pub black_bishops: u64,
     pub black_knights: u64,
-}
-
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub struct Piece {
-    pub kind: u8,
-    pub position: u64,
 }
 
 impl BitBoard {
@@ -131,39 +126,22 @@ pub enum Color {
     Empty,
 }
 
-impl Piece {
-    #[inline]
-    pub fn new(kind: u8, position: u64) -> Piece {
-        Piece { kind, position }
+pub fn is_kind_white(kind: u8) -> bool {
+    if kind == EMPTY_SQUARE {
+        return false;
     }
-
-    #[inline]
-    pub fn is_white(&self) -> bool {
-        self.get_color() == Color::White
+    if (kind & BLACK_BIT) != 0 {
+        return false;
     }
-
-    #[inline]
-    pub fn get_color(&self) -> Color {
-        if self.is_empty_square() {
-            return Color::Empty;
-        }
-        if (self.kind & BLACK_BIT) != 0 {
-            return Color::Black;
-        }
-        Color::White
-    }
-
-    #[inline]
-    pub fn is_empty_square(&self) -> bool {
-        self.kind == EMPTY_SQUARE
-    }
+    true
 }
 
 impl Board {
     // Create default chess board
     pub fn new(
         bitboard: BitBoard,
-        pieces: [Piece; 32],
+        piece_positions: [u64; 32],
+        piece_kinds: [u8; 32],
         halfmove_clock: u16,
         fullmove_counter: u16,
         en_passant: u64,
@@ -173,7 +151,8 @@ impl Board {
         let mut board = Board {
             en_passant,
             bitboard,
-            pieces,
+            piece_positions,
+            piece_kinds,
             flags: Flags { 0: 0 },
         };
 
@@ -349,34 +328,34 @@ impl Board {
 
 impl Default for Board {
     fn default() -> Self {
-        let mut ps = [Piece {
-            kind: EMPTY_SQUARE,
-            position: 0,
-        }; 32];
+        let mut ps = [(0u8, 0u64); 32];
 
         for i in 0usize..8 {
             let iu = i as u64;
-            ps[i] = Piece::new(WHITE_PAWN, ROW_2 & (FILE_A << iu));
-            ps[i + 8] = Piece::new(BLACK_PAWN, ROW_7 & (FILE_A << iu));
+            ps[i] = (WHITE_PAWN, ROW_2 & (FILE_A << iu));
+            ps[i + 8] = (BLACK_PAWN, ROW_7 & (FILE_A << iu));
         }
 
-        ps[16] = Piece::new(WHITE_KING, ROW_1 & FILE_E);
-        ps[17] = Piece::new(WHITE_QUEEN, ROW_1 & FILE_D);
-        ps[18] = Piece::new(WHITE_BISHOP, ROW_1 & FILE_C);
-        ps[19] = Piece::new(WHITE_BISHOP, ROW_1 & FILE_F);
-        ps[20] = Piece::new(WHITE_KNIGHT, ROW_1 & FILE_B);
-        ps[21] = Piece::new(WHITE_KNIGHT, ROW_1 & FILE_G);
-        ps[22] = Piece::new(WHITE_ROOK, ROW_1 & FILE_A);
-        ps[23] = Piece::new(WHITE_ROOK, ROW_1 & FILE_H);
+        ps[16] = (WHITE_KING, ROW_1 & FILE_E);
+        ps[17] = (WHITE_QUEEN, ROW_1 & FILE_D);
+        ps[18] = (WHITE_BISHOP, ROW_1 & FILE_C);
+        ps[19] = (WHITE_BISHOP, ROW_1 & FILE_F);
+        ps[20] = (WHITE_KNIGHT, ROW_1 & FILE_B);
+        ps[21] = (WHITE_KNIGHT, ROW_1 & FILE_G);
+        ps[22] = (WHITE_ROOK, ROW_1 & FILE_A);
+        ps[23] = (WHITE_ROOK, ROW_1 & FILE_H);
 
-        ps[24] = Piece::new(BLACK_KING, ROW_8 & FILE_E);
-        ps[25] = Piece::new(BLACK_QUEEN, ROW_8 & FILE_D);
-        ps[26] = Piece::new(BLACK_BISHOP, ROW_8 & FILE_C);
-        ps[27] = Piece::new(BLACK_BISHOP, ROW_8 & FILE_F);
-        ps[28] = Piece::new(BLACK_KNIGHT, ROW_8 & FILE_B);
-        ps[29] = Piece::new(BLACK_KNIGHT, ROW_8 & FILE_G);
-        ps[30] = Piece::new(BLACK_ROOK, ROW_8 & FILE_A);
-        ps[31] = Piece::new(BLACK_ROOK, ROW_8 & FILE_H);
+        ps[24] = (BLACK_KING, ROW_8 & FILE_E);
+        ps[25] = (BLACK_QUEEN, ROW_8 & FILE_D);
+        ps[26] = (BLACK_BISHOP, ROW_8 & FILE_C);
+        ps[27] = (BLACK_BISHOP, ROW_8 & FILE_F);
+        ps[28] = (BLACK_KNIGHT, ROW_8 & FILE_B);
+        ps[29] = (BLACK_KNIGHT, ROW_8 & FILE_G);
+        ps[30] = (BLACK_ROOK, ROW_8 & FILE_A);
+        ps[31] = (BLACK_ROOK, ROW_8 & FILE_H);
+
+        let piece_positions = ps.map(|(_, p)| p);
+        let piece_kinds = ps.map(|(k, _)| k);
 
         Board::new(
             BitBoard {
@@ -393,7 +372,8 @@ impl Default for Board {
                 black_bishops: ROW_8 & (FILE_C | FILE_F),
                 black_knights: ROW_8 & (FILE_B | FILE_G),
             },
-            ps,
+            piece_positions,
+            piece_kinds,
             0,
             1,
             0,

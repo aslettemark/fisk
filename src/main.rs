@@ -71,7 +71,7 @@ fn main() {
 }
 
 fn generate_and_print(fen_string: String) -> Result<(), ()> {
-    let board = Board::from_fen(&*fen_string)?;
+    let board = Board::from_fen(&*fen_string).ok_or(())?;
 
     let succ = board.generate_successors();
     for s in &succ {
@@ -122,11 +122,11 @@ fn debug() {
     let c = Board::from_fen("rnbqkbnr/pppppppp/8/8/1R6/8/PP4PP/RNBQKBNR w KQkq - 0 1").unwrap();
     c.print();
 
+    println!("Type sizes in bytes");
     println!(
-        "Board: {} BitBoard: {} Piece {} Color {}",
+        "Board: {}\nBitBoard: {}\nColor: {}",
         size_of::<Board>(),
         size_of::<BitBoard>(),
-        size_of::<Piece>(),
-        size_of::<Color>()
-    )
+        size_of::<Color>(),
+    );
 }

@@ -33,9 +33,10 @@ fn succ(fen: &str) -> Vec<Board> {
 
 fn test_alive(board: &Board, n_alive: u64) {
     let mut alive = 0;
-    for p in &board.pieces {
-        if p.kind != EMPTY_SQUARE {
+    for (i, kind) in board.piece_kinds.iter().enumerate() {
+        if *kind != EMPTY_SQUARE {
             alive += 1;
+            assert_ne!(board.piece_positions[i], 0u64); // alive piece has location
         }
     }
     assert_eq!(alive, n_alive);
@@ -205,7 +206,7 @@ fn test_iter() {
     let b = Board::default();
 
     let s1 = b.generate_successors();
-    let s2 = b.iter_successors().collect::<Vec<Board>>();
+    let s2c = b.iter_successors().count();
 
-    assert_eq!(s1.len(), s2.len());
+    assert_eq!(s1.len(), s2c);
 }

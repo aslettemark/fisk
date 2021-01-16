@@ -1,4 +1,4 @@
-use crate::board::{Board, Piece};
+use crate::board::{Board, is_kind_white};
 use crate::constants::*;
 use crate::move_generation::*;
 
@@ -26,29 +26,30 @@ impl Board {
         &self,
         white: bool,
         piece_index: usize,
-        piece: &Piece,
         mut outvec: &mut Vec<Board>,
     ) {
         // TODO Keep pieces ordered with empty square pieces at the end to abort entire
         //  iteration when an empty square is found.
-        if piece.is_empty_square() {
+
+        let piece_position = self.piece_positions[piece_index];
+        let piece_kind = self.piece_kinds[piece_index];
+
+        if piece_kind == EMPTY_SQUARE {
             return;
         }
 
-        if white ^ piece.is_white() {
+        if white ^ is_kind_white(piece_kind) {
             return;
         }
 
-        let position = piece.position;
-
-        match piece.kind {
-            WHITE_PAWN => white_pawn_moves(&self, position, piece_index, &mut outvec),
-            BLACK_PAWN => black_pawn_moves(&self, position, piece_index, &mut outvec),
-            WHITE_ROOK | BLACK_ROOK => rook_moves(&self, position, piece_index, white, &mut outvec),
+        match piece_kind {
+            WHITE_PAWN => white_pawn_moves(&self, piece_position, piece_index, &mut outvec),
+            BLACK_PAWN => black_pawn_moves(&self, piece_position, piece_index, &mut outvec),
+            WHITE_ROOK | BLACK_ROOK => rook_moves(&self, piece_position, piece_index, white, &mut outvec),
             WHITE_KNIGHT | BLACK_KNIGHT => {
-                knight_moves(&self, position, piece_index, white, &mut outvec)
+                knight_moves(&self, piece_position, piece_index, white, &mut outvec)
             }
-            WHITE_KING | BLACK_KING => king_moves(&self, position, piece_index, white, &mut outvec),
+            WHITE_KING | BLACK_KING => king_moves(&self, piece_position, piece_index, white, &mut outvec),
 
             //TODO remaining kinds
             _ => {}
@@ -59,19 +60,19 @@ impl Board {
         let white = self.white_to_move();
         let mut states = Vec::with_capacity(32);
 
-        for (i, piece) in self.pieces.iter().enumerate() {
-            self.piece_moves(white, i, piece, &mut states);
+        for i in 0..32 {
+            self.piece_moves(white, i, &mut states);
         }
 
         states
     }
 
     pub fn delete_piece(&mut self, capture_pos: u64) {
-        let mut piece_list = &mut self.pieces;
-        for (i, p) in piece_list.iter().enumerate() {
-            if p.position == capture_pos {
-                piece_list[i].kind = EMPTY_SQUARE;
-                piece_list[i].position = 0;
+        let piece_positions = &mut self.piece_positions;
+        for (i, p) in piece_positions.iter().enumerate() {
+            if *p == capture_pos {
+                piece_positions[i] = 0;
+                self.piece_kinds[i] = EMPTY_SQUARE;
                 break;
             }
         }
@@ -101,10 +102,10 @@ impl<'a> Iterator for SuccessorIter<'a> {
             return Some(board);
         }
 
-        let piece_list = &self.board.pieces;
+        let piece_kinds = &self.board.piece_kinds;
         while self.piece_index < 32 {
-            let piece = piece_list[self.piece_index];
-            if piece.is_empty_square() {
+            let piece_kind = piece_kinds[self.piece_index];
+            if piece_kind == EMPTY_SQUARE {
                 self.piece_index += 1;
                 continue;
             }
@@ -112,7 +113,6 @@ impl<'a> Iterator for SuccessorIter<'a> {
             self.board.piece_moves(
                 self.board.white_to_move(),
                 self.piece_index,
-                &piece,
                 &mut self.buf,
             );
             self.piece_index += 1;

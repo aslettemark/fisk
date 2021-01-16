@@ -1,4 +1,4 @@
-use crate::board::{BitBoard, Board, Piece};
+use crate::board::{BitBoard, Board};
 use crate::constants::*;
 
 pub const FEN_DEFAULT_BOARD: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -6,10 +6,10 @@ pub const FEN_DEFAULT_BOARD: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR
 impl Board {
     /// Create Board from Forsyth–Edwards Notation
     /// https://en.wikipedia.org/wiki/Forsyth-Edwards_Notation
-    pub fn from_fen(fen: &str) -> Result<Board, ()> {
+    pub fn from_fen(fen: &str) -> Option<Board> {
         let split: Vec<&str> = fen.split_whitespace().collect::<Vec<_>>();
         if split.len() < 4 {
-            return Err(());
+            return None;
         }
         let has_move_data = split.len() == 6;
 
@@ -18,8 +18,8 @@ impl Board {
 
         let (halfmove_clock, fullmove_counter) = if has_move_data {
             (
-                split.get(4).unwrap().parse::<u16>().ok().ok_or(())?,
-                split.get(5).unwrap().parse::<u16>().ok().ok_or(())?,
+                split.get(4).unwrap().parse::<u16>().ok()?,
+                split.get(5).unwrap().parse::<u16>().ok()?,
             )
         } else {
             (0, 1)
@@ -27,9 +27,10 @@ impl Board {
 
         let white_to_move = split.get(1).unwrap() == &"w";
 
-        Ok(Board::new(
+        Some(Board::new(
             bitboard,
-            pieces,
+            pieces.map(|(_, p)| p),
+            pieces.map(|(k, _)| k),
             halfmove_clock,
             fullmove_counter,
             0, // TODO
@@ -58,7 +59,7 @@ fn fen_kind(piece: char) -> u8 {
     }
 }
 
-fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
+fn parse_board_string(board: &str) -> (BitBoard, [(u8, u64); 32]) {
     let board_rows: Vec<&str> = board.split('/').collect::<Vec<_>>();
     if board_rows.len() != 8 {
         panic!("Missing board row(s)");
@@ -66,10 +67,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
 
     let mut bb = BitBoard::empty();
 
-    let mut pieces = [Piece {
-        kind: EMPTY_SQUARE,
-        position: 0,
-    }; 32]; // Limitation: only supports positions with <= 32 pieces
+    let mut pieces = [(EMPTY_SQUARE, 0u64); 32]; // Limitation: only supports positions with <= 32 pieces
     let mut piece_i: usize = 0;
 
     for (i, pieces_str) in board_rows.iter().enumerate() {
@@ -102,8 +100,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [Piece; 32]) {
                 _ => (),
             };
 
-            pieces[piece_i].kind = kind;
-            pieces[piece_i].position = pos;
+            pieces[piece_i] = (kind, pos);
             piece_i += 1;
             j += 1;
         }
