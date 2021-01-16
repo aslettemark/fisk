@@ -45,7 +45,7 @@ fn test_alive(board: &Board, n_alive: u64) {
 
 #[test]
 fn test_default_board_movegen() {
-    test_starting_board_movegen(Board::new());
+    test_starting_board_movegen(Board::default());
     test_starting_board_movegen(fen(fisk::fen::FEN_DEFAULT_BOARD));
 }
 
@@ -53,6 +53,7 @@ fn test_default_board_movegen() {
 fn test_basic_pawn_moves() {
     let a = fen("8/8/8/8/8/6p1/5P2/8 w KQkq -");
     let succ = a.generate_successors();
+    assert!(a.white_to_move());
     assert_eq!(succ.len(), 3);
 
     let b = fen("8/8/8/8/6p1/5P2/8/8 w KQkq -");
@@ -201,7 +202,7 @@ fn test_king_capture() {
 
 #[test]
 fn test_iter() {
-    let b = Board::new();
+    let b = Board::default();
 
     let s1 = b.generate_successors();
     let s2 = b.iter_successors().collect::<Vec<Board>>();

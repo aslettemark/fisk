@@ -1,14 +1,16 @@
 use crate::constants::*;
 
 #[derive(Copy, Clone, Debug)]
+struct Flags(u8);
+
+#[derive(Copy, Clone, Debug)]
 pub struct Board {
     pub halfmove_clock: u16,
     pub fullmove_counter: u16,
     pub en_passant: u64,
     pub bitboard: BitBoard,
     pub pieces: [Piece; 32], // TODO Vec?
-    pub castling: u8,
-    pub white_to_move: bool,
+    flags: Flags,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -133,57 +135,30 @@ impl Piece {
 
 impl Board {
     // Create default chess board
-    pub fn new() -> Board {
-        let mut ps = [Piece {
-            kind: EMPTY_SQUARE,
-            position: 0,
-        }; 32];
-
-        for i in 0usize..8 {
-            let iu = i as u64;
-            ps[i] = Piece::new(WHITE_PAWN, ROW_2 & (FILE_A << iu));
-            ps[i + 8] = Piece::new(BLACK_PAWN, ROW_7 & (FILE_A << iu));
+    pub fn new(
+        bitboard: BitBoard,
+        pieces: [Piece; 32],
+        halfmove_clock: u16,
+        fullmove_counter: u16,
+        en_passant: u64,
+        white_to_move: bool,
+        castling_availability: u8, // 0b0000KQkq
+    ) -> Board {
+        let mut flags = Flags { 0: 0 };
+        flags.set_bit(0, white_to_move);
+        for i in 0..4 {
+            if (castling_availability & (1 << i)) != 0 {
+                flags.set_bit(i + 1, true);
+            }
         }
 
-        ps[16] = Piece::new(WHITE_KING, ROW_1 & FILE_E);
-        ps[17] = Piece::new(WHITE_QUEEN, ROW_1 & FILE_D);
-        ps[18] = Piece::new(WHITE_BISHOP, ROW_1 & FILE_C);
-        ps[19] = Piece::new(WHITE_BISHOP, ROW_1 & FILE_F);
-        ps[20] = Piece::new(WHITE_KNIGHT, ROW_1 & FILE_B);
-        ps[21] = Piece::new(WHITE_KNIGHT, ROW_1 & FILE_G);
-        ps[22] = Piece::new(WHITE_ROOK, ROW_1 & FILE_A);
-        ps[23] = Piece::new(WHITE_ROOK, ROW_1 & FILE_H);
-
-        ps[24] = Piece::new(BLACK_KING, ROW_8 & FILE_E);
-        ps[25] = Piece::new(BLACK_QUEEN, ROW_8 & FILE_D);
-        ps[26] = Piece::new(BLACK_BISHOP, ROW_8 & FILE_C);
-        ps[27] = Piece::new(BLACK_BISHOP, ROW_8 & FILE_F);
-        ps[28] = Piece::new(BLACK_KNIGHT, ROW_8 & FILE_B);
-        ps[29] = Piece::new(BLACK_KNIGHT, ROW_8 & FILE_G);
-        ps[30] = Piece::new(BLACK_ROOK, ROW_8 & FILE_A);
-        ps[31] = Piece::new(BLACK_ROOK, ROW_8 & FILE_H);
-
         Board {
-            halfmove_clock: 0,
-            fullmove_counter: 1,
-            en_passant: 0,
-            bitboard: BitBoard {
-                white_pawns: ROW_2,
-                white_queen: ROW_1 & FILE_D,
-                white_king: ROW_1 & FILE_E,
-                white_rooks: ROW_1 & (FILE_A | FILE_H),
-                white_bishops: ROW_1 & (FILE_C | FILE_F),
-                white_knights: ROW_1 & (FILE_B | FILE_G),
-                black_pawns: ROW_7,
-                black_queen: ROW_8 & FILE_D,
-                black_king: ROW_8 & FILE_E,
-                black_rooks: ROW_8 & (FILE_A | FILE_H),
-                black_bishops: ROW_8 & (FILE_C | FILE_F),
-                black_knights: ROW_8 & (FILE_B | FILE_G),
-            },
-            pieces: ps,
-            castling: 0b11101110,
-            white_to_move: true,
+            halfmove_clock,
+            fullmove_counter,
+            en_passant,
+            bitboard,
+            pieces,
+            flags,
         }
     }
 
@@ -275,10 +250,88 @@ impl Board {
 
         EMPTY_SQUARE
     }
+
+    pub fn white_to_move(self) -> bool {
+        self.flags.get_bit(0)
+    }
+
+    pub fn toggle_white_to_move(&mut self) {
+        self.flags.toggle_bit(0);
+    }
 }
 
 impl Default for Board {
     fn default() -> Self {
-        Self::new()
+        let mut ps = [Piece {
+            kind: EMPTY_SQUARE,
+            position: 0,
+        }; 32];
+
+        for i in 0usize..8 {
+            let iu = i as u64;
+            ps[i] = Piece::new(WHITE_PAWN, ROW_2 & (FILE_A << iu));
+            ps[i + 8] = Piece::new(BLACK_PAWN, ROW_7 & (FILE_A << iu));
+        }
+
+        ps[16] = Piece::new(WHITE_KING, ROW_1 & FILE_E);
+        ps[17] = Piece::new(WHITE_QUEEN, ROW_1 & FILE_D);
+        ps[18] = Piece::new(WHITE_BISHOP, ROW_1 & FILE_C);
+        ps[19] = Piece::new(WHITE_BISHOP, ROW_1 & FILE_F);
+        ps[20] = Piece::new(WHITE_KNIGHT, ROW_1 & FILE_B);
+        ps[21] = Piece::new(WHITE_KNIGHT, ROW_1 & FILE_G);
+        ps[22] = Piece::new(WHITE_ROOK, ROW_1 & FILE_A);
+        ps[23] = Piece::new(WHITE_ROOK, ROW_1 & FILE_H);
+
+        ps[24] = Piece::new(BLACK_KING, ROW_8 & FILE_E);
+        ps[25] = Piece::new(BLACK_QUEEN, ROW_8 & FILE_D);
+        ps[26] = Piece::new(BLACK_BISHOP, ROW_8 & FILE_C);
+        ps[27] = Piece::new(BLACK_BISHOP, ROW_8 & FILE_F);
+        ps[28] = Piece::new(BLACK_KNIGHT, ROW_8 & FILE_B);
+        ps[29] = Piece::new(BLACK_KNIGHT, ROW_8 & FILE_G);
+        ps[30] = Piece::new(BLACK_ROOK, ROW_8 & FILE_A);
+        ps[31] = Piece::new(BLACK_ROOK, ROW_8 & FILE_H);
+
+        Board::new(
+            BitBoard {
+                white_pawns: ROW_2,
+                white_queen: ROW_1 & FILE_D,
+                white_king: ROW_1 & FILE_E,
+                white_rooks: ROW_1 & (FILE_A | FILE_H),
+                white_bishops: ROW_1 & (FILE_C | FILE_F),
+                white_knights: ROW_1 & (FILE_B | FILE_G),
+                black_pawns: ROW_7,
+                black_queen: ROW_8 & FILE_D,
+                black_king: ROW_8 & FILE_E,
+                black_rooks: ROW_8 & (FILE_A | FILE_H),
+                black_bishops: ROW_8 & (FILE_C | FILE_F),
+                black_knights: ROW_8 & (FILE_B | FILE_G),
+            },
+            ps,
+            0,
+            1,
+            0,
+            true,
+            0b00001111,
+        )
+    }
+}
+
+impl Flags {
+    #[inline]
+    fn get_bit(&self, i: usize) -> bool {
+        self.0 & (1 << i) != 0
+    }
+
+    #[inline]
+    fn set_bit(&mut self, i: usize, value: bool) {
+        self.0 &= !(1 << i);
+        if value {
+            self.0 |= 1 << i;
+        }
+    }
+
+    #[inline]
+    fn toggle_bit(&mut self, i: usize) {
+        self.set_bit(i, !self.get_bit(i));
     }
 }

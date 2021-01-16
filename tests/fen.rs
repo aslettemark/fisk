@@ -21,15 +21,18 @@ fn test_default_board_fen() {
     for p in a.pieces.iter() {
         assert_ne!(p.kind, EMPTY_SQUARE, "Piece list is filled");
     }
+    assert!(a.white_to_move())
 }
 
 #[test]
 fn compare_board_constructor_fen() {
-    let a = Board::new();
+    let a = Board::default();
     let b = Board::from_fen(FEN_DEFAULT_BOARD).unwrap();
 
     assert_eq!(a.bitboard, b.bitboard);
     assert_eq!(a.pieces.len(), b.pieces.len());
     assert_eq!(a.halfmove_clock, b.halfmove_clock);
     // assert_eq!(a.castling, b.castling); //TODO enable
+    assert!(a.white_to_move());
+    assert!(b.white_to_move());
 }

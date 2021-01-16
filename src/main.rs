@@ -101,7 +101,7 @@ fn interactive() {
 }
 
 fn debug() {
-    let a: Board = Board::new();
+    let a: Board = Board::default();
     a.print();
 
     println!("------------------------------------");

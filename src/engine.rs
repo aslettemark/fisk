@@ -6,7 +6,7 @@ impl Board {
     pub fn clone_and_advance(&self, en_passant: u64, reset_halfmove: bool) -> Board {
         let mut new = *self;
         new.en_passant = en_passant;
-        new.white_to_move = !new.white_to_move;
+        new.toggle_white_to_move();
 
         if reset_halfmove {
             new.halfmove_clock = 0;
@@ -14,7 +14,7 @@ impl Board {
             new.halfmove_clock += 1;
         }
 
-        if new.white_to_move {
+        if new.white_to_move() {
             new.fullmove_counter += 1;
         }
 
@@ -56,7 +56,7 @@ impl Board {
     }
 
     pub fn generate_successors(&self) -> Vec<Board> {
-        let white = self.white_to_move;
+        let white = self.white_to_move();
         let mut states = Vec::with_capacity(32);
 
         for (i, piece) in self.pieces.iter().enumerate() {
@@ -110,7 +110,7 @@ impl<'a> Iterator for SuccessorIter<'a> {
             }
 
             self.board.piece_moves(
-                self.board.white_to_move,
+                self.board.white_to_move(),
                 self.piece_index,
                 &piece,
                 &mut self.buf,

@@ -25,17 +25,17 @@ impl Board {
             (0, 1)
         };
 
-        let white = split.get(1).unwrap() == &"w";
+        let white_to_move = split.get(1).unwrap() == &"w";
 
-        Ok(Board {
-            halfmove_clock,
-            fullmove_counter,
-            en_passant: 0, //TODO
+        Ok(Board::new(
             bitboard,
             pieces,
-            castling: 0, //TODO
-            white_to_move: white,
-        })
+            halfmove_clock,
+            fullmove_counter,
+            0, // TODO
+            white_to_move,
+            0, // TODO
+        ))
     }
 }
 

@@ -29,9 +29,9 @@ pub fn bench_movegen_default(depth: i32, use_iterator: bool) {
     );
     let t1 = time::get_time();
     let nodes = if use_iterator {
-        count_nodes_iterator(&Board::new(), depth)
+        count_nodes_iterator(&Board::default(), depth)
     } else {
-        count_nodes(&Board::new(), depth)
+        count_nodes(&Board::default(), depth)
     };
     let t2 = time::get_time();
     let time = t2 - t1;
