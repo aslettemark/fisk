@@ -137,7 +137,7 @@ pub fn is_kind_white(kind: u8) -> bool {
 }
 
 impl Board {
-    // Create default chess board
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         bitboard: BitBoard,
         piece_positions: [u64; 32],

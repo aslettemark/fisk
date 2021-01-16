@@ -74,7 +74,7 @@ fn get_king_attacks(trailing: u64) -> [u64; 8] {
     let mut attacks: [u64; 8] = [0; 8];
     for (i, offset) in attack_offsets.iter().enumerate() {
         let bit = trailing as isize + offset;
-        if bit >= 0 && bit < 64 {
+        if (0..64).contains(&bit) {
             attacks[i] = (1 << (bit as u64)) & mask;
         }
     }
@@ -82,7 +82,7 @@ fn get_king_attacks(trailing: u64) -> [u64; 8] {
 }
 
 fn generate_file_attacks() -> [u64; 64] {
-    let mut attacks = [0 as u64; 64];
+    let mut attacks = [0u64; 64];
     for (i, attack) in attacks.iter_mut().enumerate() {
         let file_index = i % 8;
         *attack = FILES[file_index] & !(1 << i as u64); //zero out the occupied position
@@ -91,7 +91,7 @@ fn generate_file_attacks() -> [u64; 64] {
 }
 
 fn generate_rank_attacks() -> [u64; 64] {
-    let mut attacks = [0 as u64; 64];
+    let mut attacks = [0u64; 64];
     for (i, attack) in attacks.iter_mut().enumerate() {
         let rank_index = i / 8;
         *attack = ROWS[rank_index] & !(1 << i as u64); //zero out the occupied position
@@ -127,7 +127,7 @@ fn get_knight_attacks(trailing: u64) -> [u64; 8] {
     let mut attacks: [u64; 8] = [0; 8];
     for (i, offset) in attack_offsets.iter().enumerate() {
         let bit = trailing as isize + offset;
-        if bit >= 0 && bit < 64 {
+        if (0..64).contains(&bit) {
             attacks[i] = (1 << (bit as u64)) & mask;
         }
     }
