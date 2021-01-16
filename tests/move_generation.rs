@@ -1,7 +1,7 @@
 use bitintr::Popcnt;
 
+use fisk::board::Board;
 use fisk::constants::*;
-use fisk::engine::Board;
 
 fn fen(fen: &str) -> Board {
     Board::from_fen(fen).unwrap()

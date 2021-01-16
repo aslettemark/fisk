@@ -1,5 +1,5 @@
+use crate::board::{BitBoard, Board, Piece};
 use crate::constants::*;
-use crate::engine::{BitBoard, Board, Piece};
 
 pub const FEN_DEFAULT_BOARD: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 

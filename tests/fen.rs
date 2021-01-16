@@ -1,5 +1,5 @@
+use fisk::board::Board;
 use fisk::constants::*;
-use fisk::engine::Board;
 use fisk::fen::FEN_DEFAULT_BOARD;
 
 #[test]

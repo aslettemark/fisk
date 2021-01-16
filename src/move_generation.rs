@@ -2,8 +2,8 @@ extern crate bitintr;
 
 use bitintr::*;
 
+use crate::board::Board;
 use crate::constants::*;
-use crate::engine::Board;
 
 fn pawn_capture_pos(
     board: &Board,

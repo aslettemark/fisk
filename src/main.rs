@@ -7,8 +7,8 @@ use std::io::Write;
 
 use clap::{App, Arg, SubCommand};
 
+use fisk::board::*;
 use fisk::constants::*;
-use fisk::engine::{BitBoard, Board, Piece};
 use fisk::fen::*;
 
 use crate::bench::*;

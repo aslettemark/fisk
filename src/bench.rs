@@ -1,4 +1,4 @@
-use fisk::engine::Board;
+use fisk::board::Board;
 
 fn count_nodes(board: &Board, depth: i32) -> u32 {
     if depth == 0 {
