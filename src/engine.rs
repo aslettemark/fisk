@@ -7,7 +7,7 @@ pub struct Board {
     pub fullmove_counter: u16,
     pub en_passant: u64,
     pub bitboard: BitBoard,
-    pub pieces: [Piece; 32],
+    pub pieces: [Piece; 32], // TODO Vec?
     pub castling: u8,
     pub white_to_move: bool,
 }
@@ -215,7 +215,7 @@ impl Board {
         mut outvec: &mut Vec<Board>,
     ) {
         // TODO Keep pieces ordered with empty square pieces at the end to abort entire
-        // iteration when an empty square is found.
+        //  iteration when an empty square is found.
         if piece.is_empty_square() {
             return;
         }
@@ -229,15 +229,11 @@ impl Board {
         match piece.kind {
             WHITE_PAWN => white_pawn_moves(&self, position, piece_index, &mut outvec),
             BLACK_PAWN => black_pawn_moves(&self, position, piece_index, &mut outvec),
-            WHITE_ROOK | BLACK_ROOK => {
-                rook_moves(&self, position, piece_index, white, &mut outvec)
-            }
+            WHITE_ROOK | BLACK_ROOK => rook_moves(&self, position, piece_index, white, &mut outvec),
             WHITE_KNIGHT | BLACK_KNIGHT => {
                 knight_moves(&self, position, piece_index, white, &mut outvec)
             }
-            WHITE_KING | BLACK_KING => {
-                king_moves(&self, position, piece_index, white, &mut outvec)
-            }
+            WHITE_KING | BLACK_KING => king_moves(&self, position, piece_index, white, &mut outvec),
 
             //TODO remaining kinds
             _ => {}

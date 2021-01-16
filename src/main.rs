@@ -8,10 +8,11 @@ use std::io::Write;
 use clap::{App, Arg, SubCommand};
 
 use fisk::constants::*;
-use fisk::engine::Board;
+use fisk::engine::{BitBoard, Board, Piece};
 use fisk::fen::*;
 
 use crate::bench::*;
+use std::mem::size_of;
 
 mod bench;
 
@@ -120,4 +121,11 @@ fn debug() {
 
     let c = Board::from_fen("rnbqkbnr/pppppppp/8/8/1R6/8/PP4PP/RNBQKBNR w KQkq - 0 1").unwrap();
     c.print();
+
+    println!(
+        "Board: {} BitBoard: {} Piece {}",
+        size_of::<Board>(),
+        size_of::<BitBoard>(),
+        size_of::<Piece>()
+    )
 }
