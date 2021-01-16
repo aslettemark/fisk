@@ -9,13 +9,13 @@ impl Board {
         new.toggle_white_to_move();
 
         if reset_halfmove {
-            new.halfmove_clock = 0;
+            new.reset_halfmove_clock();
         } else {
-            new.halfmove_clock += 1;
+            new.increment_halfmove_clock();
         }
 
         if new.white_to_move() {
-            new.fullmove_counter += 1;
+            new.increment_fullmove_counter();
         }
 
         new

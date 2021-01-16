@@ -20,7 +20,7 @@ fn succ(fen: &str) -> Vec<Board> {
             && (b.bitboard.black_coverage() != s.bitboard.black_coverage())
             && (b.bitboard.coverage().popcnt() > s.bitboard.coverage().popcnt());
 
-        if s.halfmove_clock == 0 {
+        if s.get_halfmove_clock() == 0 {
             assert!(pawn_move || has_captured);
         } else {
             assert!(!pawn_move);
@@ -116,7 +116,7 @@ fn test_white_knight_capture() {
         let succ = a.generate_successors();
         assert_eq!(succ.len(), 1);
         let b = succ.get(0).unwrap();
-        assert_eq!(b.halfmove_clock, 0);
+        assert_eq!(b.get_halfmove_clock(), 0);
         let bb = b.bitboard;
         assert_ne!(bb.white_pawns, 0);
         assert_ne!(bb.black_pawns, 0);

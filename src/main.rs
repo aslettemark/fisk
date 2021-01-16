@@ -123,9 +123,10 @@ fn debug() {
     c.print();
 
     println!(
-        "Board: {} BitBoard: {} Piece {}",
+        "Board: {} BitBoard: {} Piece {} Color {}",
         size_of::<Board>(),
         size_of::<BitBoard>(),
-        size_of::<Piece>()
+        size_of::<Piece>(),
+        size_of::<Color>()
     )
 }

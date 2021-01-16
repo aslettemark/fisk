@@ -8,15 +8,13 @@ use crate::constants::*;
 /// 4: white kingside castling
 /// 5-7: unused
 /// 8-15: reserved (en passant file, one-hot/popcnt encoded)
-/// 16-31: reserved (halfmove_clock)
-/// 32-47: reserved (fullmove_counter)
+/// 16-31: halfmove_clock
+/// 32-47: fullmove_counter
 #[derive(Copy, Clone, Debug)]
 struct Flags(u64);
 
 #[derive(Copy, Clone, Debug)]
 pub struct Board {
-    pub halfmove_clock: u16,
-    pub fullmove_counter: u16,
     pub en_passant: u64,
     pub bitboard: BitBoard,
     pub pieces: [Piece; 32], // TODO Vec?
@@ -126,6 +124,13 @@ impl BitBoard {
     }
 }
 
+#[derive(PartialEq)]
+pub enum Color {
+    White,
+    Black,
+    Empty,
+}
+
 impl Piece {
     #[inline]
     pub fn new(kind: u8, position: u64) -> Piece {
@@ -134,7 +139,18 @@ impl Piece {
 
     #[inline]
     pub fn is_white(&self) -> bool {
-        (self.kind & BLACK_BIT) == 0
+        self.get_color() == Color::White
+    }
+
+    #[inline]
+    pub fn get_color(&self) -> Color {
+        if self.is_empty_square() {
+            return Color::Empty;
+        }
+        if (self.kind & BLACK_BIT) != 0 {
+            return Color::Black;
+        }
+        Color::White
     }
 
     #[inline]
@@ -154,22 +170,23 @@ impl Board {
         white_to_move: bool,
         castling_availability: u8, // 0b0000KQkq
     ) -> Board {
-        let mut flags = Flags { 0: 0 };
-        flags.set_bit(0, white_to_move);
-        for i in 0..4 {
-            if (castling_availability & (1 << i)) != 0 {
-                flags.set_bit(i + 1, true);
-            }
-        }
-
-        Board {
-            halfmove_clock,
-            fullmove_counter,
+        let mut board = Board {
             en_passant,
             bitboard,
             pieces,
-            flags,
+            flags: Flags { 0: 0 },
+        };
+
+        board.flags.set_bit(0, white_to_move);
+        for i in 0..4 {
+            if (castling_availability & (1 << i)) != 0 {
+                board.flags.set_bit(i + 1, true);
+            }
         }
+        board.set_halfmove_clock(halfmove_clock);
+        board.set_fullmove_counter(fullmove_counter);
+
+        board
     }
 
     pub fn print(&self) {
@@ -291,6 +308,42 @@ impl Board {
 
     pub fn can_black_castle_queenside(&self) -> bool {
         self.flags.get_bit(1)
+    }
+
+    pub fn get_halfmove_clock(&self) -> u16 {
+        ((self.flags.0 >> 16) & (0xFFFF_u64)) as u16
+    }
+
+    pub fn get_fullmove_counter(&self) -> u16 {
+        ((self.flags.0 >> 32) & (0xFFFF_u64)) as u16
+    }
+
+    pub fn reset_halfmove_clock(&mut self) {
+        self.flags.0 &= !(0xFFFF_u64 << 16);
+    }
+
+    pub fn increment_halfmove_clock(&mut self) {
+        let clock = self.get_halfmove_clock() + 1;
+        self.set_halfmove_clock(clock);
+    }
+
+    pub fn set_halfmove_clock(&mut self, new: u16) {
+        self.reset_halfmove_clock();
+        self.flags.0 |= (new as u64) << 16;
+    }
+
+    pub fn reset_fullmove_counter(&mut self) {
+        self.flags.0 &= !(0xFFFF_u64 << 32);
+    }
+
+    pub fn increment_fullmove_counter(&mut self) {
+        let counter = self.get_fullmove_counter() + 1;
+        self.set_fullmove_counter(counter);
+    }
+
+    pub fn set_fullmove_counter(&mut self, new: u16) {
+        self.reset_fullmove_counter();
+        self.flags.0 |= (new as u64) << 32;
     }
 }
 
