@@ -1,7 +1,17 @@
 use crate::constants::*;
 
+/// Bit overview:
+/// 0: white to move
+/// 1: black queenside castling availability
+/// 2: black kingside castling
+/// 3: white queenside castling
+/// 4: white kingside castling
+/// 5-7: unused
+/// 8-15: reserved (en passant file, one-hot/popcnt encoded)
+/// 16-31: reserved (halfmove_clock)
+/// 32-47: reserved (fullmove_counter)
 #[derive(Copy, Clone, Debug)]
-struct Flags(u8);
+struct Flags(u64);
 
 #[derive(Copy, Clone, Debug)]
 pub struct Board {
@@ -257,6 +267,30 @@ impl Board {
 
     pub fn toggle_white_to_move(&mut self) {
         self.flags.toggle_bit(0);
+    }
+
+    pub fn disqualify_white_castling(&mut self) {
+        self.flags.0 &= !(0b11000);
+    }
+
+    pub fn disqualify_black_castling(&mut self) {
+        self.flags.0 &= !(0b00110);
+    }
+
+    pub fn can_white_castle_kingside(&self) -> bool {
+        self.flags.get_bit(4)
+    }
+
+    pub fn can_white_castle_queenside(&self) -> bool {
+        self.flags.get_bit(3)
+    }
+
+    pub fn can_black_castle_kingside(&self) -> bool {
+        self.flags.get_bit(2)
+    }
+
+    pub fn can_black_castle_queenside(&self) -> bool {
+        self.flags.get_bit(1)
     }
 }
 

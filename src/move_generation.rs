@@ -261,8 +261,10 @@ pub fn king_moves(
             new.pieces[piece_index].position = *t;
             if white {
                 new.bitboard.white_king = (new.bitboard.white_king ^ position) | *t;
+                new.disqualify_white_castling();
             } else {
                 new.bitboard.black_king = (new.bitboard.black_king ^ position) | *t;
+                new.disqualify_black_castling();
             }
             outvec.push(new);
             continue;
@@ -284,9 +286,11 @@ pub fn king_moves(
         if white {
             bb.white_king = (bb.white_king ^ position) | capture_pos;
             new.bitboard.unset_black_piece(capture_pos);
+            new.disqualify_white_castling();
         } else {
             bb.black_king = (bb.black_king ^ position) | capture_pos;
             new.bitboard.unset_white_piece(capture_pos);
+            new.disqualify_black_castling();
         }
 
         outvec.push(new);
