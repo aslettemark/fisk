@@ -1,3 +1,4 @@
+use crate::board::Color::{Black, Empty, White};
 use crate::board::PieceKind::*;
 use crate::constants::*;
 
@@ -148,14 +149,17 @@ pub enum PieceKind {
 
 impl PieceKind {
     pub fn is_white(&self) -> bool {
+        self.get_color() == White
+    }
+
+    pub fn get_color(&self) -> Color {
         if *self == EmptySquare {
-            return false;
+            return Empty;
         }
         if ((*self as u8) & BLACK_BIT) != 0 {
-            return false;
+            return Black;
         }
-
-        true
+        White
     }
 }
 
