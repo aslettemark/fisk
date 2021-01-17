@@ -1,4 +1,5 @@
 use fisk::board::Board;
+use fisk::board::PieceKind::EmptySquare;
 use fisk::constants::*;
 use fisk::fen::FEN_DEFAULT_BOARD;
 
@@ -19,7 +20,7 @@ fn test_default_board_fen() {
     );
 
     for kind in a.piece_kinds.iter() {
-        assert_ne!(*kind, EMPTY_SQUARE, "Piece list is filled");
+        assert_ne!(*kind, EmptySquare, "Piece list is filled");
     }
     assert!(a.white_to_move())
 }

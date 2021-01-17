@@ -1,5 +1,5 @@
-use crate::board::{Board, is_kind_white};
-use crate::constants::*;
+use crate::board::PieceKind::*;
+use crate::board::{Board, PieceKind};
 use crate::move_generation::*;
 
 impl Board {
@@ -22,37 +22,43 @@ impl Board {
     }
 
     #[inline]
-    fn piece_moves(
-        &self,
-        white: bool,
-        piece_index: usize,
-        mut outvec: &mut Vec<Board>,
-    ) {
+    fn piece_moves(&self, white: bool, piece_index: usize, mut outvec: &mut Vec<Board>) {
         // TODO Keep pieces ordered with empty square pieces at the end to abort entire
         //  iteration when an empty square is found.
 
         let piece_position = self.piece_positions[piece_index];
         let piece_kind = self.piece_kinds[piece_index];
 
-        if piece_kind == EMPTY_SQUARE {
+        if piece_kind == PieceKind::EmptySquare {
             return;
         }
 
-        if white ^ is_kind_white(piece_kind) {
+        if white ^ piece_kind.is_white() {
             return;
         }
 
         match piece_kind {
-            WHITE_PAWN => white_pawn_moves(&self, piece_position, piece_index, &mut outvec),
-            BLACK_PAWN => black_pawn_moves(&self, piece_position, piece_index, &mut outvec),
-            WHITE_ROOK | BLACK_ROOK => rook_moves(&self, piece_position, piece_index, white, &mut outvec),
-            WHITE_KNIGHT | BLACK_KNIGHT => {
+            WhitePawn => white_pawn_moves(&self, piece_position, piece_index, &mut outvec),
+            BlackPawn => black_pawn_moves(&self, piece_position, piece_index, &mut outvec),
+            WhiteRook | BlackRook => {
+                rook_moves(&self, piece_position, piece_index, white, &mut outvec)
+            }
+            WhiteKnight | BlackKnight => {
                 knight_moves(&self, piece_position, piece_index, white, &mut outvec)
             }
-            WHITE_KING | BLACK_KING => king_moves(&self, piece_position, piece_index, white, &mut outvec),
+            WhiteKing | BlackKing => {
+                king_moves(&self, piece_position, piece_index, white, &mut outvec)
+            }
 
-            //TODO remaining kinds
-            _ => {}
+            // TODO
+            WhiteQueen => {}
+            WhiteBishop => {}
+            BlackQueen => {}
+            BlackBishop => {}
+
+            EmptySquare => {
+                unreachable!()
+            }
         }
     }
 
@@ -72,7 +78,7 @@ impl Board {
         for (i, p) in piece_positions.iter().enumerate() {
             if *p == capture_pos {
                 piece_positions[i] = 0;
-                self.piece_kinds[i] = EMPTY_SQUARE;
+                self.piece_kinds[i] = EmptySquare;
                 break;
             }
         }
@@ -105,16 +111,13 @@ impl<'a> Iterator for SuccessorIter<'a> {
         let piece_kinds = &self.board.piece_kinds;
         while self.piece_index < 32 {
             let piece_kind = piece_kinds[self.piece_index];
-            if piece_kind == EMPTY_SQUARE {
+            if piece_kind == EmptySquare {
                 self.piece_index += 1;
                 continue;
             }
 
-            self.board.piece_moves(
-                self.board.white_to_move(),
-                self.piece_index,
-                &mut self.buf,
-            );
+            self.board
+                .piece_moves(self.board.white_to_move(), self.piece_index, &mut self.buf);
             self.piece_index += 1;
 
             if !self.buf.is_empty() {

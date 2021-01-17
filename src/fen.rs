@@ -1,4 +1,5 @@
-use crate::board::{BitBoard, Board};
+use crate::board::PieceKind::*;
+use crate::board::{BitBoard, Board, PieceKind};
 use crate::constants::*;
 
 pub const FEN_DEFAULT_BOARD: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -41,25 +42,25 @@ impl Board {
 }
 
 /// Map FEN pieces to kinds
-fn fen_kind(piece: char) -> u8 {
+fn fen_kind(piece: char) -> PieceKind {
     match piece {
-        'r' => BLACK_ROOK,
-        'n' => BLACK_KNIGHT,
-        'b' => BLACK_BISHOP,
-        'q' => BLACK_QUEEN,
-        'k' => BLACK_KING,
-        'p' => BLACK_PAWN,
-        'R' => WHITE_ROOK,
-        'N' => WHITE_KNIGHT,
-        'B' => WHITE_BISHOP,
-        'Q' => WHITE_QUEEN,
-        'K' => WHITE_KING,
-        'P' => WHITE_PAWN,
+        'r' => BlackRook,
+        'n' => BlackKnight,
+        'b' => BlackBishop,
+        'q' => BlackQueen,
+        'k' => BlackKing,
+        'p' => BlackPawn,
+        'R' => WhiteRook,
+        'N' => WhiteKnight,
+        'B' => WhiteBishop,
+        'Q' => WhiteQueen,
+        'K' => WhiteKing,
+        'P' => WhitePawn,
         _ => panic!("Invalid piece: {}", piece),
     }
 }
 
-fn parse_board_string(board: &str) -> (BitBoard, [(u8, u64); 32]) {
+fn parse_board_string(board: &str) -> (BitBoard, [(PieceKind, u64); 32]) {
     let board_rows: Vec<&str> = board.split('/').collect::<Vec<_>>();
     if board_rows.len() != 8 {
         panic!("Missing board row(s)");
@@ -67,7 +68,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [(u8, u64); 32]) {
 
     let mut bb = BitBoard::empty();
 
-    let mut pieces = [(EMPTY_SQUARE, 0u64); 32]; // Limitation: only supports positions with <= 32 pieces
+    let mut pieces = [(EmptySquare, 0u64); 32]; // Limitation: only supports positions with <= 32 pieces
     let mut piece_i: usize = 0;
 
     for (i, pieces_str) in board_rows.iter().enumerate() {
@@ -85,18 +86,18 @@ fn parse_board_string(board: &str) -> (BitBoard, [(u8, u64); 32]) {
             let pos = row_mask & file_mask;
 
             match kind {
-                WHITE_PAWN => bb.white_pawns ^= pos,
-                WHITE_BISHOP => bb.white_bishops ^= pos,
-                WHITE_KNIGHT => bb.white_knights ^= pos,
-                WHITE_ROOK => bb.white_rooks ^= pos,
-                WHITE_QUEEN => bb.white_queen ^= pos,
-                WHITE_KING => bb.white_king ^= pos,
-                BLACK_PAWN => bb.black_pawns ^= pos,
-                BLACK_BISHOP => bb.black_bishops ^= pos,
-                BLACK_KNIGHT => bb.black_knights ^= pos,
-                BLACK_ROOK => bb.black_rooks ^= pos,
-                BLACK_QUEEN => bb.black_queen ^= pos,
-                BLACK_KING => bb.black_king ^= pos,
+                WhitePawn => bb.white_pawns ^= pos,
+                WhiteBishop => bb.white_bishops ^= pos,
+                WhiteKnight => bb.white_knights ^= pos,
+                WhiteRook => bb.white_rooks ^= pos,
+                WhiteQueen => bb.white_queen ^= pos,
+                WhiteKing => bb.white_king ^= pos,
+                BlackPawn => bb.black_pawns ^= pos,
+                BlackBishop => bb.black_bishops ^= pos,
+                BlackKnight => bb.black_knights ^= pos,
+                BlackRook => bb.black_rooks ^= pos,
+                BlackQueen => bb.black_queen ^= pos,
+                BlackKing => bb.black_king ^= pos,
                 _ => (),
             };
 

@@ -1,3 +1,4 @@
+use crate::board::PieceKind::*;
 use crate::constants::*;
 
 /// Bit overview:
@@ -18,7 +19,7 @@ pub struct Board {
     pub en_passant: u64,
     pub bitboard: BitBoard,
     pub piece_positions: [u64; 32],
-    pub piece_kinds: [u8; 32],
+    pub piece_kinds: [PieceKind; 32],
     flags: Flags,
 }
 
@@ -126,14 +127,36 @@ pub enum Color {
     Empty,
 }
 
-pub fn is_kind_white(kind: u8) -> bool {
-    if kind == EMPTY_SQUARE {
-        return false;
+#[derive(PartialEq, Copy, Clone, Debug)]
+pub enum PieceKind {
+    EmptySquare = EMPTY_SQUARE as isize,
+
+    WhiteQueen = WHITE_QUEEN as isize,
+    WhiteKing = WHITE_KING as isize,
+    WhiteRook = WHITE_ROOK as isize,
+    WhiteBishop = WHITE_BISHOP as isize,
+    WhiteKnight = WHITE_KNIGHT as isize,
+    WhitePawn = WHITE_PAWN as isize,
+
+    BlackQueen = BLACK_QUEEN as isize,
+    BlackKing = BLACK_KING as isize,
+    BlackRook = BLACK_ROOK as isize,
+    BlackBishop = BLACK_BISHOP as isize,
+    BlackKnight = BLACK_KNIGHT as isize,
+    BlackPawn = BLACK_PAWN as isize,
+}
+
+impl PieceKind {
+    pub fn is_white(&self) -> bool {
+        if *self == EmptySquare {
+            return false;
+        }
+        if ((*self as u8) & BLACK_BIT) != 0 {
+            return false;
+        }
+
+        true
     }
-    if (kind & BLACK_BIT) != 0 {
-        return false;
-    }
-    true
 }
 
 impl Board {
@@ -141,7 +164,7 @@ impl Board {
     pub fn new(
         bitboard: BitBoard,
         piece_positions: [u64; 32],
-        piece_kinds: [u8; 32],
+        piece_kinds: [PieceKind; 32],
         halfmove_clock: u16,
         fullmove_counter: u16,
         en_passant: u64,
@@ -191,70 +214,70 @@ impl Board {
         }*/
     }
 
-    fn piece_representation(&self, kind: u8) -> char {
+    fn piece_representation(&self, kind: PieceKind) -> char {
         match kind {
-            WHITE_PAWN => '♙',
-            WHITE_BISHOP => '♗',
-            WHITE_KNIGHT => '♘',
-            WHITE_ROOK => '♖',
-            WHITE_QUEEN => '♕',
-            WHITE_KING => '♔',
-            BLACK_PAWN => '♟',
-            BLACK_BISHOP => '♝',
-            BLACK_KNIGHT => '♞',
-            BLACK_ROOK => '♜',
-            BLACK_QUEEN => '♛',
-            BLACK_KING => '♚',
+            WhitePawn => '♙',
+            WhiteBishop => '♗',
+            WhiteKnight => '♘',
+            WhiteRook => '♖',
+            WhiteQueen => '♕',
+            WhiteKing => '♔',
+            BlackPawn => '♟',
+            BlackBishop => '♝',
+            BlackKnight => '♞',
+            BlackRook => '♜',
+            BlackQueen => '♛',
+            BlackKing => '♚',
             _ => ' ',
         }
     }
 
-    pub fn kind_at(&self, pos: u64) -> u8 {
+    pub fn kind_at(&self, pos: u64) -> PieceKind {
         //TODO: There should be a faster way to do this
         // Idea 1: Try merging bitboards, binary search? (possibly large overhead)
         // Idea 2: profile, sort cases, special case for empty?
         let b = &self.bitboard;
         if pos & b.white_pawns != 0 {
-            return WHITE_PAWN;
+            return WhitePawn;
         }
         if pos & b.black_pawns != 0 {
-            return BLACK_PAWN;
+            return BlackPawn;
         }
 
         if pos & b.white_bishops != 0 {
-            return WHITE_BISHOP;
+            return WhiteBishop;
         }
         if pos & b.white_knights != 0 {
-            return WHITE_KNIGHT;
+            return WhiteKnight;
         }
         if pos & b.white_rooks != 0 {
-            return WHITE_ROOK;
+            return WhiteRook;
         }
         if pos & b.black_bishops != 0 {
-            return BLACK_BISHOP;
+            return BlackBishop;
         }
         if pos & b.black_knights != 0 {
-            return BLACK_KNIGHT;
+            return BlackKnight;
         }
         if pos & b.black_rooks != 0 {
-            return BLACK_ROOK;
+            return BlackRook;
         }
 
         if pos & b.white_queen != 0 {
-            return WHITE_QUEEN;
+            return WhiteQueen;
         }
         if pos & b.white_king != 0 {
-            return WHITE_KING;
+            return WhiteKing;
         }
 
         if pos & b.black_queen != 0 {
-            return BLACK_QUEEN;
+            return BlackQueen;
         }
         if pos & b.black_king != 0 {
-            return BLACK_KING;
+            return BlackKing;
         }
 
-        EMPTY_SQUARE
+        EmptySquare
     }
 
     pub fn white_to_move(self) -> bool {
@@ -328,31 +351,31 @@ impl Board {
 
 impl Default for Board {
     fn default() -> Self {
-        let mut ps = [(0u8, 0u64); 32];
+        let mut ps = [(PieceKind::EmptySquare, 0u64); 32];
 
         for i in 0usize..8 {
             let iu = i as u64;
-            ps[i] = (WHITE_PAWN, ROW_2 & (FILE_A << iu));
-            ps[i + 8] = (BLACK_PAWN, ROW_7 & (FILE_A << iu));
+            ps[i] = (WhitePawn, ROW_2 & (FILE_A << iu));
+            ps[i + 8] = (BlackPawn, ROW_7 & (FILE_A << iu));
         }
 
-        ps[16] = (WHITE_KING, ROW_1 & FILE_E);
-        ps[17] = (WHITE_QUEEN, ROW_1 & FILE_D);
-        ps[18] = (WHITE_BISHOP, ROW_1 & FILE_C);
-        ps[19] = (WHITE_BISHOP, ROW_1 & FILE_F);
-        ps[20] = (WHITE_KNIGHT, ROW_1 & FILE_B);
-        ps[21] = (WHITE_KNIGHT, ROW_1 & FILE_G);
-        ps[22] = (WHITE_ROOK, ROW_1 & FILE_A);
-        ps[23] = (WHITE_ROOK, ROW_1 & FILE_H);
+        ps[16] = (WhiteKing, ROW_1 & FILE_E);
+        ps[17] = (WhiteQueen, ROW_1 & FILE_D);
+        ps[18] = (WhiteBishop, ROW_1 & FILE_C);
+        ps[19] = (WhiteBishop, ROW_1 & FILE_F);
+        ps[20] = (WhiteKnight, ROW_1 & FILE_B);
+        ps[21] = (WhiteKnight, ROW_1 & FILE_G);
+        ps[22] = (WhiteRook, ROW_1 & FILE_A);
+        ps[23] = (WhiteRook, ROW_1 & FILE_H);
 
-        ps[24] = (BLACK_KING, ROW_8 & FILE_E);
-        ps[25] = (BLACK_QUEEN, ROW_8 & FILE_D);
-        ps[26] = (BLACK_BISHOP, ROW_8 & FILE_C);
-        ps[27] = (BLACK_BISHOP, ROW_8 & FILE_F);
-        ps[28] = (BLACK_KNIGHT, ROW_8 & FILE_B);
-        ps[29] = (BLACK_KNIGHT, ROW_8 & FILE_G);
-        ps[30] = (BLACK_ROOK, ROW_8 & FILE_A);
-        ps[31] = (BLACK_ROOK, ROW_8 & FILE_H);
+        ps[24] = (BlackKing, ROW_8 & FILE_E);
+        ps[25] = (BlackQueen, ROW_8 & FILE_D);
+        ps[26] = (BlackBishop, ROW_8 & FILE_C);
+        ps[27] = (BlackBishop, ROW_8 & FILE_F);
+        ps[28] = (BlackKnight, ROW_8 & FILE_B);
+        ps[29] = (BlackKnight, ROW_8 & FILE_G);
+        ps[30] = (BlackRook, ROW_8 & FILE_A);
+        ps[31] = (BlackRook, ROW_8 & FILE_H);
 
         let piece_positions = ps.map(|(_, p)| p);
         let piece_kinds = ps.map(|(k, _)| k);

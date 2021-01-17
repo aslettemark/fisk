@@ -129,4 +129,5 @@ fn debug() {
         size_of::<BitBoard>(),
         size_of::<Color>(),
     );
+    println!("PieceKind {}", size_of::<PieceKind>());
 }

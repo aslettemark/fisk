@@ -3,6 +3,7 @@ extern crate bitintr;
 use bitintr::*;
 
 use crate::board::Board;
+use crate::board::PieceKind::EmptySquare;
 use crate::constants::*;
 
 fn pawn_capture_pos(
@@ -14,13 +15,12 @@ fn pawn_capture_pos(
     outvec: &mut Vec<Board>,
 ) {
     let kind = board.kind_at(capture_pos);
-    if kind == EMPTY_SQUARE {
+    if kind == EmptySquare {
         // TODO optimize the check for emptiness?
         return;
     }
 
-    let white_piece = kind & BLACK_BIT == 0;
-    if !(white ^ white_piece) {
+    if !(white ^ kind.is_white()) {
         return;
     }
 
@@ -53,7 +53,7 @@ pub fn white_pawn_moves(
     //a white pawn cannot exist on row 8
     let pos_front = position << 8;
     let kind_front = board.kind_at(pos_front);
-    if kind_front == EMPTY_SQUARE {
+    if kind_front == EmptySquare {
         // pawn short forward move
         let mut new = board.clone_and_advance(0, true);
         new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | pos_front;
@@ -62,10 +62,10 @@ pub fn white_pawn_moves(
         //TODO turn into queen, rook, bishop, knight if row == 8
     }
 
-    if kind_front == EMPTY_SQUARE && (position & ROW_2 != 0) {
+    if kind_front == EmptySquare && (position & ROW_2 != 0) {
         // pawn double square move
         let pos_twofront = pos_front << 8;
-        if board.kind_at(pos_twofront) == EMPTY_SQUARE {
+        if board.kind_at(pos_twofront) == EmptySquare {
             //All clear, sir
             let mut new = board.clone_and_advance(pos_front, true);
             new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | pos_twofront;
@@ -108,7 +108,7 @@ pub fn black_pawn_moves(
     //a black pawn cannot exist on row 0
     let pos_front = position >> 8;
     let kind_front = board.kind_at(pos_front);
-    if kind_front == EMPTY_SQUARE {
+    if kind_front == EmptySquare {
         // pawn short forward move
         let mut new = board.clone_and_advance(0, true);
         new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_front;
@@ -117,10 +117,10 @@ pub fn black_pawn_moves(
         //TODO turn into queen, rook, bishop, knight if row == 0
     }
 
-    if kind_front == EMPTY_SQUARE && (position & ROW_7 != 0) {
+    if kind_front == EmptySquare && (position & ROW_7 != 0) {
         // pawn double square move
         let pos_twofront = pos_front >> 8;
-        if board.kind_at(pos_twofront) == EMPTY_SQUARE {
+        if board.kind_at(pos_twofront) == EmptySquare {
             //All clear, sir
             let mut new = board.clone_and_advance(pos_front, true);
             new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_twofront;
@@ -155,18 +155,18 @@ pub fn black_pawn_moves(
 pub fn rook_moves(
     board: &Board,
     position: u64,
-    pawn_piece_index: usize,
+    piece_index: usize,
     white: bool,
     outvec: &mut Vec<Board>,
 ) {
-    file_slide_moves(board, position, pawn_piece_index, white, outvec);
-    row_slide_moves(board, position, pawn_piece_index, white, outvec);
+    file_slide_moves(board, position, piece_index, white, outvec);
+    row_slide_moves(board, position, piece_index, white, outvec);
 }
 
 fn file_slide_moves(
     board: &Board,
     position: u64,
-    pawn_piece_index: usize,
+    piece_index: usize,
     white: bool,
     outvec: &mut Vec<Board>,
 ) {
@@ -180,7 +180,7 @@ fn file_slide_moves(
 fn row_slide_moves(
     board: &Board,
     position: u64,
-    pawn_piece_index: usize,
+    piece_index: usize,
     white: bool,
     outvec: &mut Vec<Board>,
 ) {
@@ -206,7 +206,7 @@ pub fn knight_moves(
             continue;
         }
         let target_kind = board.kind_at(*t);
-        if target_kind == EMPTY_SQUARE {
+        if target_kind == EmptySquare {
             let mut new = board.clone_and_advance(0, false);
             new.piece_positions[piece_index] = *t;
 
@@ -217,27 +217,24 @@ pub fn knight_moves(
             }
 
             outvec.push(new);
-        } else {
-            let target_white = (target_kind & BLACK_BIT) == 0;
-            if white ^ target_white {
-                let capture_pos = *t;
-                let mut new = board.clone_and_advance(0, true);
-                new.delete_piece(capture_pos);
-                new.piece_positions[piece_index] = capture_pos;
+        } else if white ^ target_kind.is_white() {
+            let capture_pos = *t;
+            let mut new = board.clone_and_advance(0, true);
+            new.delete_piece(capture_pos);
+            new.piece_positions[piece_index] = capture_pos;
 
-                let mut bb = &mut new.bitboard;
-                if white {
-                    bb.white_knights = (bb.white_knights ^ position) | capture_pos;
+            let mut bb = &mut new.bitboard;
+            if white {
+                bb.white_knights = (bb.white_knights ^ position) | capture_pos;
 
-                    new.bitboard.unset_black_piece(capture_pos);
-                } else {
-                    bb.black_knights = (bb.black_knights ^ position) | capture_pos;
+                new.bitboard.unset_black_piece(capture_pos);
+            } else {
+                bb.black_knights = (bb.black_knights ^ position) | capture_pos;
 
-                    new.bitboard.unset_white_piece(capture_pos);
-                }
-
-                outvec.push(new);
+                new.bitboard.unset_white_piece(capture_pos);
             }
+
+            outvec.push(new);
         }
     }
 }
@@ -256,7 +253,7 @@ pub fn king_moves(
             continue;
         }
         let target_kind = board.kind_at(*t);
-        if target_kind == EMPTY_SQUARE {
+        if target_kind == EmptySquare {
             let mut new = board.clone_and_advance(0, false);
             new.piece_positions[piece_index] = *t;
             if white {
@@ -270,8 +267,7 @@ pub fn king_moves(
             continue;
         }
 
-        let target_white = (target_kind & BLACK_BIT) == 0;
-        if !(white ^ target_white) {
+        if !(white ^ target_kind.is_white()) {
             // Can't capture our own pieces
             continue;
         }

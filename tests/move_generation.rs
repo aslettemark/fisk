@@ -1,7 +1,9 @@
 use bitintr::Popcnt;
 
-use fisk::board::Board;
+use fisk::board::PieceKind::EmptySquare;
+use fisk::board::{Board, PieceKind};
 use fisk::constants::*;
+use std::mem::size_of;
 
 fn fen(fen: &str) -> Board {
     Board::from_fen(fen).unwrap()
@@ -34,7 +36,7 @@ fn succ(fen: &str) -> Vec<Board> {
 fn test_alive(board: &Board, n_alive: u64) {
     let mut alive = 0;
     for (i, kind) in board.piece_kinds.iter().enumerate() {
-        if *kind != EMPTY_SQUARE {
+        if *kind != EmptySquare {
             alive += 1;
             assert_ne!(board.piece_positions[i], 0u64); // alive piece has location
         }
@@ -209,4 +211,9 @@ fn test_iter() {
     let s2c = b.iter_successors().count();
 
     assert_eq!(s1.len(), s2c);
+}
+
+#[test]
+fn test_piece_kind_memsize() {
+    assert_eq!(size_of::<PieceKind>(), 1); // Not using more memory than u8
 }
