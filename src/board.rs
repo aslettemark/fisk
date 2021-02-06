@@ -381,8 +381,13 @@ impl Default for Board {
         ps[30] = (BlackRook, ROW_8 & FILE_A);
         ps[31] = (BlackRook, ROW_8 & FILE_H);
 
-        let piece_positions = ps.map(|(_, p)| p);
-        let piece_kinds = ps.map(|(k, _)| k);
+        let mut piece_positions = [0u64; 32];
+        let mut piece_kinds = [PieceKind::EmptySquare; 32];
+
+        for i in 0..32 {
+            piece_kinds[i] = ps[i].0;
+            piece_positions[i] = ps[i].1;
+        }
 
         Board::new(
             BitBoard {

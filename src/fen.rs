@@ -28,10 +28,18 @@ impl Board {
 
         let white_to_move = split.get(1).unwrap() == &"w";
 
+        let mut piece_positions = [0u64; 32];
+        let mut piece_kinds = [PieceKind::EmptySquare; 32];
+
+        for i in 0..32 {
+            piece_kinds[i] = pieces[i].0;
+            piece_positions[i] = pieces[i].1;
+        }
+
         Some(Board::new(
             bitboard,
-            pieces.map(|(_, p)| p),
-            pieces.map(|(k, _)| k),
+            piece_positions,
+            piece_kinds,
             halfmove_clock,
             fullmove_counter,
             0, // TODO

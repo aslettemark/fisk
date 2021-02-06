@@ -1,5 +1,3 @@
-#![feature(array_map)]
-
 #[macro_use]
 extern crate lazy_static;
 
