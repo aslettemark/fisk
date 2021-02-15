@@ -238,6 +238,7 @@ impl Board {
         EmptySquare
     }
 
+    #[inline]
     pub fn split_occupancy(&self) -> (u64, u64) {
         if self.white_to_move() {
             (
@@ -252,7 +253,8 @@ impl Board {
         }
     }
 
-    pub fn white_to_move(self) -> bool {
+    #[inline]
+    pub const fn white_to_move(self) -> bool {
         self.flags.get_bit(0)
     }
 
@@ -385,7 +387,7 @@ impl Default for Board {
 
 impl Flags {
     #[inline]
-    fn get_bit(&self, i: usize) -> bool {
+    const fn get_bit(&self, i: usize) -> bool {
         self.0 & (1 << i) != 0
     }
 

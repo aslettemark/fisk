@@ -160,10 +160,10 @@ pub fn rooklike_moves(
     board: &Board,
     position: u64,
     piece_index: usize,
-    white: bool,
     queen: bool,
     outvec: &mut Vec<Board>,
 ) {
+    let white = board.white_to_move();
     file_slide_moves(board, position, piece_index, white, queen, outvec);
     row_slide_moves(board, position, piece_index, white, queen, outvec);
 }
@@ -343,13 +343,8 @@ fn get_knight_possible_targets(pos: u64) -> [u64; 8] {
     KNIGHT_ATTACK[pos.tzcnt() as usize]
 }
 
-pub fn knight_moves(
-    board: &Board,
-    position: u64,
-    piece_index: usize,
-    white: bool,
-    outvec: &mut Vec<Board>,
-) {
+pub fn knight_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut Vec<Board>) {
+    let white = board.white_to_move();
     let targets = get_knight_possible_targets(position);
     let (our_occupancy, enemy_occupancy) = board.split_occupancy();
     let total_occupancy = our_occupancy | enemy_occupancy;
@@ -397,9 +392,9 @@ pub fn king_moves(
     board: &Board,
     position: u64,
     piece_index: usize,
-    white: bool,
     outvec: &mut Vec<Board>,
 ) {
+    let white = board.white_to_move();
     let trailing = position.tzcnt() as usize;
     let (our_occupancy, enemy_occupancy) = board.split_occupancy();
     let total_occupancy = our_occupancy | enemy_occupancy;

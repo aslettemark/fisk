@@ -23,7 +23,7 @@ impl Board {
     }
 
     #[inline]
-    fn piece_moves(&self, white: bool, piece_index: usize, mut outvec: &mut Vec<Board>) {
+    fn piece_moves(&self, piece_index: usize, mut outvec: &mut Vec<Board>) {
         // TODO Keep pieces ordered with empty square pieces at the end to abort entire
         //  iteration when an empty square is found.
 
@@ -35,36 +35,25 @@ impl Board {
         let piece_position = 1u64 << piece_position_tzcnt;
         let piece_kind = self.piece_kinds[piece_index];
 
-        if white ^ piece_kind.is_white() {
+        if self.white_to_move() ^ piece_kind.is_white() {
             return;
         }
 
         match piece_kind {
             WhitePawn => white_pawn_moves(&self, piece_position, piece_index, &mut outvec),
             BlackPawn => black_pawn_moves(&self, piece_position, piece_index, &mut outvec),
-            WhiteRook | BlackRook => rooklike_moves(
-                &self,
-                piece_position,
-                piece_index,
-                white,
-                false,
-                &mut outvec,
-            ),
+            WhiteRook | BlackRook => {
+                rooklike_moves(&self, piece_position, piece_index, false, &mut outvec)
+            }
             WhiteKnight | BlackKnight => {
-                knight_moves(&self, piece_position, piece_index, white, &mut outvec)
+                knight_moves(&self, piece_position, piece_index, &mut outvec)
             }
-            WhiteKing | BlackKing => {
-                king_moves(&self, piece_position, piece_index, white, &mut outvec)
-            }
+            WhiteKing | BlackKing => king_moves(&self, piece_position, piece_index, &mut outvec),
 
             // TODO
-            WhiteQueen => {
-                rooklike_moves(&self, piece_position, piece_index, white, true, &mut outvec)
-            }
+            WhiteQueen => rooklike_moves(&self, piece_position, piece_index, true, &mut outvec),
             WhiteBishop => {}
-            BlackQueen => {
-                rooklike_moves(&self, piece_position, piece_index, white, true, &mut outvec)
-            }
+            BlackQueen => rooklike_moves(&self, piece_position, piece_index, true, &mut outvec),
             BlackBishop => {}
 
             EmptySquare => {
@@ -74,11 +63,10 @@ impl Board {
     }
 
     pub fn generate_successors(&self) -> Vec<Board> {
-        let white = self.white_to_move();
         let mut states = Vec::with_capacity(32);
 
         for i in 0..32 {
-            self.piece_moves(white, i, &mut states);
+            self.piece_moves(i, &mut states);
         }
 
         states
@@ -127,8 +115,7 @@ impl<'a> Iterator for SuccessorIter<'a> {
                 continue;
             }
 
-            self.board
-                .piece_moves(self.board.white_to_move(), self.piece_index, &mut self.buf);
+            self.board.piece_moves(self.piece_index, &mut self.buf);
             self.piece_index += 1;
 
             if !self.buf.is_empty() {
