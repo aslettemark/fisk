@@ -33,6 +33,12 @@ fn succ(fen: &str) -> Vec<Board> {
     succ
 }
 
+fn gen(fen: &str, expected_succ: usize) -> Vec<Board> {
+    let v = succ(fen);
+    assert_eq!(v.len(), expected_succ);
+    v
+}
+
 fn test_alive(board: &Board, n_alive: u64) {
     let mut alive = 0;
     for (i, kind) in board.piece_kinds.iter().enumerate() {
@@ -44,6 +50,17 @@ fn test_alive(board: &Board, n_alive: u64) {
     assert_eq!(alive, n_alive);
     let cover = board.bitboard.coverage();
     assert_eq!(cover.popcnt(), alive);
+}
+
+fn expect_queens(board: &Board, white: u64, black: u64) {
+    assert_eq!(
+        (board.bitboard.white_bishoplike & board.bitboard.white_rooklike).popcnt(),
+        white
+    );
+    assert_eq!(
+        (board.bitboard.black_bishoplike & board.bitboard.black_rooklike).popcnt(),
+        black
+    );
 }
 
 #[test]
@@ -246,4 +263,56 @@ fn test_rook_file_slide() {
             test_alive(s, 6 + 4);
         }
     }
+}
+
+#[test]
+fn test_rook_row_file_slide() {
+    let s1 = gen("7R/6R1/5R2/4R3/3R4/2R5/1R6/R7 w - - 0 1", 8 * (2 * 7));
+    for s in &s1 {
+        assert_eq!(s.get_halfmove_clock(), 1);
+    }
+
+    let s2 = gen("n6R/6R1/5R2/4R3/3R4/2R5/1R6/R6n w - - 0 1", 8 * (2 * 7));
+    let mut capture_count = 0;
+    for s in &s2 {
+        if s.get_halfmove_clock() == 0 {
+            capture_count += 1;
+            assert_eq!(s.bitboard.black_coverage().popcnt(), 1);
+        } else {
+            assert_eq!(s.bitboard.black_coverage().popcnt(), 2);
+        }
+        expect_queens(s, 0, 0);
+    }
+    assert_eq!(capture_count, 4);
+
+    let s3 = gen("n6Q/6R1/5R2/4R3/3R4/2R5/1R6/Q6n w - - 0 1", 8 * (2 * 7));
+    let mut capture_count = 0;
+    for s in &s3 {
+        if s.get_halfmove_clock() == 0 {
+            capture_count += 1;
+            assert_eq!(s.bitboard.black_coverage().popcnt(), 1);
+        } else {
+            assert_eq!(s.bitboard.black_coverage().popcnt(), 2);
+        }
+        expect_queens(s, 2, 0);
+    }
+    assert_eq!(capture_count, 4);
+}
+
+#[test]
+fn test_queen_moves() {
+    gen("8/1r6/8/3p4/3P4/8/1Q6/8 w - - 0 1", 17);
+
+    let s2 = gen("8/1r6/8/3p4/3P4/rrr5/rQr5/rrr5 w - - 0 1", 8);
+    for s in &s2 {
+        assert_eq!(s.get_halfmove_clock(), 0);
+        assert_eq!(s.bitboard.black_rooklike.popcnt(), 8);
+        expect_queens(s, 1, 0);
+    }
+}
+
+#[test]
+fn test_bishop_moves() {
+    let s1 = gen("b7/1Q6/8/8/8/8/8/8 b - - 0 1", 1);
+    expect_queens(&s1[0], 0, 0);
 }

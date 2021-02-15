@@ -39,22 +39,72 @@ impl Board {
             return;
         }
 
-        match piece_kind {
-            WhitePawn => white_pawn_moves(&self, piece_position, piece_index, &mut outvec),
-            BlackPawn => black_pawn_moves(&self, piece_position, piece_index, &mut outvec),
-            WhiteRook | BlackRook => {
-                rooklike_moves(&self, piece_position, piece_index, false, &mut outvec)
-            }
-            WhiteKnight | BlackKnight => {
-                knight_moves(&self, piece_position, piece_index, &mut outvec)
-            }
-            WhiteKing | BlackKing => king_moves(&self, piece_position, piece_index, &mut outvec),
+        let (our_occupancy, enemy_occupancy) = self.split_occupancy();
 
-            // TODO
-            WhiteQueen => rooklike_moves(&self, piece_position, piece_index, true, &mut outvec),
-            WhiteBishop => {}
-            BlackQueen => rooklike_moves(&self, piece_position, piece_index, true, &mut outvec),
-            BlackBishop => {}
+        match piece_kind {
+            WhitePawn => white_pawn_moves(
+                &self,
+                piece_position,
+                piece_index,
+                our_occupancy,
+                enemy_occupancy,
+                &mut outvec,
+            ),
+            BlackPawn => black_pawn_moves(
+                &self,
+                piece_position,
+                piece_index,
+                our_occupancy,
+                enemy_occupancy,
+                &mut outvec,
+            ),
+            WhiteRook | BlackRook => rooklike_moves(
+                &self,
+                piece_position,
+                piece_index,
+                our_occupancy,
+                enemy_occupancy,
+                false,
+                &mut outvec,
+            ),
+            WhiteKnight | BlackKnight => knight_moves(
+                &self,
+                piece_position,
+                piece_index,
+                our_occupancy,
+                enemy_occupancy,
+                &mut outvec,
+            ),
+            WhiteKing | BlackKing => king_moves(&self, piece_position, piece_index, &mut outvec),
+            WhiteQueen | BlackQueen => {
+                rooklike_moves(
+                    &self,
+                    piece_position,
+                    piece_index,
+                    our_occupancy,
+                    enemy_occupancy,
+                    true,
+                    &mut outvec,
+                );
+                bishoplike_moves(
+                    &self,
+                    piece_position,
+                    piece_index,
+                    our_occupancy,
+                    enemy_occupancy,
+                    true,
+                    &mut outvec,
+                );
+            }
+            WhiteBishop | BlackBishop => bishoplike_moves(
+                &self,
+                piece_position,
+                piece_index,
+                our_occupancy,
+                enemy_occupancy,
+                false,
+                &mut outvec,
+            ),
 
             EmptySquare => {
                 unreachable!()
@@ -63,7 +113,7 @@ impl Board {
     }
 
     pub fn generate_successors(&self) -> Vec<Board> {
-        let mut states = Vec::with_capacity(32);
+        let mut states = Vec::with_capacity(64);
 
         for i in 0..32 {
             self.piece_moves(i, &mut states);

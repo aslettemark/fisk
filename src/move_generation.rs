@@ -36,9 +36,10 @@ pub fn white_pawn_moves(
     board: &Board,
     position: u64,
     pawn_piece_index: usize,
+    our_occupancy: u64,
+    enemy_occupancy: u64,
     outvec: &mut Vec<Board>,
 ) {
-    let (our_occupancy, enemy_occupancy) = board.split_occupancy();
     let total_occupancy = our_occupancy | enemy_occupancy;
 
     //a white pawn cannot exist on row 8
@@ -98,9 +99,10 @@ pub fn black_pawn_moves(
     board: &Board,
     position: u64,
     pawn_piece_index: usize,
+    our_occupancy: u64,
+    enemy_occupancy: u64,
     outvec: &mut Vec<Board>,
 ) {
-    let (our_occupancy, enemy_occupancy) = board.split_occupancy();
     let total_occupancy = our_occupancy | enemy_occupancy;
 
     //a black pawn cannot exist on row 0
@@ -156,16 +158,206 @@ pub fn black_pawn_moves(
     //TODO en passant capture
 }
 
-pub fn rooklike_moves(
+#[allow(clippy::too_many_arguments)]
+fn bishoplike_target_square(
+    white: bool,
+    queen: bool,
+    piece_index: usize,
+    position: u64,
+    target_pos: u64,
+    our_occupancy: u64,
+    enemy_occupancy: u64,
+    board: &Board,
+    outvec: &mut Vec<Board>,
+) -> bool {
+    let target_pos_tzcnt = target_pos.tzcnt() as u8;
+    if (target_pos & enemy_occupancy) != 0 {
+        // Capture
+        let mut new = board.clone_and_advance(0, true);
+        new.delete_piece(target_pos_tzcnt);
+        new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
+        if white {
+            new.bitboard.white_bishoplike = (new.bitboard.white_bishoplike ^ position) | target_pos;
+            if queen {
+                new.bitboard.white_rooklike = (new.bitboard.white_rooklike ^ position) | target_pos;
+            }
+            new.bitboard.unset_black_piece(target_pos);
+        } else {
+            new.bitboard.black_bishoplike = (new.bitboard.black_bishoplike ^ position) | target_pos;
+            if queen {
+                new.bitboard.black_rooklike = (new.bitboard.black_rooklike ^ position) | target_pos;
+            }
+            new.bitboard.unset_white_piece(target_pos);
+        }
+        outvec.push(new);
+        return false;
+    } else if (target_pos & our_occupancy) != 0 {
+        // Abort
+        return false;
+    } else {
+        // Move to empty square
+        let mut new = board.clone_and_advance(0, false);
+        new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
+        if white {
+            new.bitboard.white_bishoplike = (new.bitboard.white_bishoplike ^ position) | target_pos;
+            if queen {
+                new.bitboard.white_rooklike = (new.bitboard.white_rooklike ^ position) | target_pos;
+            }
+        } else {
+            new.bitboard.black_bishoplike = (new.bitboard.black_bishoplike ^ position) | target_pos;
+            if queen {
+                new.bitboard.black_rooklike = (new.bitboard.black_rooklike ^ position) | target_pos;
+            }
+        }
+        outvec.push(new);
+    }
+    true
+}
+
+pub fn bishoplike_moves(
     board: &Board,
     position: u64,
     piece_index: usize,
+    our_occupancy: u64,
+    enemy_occupancy: u64,
     queen: bool,
     outvec: &mut Vec<Board>,
 ) {
     let white = board.white_to_move();
-    file_slide_moves(board, position, piece_index, white, queen, outvec);
-    row_slide_moves(board, position, piece_index, white, queen, outvec);
+
+    fn is_at_top(position: u64) -> bool {
+        intersects(position, ROW_8)
+    }
+    fn is_at_bottom(position: u64) -> bool {
+        intersects(position, ROW_1)
+    }
+    fn is_at_left(position: u64) -> bool {
+        intersects(position, FILE_A)
+    }
+    fn is_at_right(position: u64) -> bool {
+        intersects(position, FILE_H)
+    }
+
+    let top = is_at_top(position);
+    let bottom = is_at_bottom(position);
+    let right = is_at_right(position);
+    let left = is_at_left(position);
+
+    if !top && !right {
+        let mut target_pos = position << 9;
+        loop {
+            let should_continue = bishoplike_target_square(
+                white,
+                queen,
+                piece_index,
+                position,
+                target_pos,
+                our_occupancy,
+                enemy_occupancy,
+                board,
+                outvec,
+            );
+            if !should_continue || is_at_top(target_pos) || is_at_right(target_pos) {
+                break;
+            }
+            target_pos <<= 9;
+        }
+    }
+
+    if !top && !left {
+        let mut target_pos = position << 7;
+        loop {
+            let should_continue = bishoplike_target_square(
+                white,
+                queen,
+                piece_index,
+                position,
+                target_pos,
+                our_occupancy,
+                enemy_occupancy,
+                board,
+                outvec,
+            );
+            if !should_continue || is_at_top(target_pos) || is_at_left(target_pos) {
+                break;
+            }
+            target_pos <<= 7;
+        }
+    }
+
+    if !bottom && !right {
+        let mut target_pos = position >> 7;
+        loop {
+            let should_continue = bishoplike_target_square(
+                white,
+                queen,
+                piece_index,
+                position,
+                target_pos,
+                our_occupancy,
+                enemy_occupancy,
+                board,
+                outvec,
+            );
+            if !should_continue || is_at_bottom(target_pos) || is_at_right(target_pos) {
+                break;
+            }
+            target_pos >>= 7;
+        }
+    }
+
+    if !bottom && !left {
+        let mut target_pos = position >> 9;
+        loop {
+            let should_continue = bishoplike_target_square(
+                white,
+                queen,
+                piece_index,
+                position,
+                target_pos,
+                our_occupancy,
+                enemy_occupancy,
+                board,
+                outvec,
+            );
+            if !should_continue || is_at_bottom(target_pos) || is_at_left(target_pos) {
+                break;
+            }
+            target_pos >>= 9;
+        }
+    }
+}
+
+pub fn rooklike_moves(
+    board: &Board,
+    position: u64,
+    piece_index: usize,
+    our_occupancy: u64,
+    enemy_occupancy: u64,
+    queen: bool,
+    outvec: &mut Vec<Board>,
+) {
+    let white = board.white_to_move();
+    file_slide_moves(
+        board,
+        position,
+        piece_index,
+        white,
+        queen,
+        our_occupancy,
+        enemy_occupancy,
+        outvec,
+    );
+    row_slide_moves(
+        board,
+        position,
+        piece_index,
+        white,
+        queen,
+        our_occupancy,
+        enemy_occupancy,
+        outvec,
+    );
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -228,16 +420,17 @@ fn rooklike_target_square(
     true
 }
 
+#[allow(clippy::too_many_arguments)]
 fn file_slide_moves(
     board: &Board,
     position: u64,
     piece_index: usize,
     white: bool,
     queen: bool,
+    our_occupancy: u64,
+    enemy_occupancy: u64,
     outvec: &mut Vec<Board>,
 ) {
-    let (our_occupancy, enemy_occupancy) = board.split_occupancy();
-
     if position & ROW_8 == 0 {
         // Not in row 8, ie can move upwards
         let mut target_pos = position << 8;
@@ -283,16 +476,17 @@ fn file_slide_moves(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn row_slide_moves(
     board: &Board,
     position: u64,
     piece_index: usize,
     white: bool,
     queen: bool,
+    our_occupancy: u64,
+    enemy_occupancy: u64,
     outvec: &mut Vec<Board>,
 ) {
-    let (our_occupancy, enemy_occupancy) = board.split_occupancy();
-
     if !intersects(position, FILE_H) {
         // Not in file H, ie can move in positive file direction
         let mut target_pos = position << 1;
@@ -343,10 +537,16 @@ fn get_knight_possible_targets(pos: u64) -> [u64; 8] {
     KNIGHT_ATTACK[pos.tzcnt() as usize]
 }
 
-pub fn knight_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut Vec<Board>) {
+pub fn knight_moves(
+    board: &Board,
+    position: u64,
+    piece_index: usize,
+    our_occupancy: u64,
+    enemy_occupancy: u64,
+    outvec: &mut Vec<Board>,
+) {
     let white = board.white_to_move();
     let targets = get_knight_possible_targets(position);
-    let (our_occupancy, enemy_occupancy) = board.split_occupancy();
     let total_occupancy = our_occupancy | enemy_occupancy;
 
     for t in &targets {
@@ -388,12 +588,7 @@ pub fn knight_moves(board: &Board, position: u64, piece_index: usize, outvec: &m
     }
 }
 
-pub fn king_moves(
-    board: &Board,
-    position: u64,
-    piece_index: usize,
-    outvec: &mut Vec<Board>,
-) {
+pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut Vec<Board>) {
     let white = board.white_to_move();
     let trailing = position.tzcnt() as usize;
     let (our_occupancy, enemy_occupancy) = board.split_occupancy();
