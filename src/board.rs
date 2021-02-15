@@ -200,7 +200,7 @@ impl Board {
     pub fn print(&self) {
         println!(" A B C D E F G H");
 
-        for (i, row) in ROWS.iter().enumerate() {
+        for (i, row) in ROWS.iter().rev().enumerate() {
             print!("{}", 7 - i + 1);
 
             for file in &FILES {
