@@ -42,9 +42,14 @@ impl Board {
         match piece_kind {
             WhitePawn => white_pawn_moves(&self, piece_position, piece_index, &mut outvec),
             BlackPawn => black_pawn_moves(&self, piece_position, piece_index, &mut outvec),
-            WhiteRook | BlackRook => {
-                rook_moves(&self, piece_position, piece_index, white, &mut outvec)
-            }
+            WhiteRook | BlackRook => rooklike_moves(
+                &self,
+                piece_position,
+                piece_index,
+                white,
+                false,
+                &mut outvec,
+            ),
             WhiteKnight | BlackKnight => {
                 knight_moves(&self, piece_position, piece_index, white, &mut outvec)
             }
@@ -53,9 +58,13 @@ impl Board {
             }
 
             // TODO
-            WhiteQueen => {}
+            WhiteQueen => {
+                rooklike_moves(&self, piece_position, piece_index, white, true, &mut outvec)
+            }
             WhiteBishop => {}
-            BlackQueen => {}
+            BlackQueen => {
+                rooklike_moves(&self, piece_position, piece_index, white, true, &mut outvec)
+            }
             BlackBishop => {}
 
             EmptySquare => {

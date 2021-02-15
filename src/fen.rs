@@ -104,7 +104,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [(PieceKind, u64); 32]) {
                 WhiteQueen => {
                     bb.white_rooklike ^= pos;
                     bb.white_bishoplike ^= pos;
-                },
+                }
                 WhiteKing => bb.white_king ^= pos,
                 BlackPawn => bb.black_pawns ^= pos,
                 BlackBishop => bb.black_bishoplike ^= pos,
@@ -113,7 +113,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [(PieceKind, u64); 32]) {
                 BlackQueen => {
                     bb.black_rooklike ^= pos;
                     bb.black_bishoplike ^= pos;
-                },
+                }
                 BlackKing => bb.black_king ^= pos,
                 _ => (),
             };

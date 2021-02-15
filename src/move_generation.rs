@@ -156,20 +156,22 @@ pub fn black_pawn_moves(
     //TODO en passant capture
 }
 
-pub fn rook_moves(
+pub fn rooklike_moves(
     board: &Board,
     position: u64,
     piece_index: usize,
     white: bool,
+    queen: bool,
     outvec: &mut Vec<Board>,
 ) {
-    rook_file_slide_moves(board, position, piece_index, white, outvec);
-    row_slide_moves(board, position, piece_index, white, outvec);
+    file_slide_moves(board, position, piece_index, white, queen, outvec);
+    row_slide_moves(board, position, piece_index, white, queen, outvec);
 }
 
 #[allow(clippy::too_many_arguments)]
-fn rook_target_square(
+fn rooklike_target_square(
     white: bool,
+    queen: bool,
     piece_index: usize,
     position: u64,
     target_pos: u64,
@@ -186,9 +188,17 @@ fn rook_target_square(
         new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
         if white {
             new.bitboard.white_rooklike = (new.bitboard.white_rooklike ^ position) | target_pos;
+            if queen {
+                new.bitboard.white_bishoplike =
+                    (new.bitboard.white_bishoplike ^ position) | target_pos;
+            }
             new.bitboard.unset_black_piece(target_pos);
         } else {
             new.bitboard.black_rooklike = (new.bitboard.black_rooklike ^ position) | target_pos;
+            if queen {
+                new.bitboard.black_bishoplike =
+                    (new.bitboard.black_bishoplike ^ position) | target_pos;
+            }
             new.bitboard.unset_white_piece(target_pos);
         }
         outvec.push(new);
@@ -202,19 +212,28 @@ fn rook_target_square(
         new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
         if white {
             new.bitboard.white_rooklike = (new.bitboard.white_rooklike ^ position) | target_pos;
+            if queen {
+                new.bitboard.white_bishoplike =
+                    (new.bitboard.white_bishoplike ^ position) | target_pos;
+            }
         } else {
             new.bitboard.black_rooklike = (new.bitboard.black_rooklike ^ position) | target_pos;
+            if queen {
+                new.bitboard.black_bishoplike =
+                    (new.bitboard.black_bishoplike ^ position) | target_pos;
+            }
         }
         outvec.push(new);
     }
     true
 }
 
-fn rook_file_slide_moves(
+fn file_slide_moves(
     board: &Board,
     position: u64,
     piece_index: usize,
     white: bool,
+    queen: bool,
     outvec: &mut Vec<Board>,
 ) {
     let (our_occupancy, enemy_occupancy) = board.split_occupancy();
@@ -223,8 +242,9 @@ fn rook_file_slide_moves(
         // Not in row 8, ie can move upwards
         let mut target_pos = position << 8;
         loop {
-            let should_continue = rook_target_square(
+            let should_continue = rooklike_target_square(
                 white,
+                queen,
                 piece_index,
                 position,
                 target_pos,
@@ -244,8 +264,9 @@ fn rook_file_slide_moves(
         // Not in row 1, ie can move downwards
         let mut target_pos = position >> 8;
         loop {
-            let should_continue = rook_target_square(
+            let should_continue = rooklike_target_square(
                 white,
+                queen,
                 piece_index,
                 position,
                 target_pos,
@@ -267,9 +288,54 @@ fn row_slide_moves(
     position: u64,
     piece_index: usize,
     white: bool,
+    queen: bool,
     outvec: &mut Vec<Board>,
 ) {
-    //TODO
+    let (our_occupancy, enemy_occupancy) = board.split_occupancy();
+
+    if !intersects(position, FILE_H) {
+        // Not in file H, ie can move in positive file direction
+        let mut target_pos = position << 1;
+        loop {
+            let should_continue = rooklike_target_square(
+                white,
+                queen,
+                piece_index,
+                position,
+                target_pos,
+                our_occupancy,
+                enemy_occupancy,
+                board,
+                outvec,
+            );
+            if !should_continue || intersects(target_pos, FILE_H) {
+                break;
+            }
+            target_pos <<= 1;
+        }
+    }
+
+    if !intersects(position, FILE_A) {
+        // Not in file A, ie can move negative file direction
+        let mut target_pos = position >> 1;
+        loop {
+            let should_continue = rooklike_target_square(
+                white,
+                queen,
+                piece_index,
+                position,
+                target_pos,
+                our_occupancy,
+                enemy_occupancy,
+                board,
+                outvec,
+            );
+            if !should_continue || intersects(target_pos, FILE_A) {
+                break;
+            }
+            target_pos >>= 1;
+        }
+    }
 }
 
 #[inline]

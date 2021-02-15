@@ -1,3 +1,4 @@
+use bitintr::Tzcnt;
 use std::cmp::{max, min};
 
 pub const ROW_1: u64 = 0xFF;
@@ -140,4 +141,13 @@ fn get_knight_attacks(trailing: u64) -> [u64; 8] {
 #[inline]
 pub const fn intersects(a: u64, b: u64) -> bool {
     (a & b) != 0
+}
+
+pub fn pos_to_file_index(pos: u64) -> usize {
+    let tzc = pos.tzcnt();
+    (tzc % 8) as usize
+}
+
+pub fn file_mask_of_pos(pos: u64) -> u64 {
+    FILES[pos_to_file_index(pos)]
 }
