@@ -2,6 +2,8 @@ use crate::board::PieceKind::*;
 use crate::board::{BitBoard, Board, PieceKind};
 use crate::constants::*;
 
+use bitintr::*;
+
 pub const FEN_DEFAULT_BOARD: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 impl Board {
@@ -28,12 +30,13 @@ impl Board {
 
         let white_to_move = split.get(1).unwrap() == &"w";
 
-        let mut piece_positions = [0u64; 32];
+        let mut piece_positions = [TZCNT_U64_ZEROS; 32];
         let mut piece_kinds = [PieceKind::EmptySquare; 32];
 
         for i in 0..32 {
             piece_kinds[i] = pieces[i].0;
-            piece_positions[i] = pieces[i].1;
+            let pos = pieces[i].1;
+            piece_positions[i] = pos.tzcnt() as u8;
         }
 
         Some(Board::new(

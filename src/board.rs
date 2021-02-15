@@ -2,6 +2,8 @@ use crate::board::Color::{Black, Empty, White};
 use crate::board::PieceKind::*;
 use crate::constants::*;
 
+use bitintr::*;
+
 /// Bit overview:
 /// 0: white to move
 /// 1: black queenside castling availability
@@ -9,7 +11,7 @@ use crate::constants::*;
 /// 3: white queenside castling
 /// 4: white kingside castling
 /// 5-7: unused
-/// 8-15: reserved (en passant file, one-hot/popcnt encoded)
+/// 8-15: reserved (en passant file, one-hot encoded)
 /// 16-31: halfmove_clock
 /// 32-47: fullmove_counter
 #[derive(Copy, Clone, Debug)]
@@ -19,7 +21,7 @@ struct Flags(u64);
 pub struct Board {
     pub en_passant: u64,
     pub bitboard: BitBoard,
-    pub piece_positions: [u64; 32],
+    pub piece_positions_tzcnt: [u8; 32],
     pub piece_kinds: [PieceKind; 32],
     flags: Flags,
 }
@@ -167,7 +169,7 @@ impl Board {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         bitboard: BitBoard,
-        piece_positions: [u64; 32],
+        piece_positions_tzcnt: [u8; 32],
         piece_kinds: [PieceKind; 32],
         halfmove_clock: u16,
         fullmove_counter: u16,
@@ -178,7 +180,7 @@ impl Board {
         let mut board = Board {
             en_passant,
             bitboard,
-            piece_positions,
+            piece_positions_tzcnt,
             piece_kinds,
             flags: Flags { 0: 0 },
         };
@@ -381,12 +383,12 @@ impl Default for Board {
         ps[30] = (BlackRook, ROW_8 & FILE_A);
         ps[31] = (BlackRook, ROW_8 & FILE_H);
 
-        let mut piece_positions = [0u64; 32];
+        let mut piece_positions = [TZCNT_U64_ZEROS; 32];
         let mut piece_kinds = [PieceKind::EmptySquare; 32];
 
         for i in 0..32 {
             piece_kinds[i] = ps[i].0;
-            piece_positions[i] = ps[i].1;
+            piece_positions[i] = ps[i].1.tzcnt() as u8;
         }
 
         Board::new(

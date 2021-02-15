@@ -38,7 +38,7 @@ fn test_alive(board: &Board, n_alive: u64) {
     for (i, kind) in board.piece_kinds.iter().enumerate() {
         if *kind != EmptySquare {
             alive += 1;
-            assert_ne!(board.piece_positions[i], 0u64); // alive piece has location
+            assert_ne!(board.piece_positions_tzcnt[i], TZCNT_U64_ZEROS); // alive piece has location
         }
     }
     assert_eq!(alive, n_alive);

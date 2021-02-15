@@ -1,5 +1,6 @@
 use crate::board::PieceKind::*;
 use crate::board::{Board, PieceKind};
+use crate::constants::TZCNT_U64_ZEROS;
 use crate::move_generation::*;
 
 impl Board {
@@ -26,7 +27,12 @@ impl Board {
         // TODO Keep pieces ordered with empty square pieces at the end to abort entire
         //  iteration when an empty square is found.
 
-        let piece_position = self.piece_positions[piece_index];
+        let piece_position_tzcnt = self.piece_positions_tzcnt[piece_index];
+        let piece_position = if piece_position_tzcnt == TZCNT_U64_ZEROS {
+            0
+        } else {
+            1u64 << piece_position_tzcnt
+        };
         let piece_kind = self.piece_kinds[piece_index];
 
         if piece_kind == PieceKind::EmptySquare {
@@ -73,11 +79,11 @@ impl Board {
         states
     }
 
-    pub fn delete_piece(&mut self, capture_pos: u64) {
-        let piece_positions = &mut self.piece_positions;
-        for (i, p) in piece_positions.iter().enumerate() {
-            if *p == capture_pos {
-                piece_positions[i] = 0;
+    pub fn delete_piece(&mut self, capture_pos_tzcnt: u8) {
+        let piece_positions_tzcnt = &mut self.piece_positions_tzcnt;
+        for (i, p) in piece_positions_tzcnt.iter().enumerate() {
+            if *p == capture_pos_tzcnt {
+                piece_positions_tzcnt[i] = TZCNT_U64_ZEROS;
                 self.piece_kinds[i] = EmptySquare;
                 break;
             }
