@@ -42,6 +42,7 @@ pub const BLACK_KING: u8 = WHITE_KING | BLACK_BIT;
 
 pub const TZCNT_U64_ZEROS: u8 = 64; // 0u64.tzcnt()
 
+// TODO investigate optimization by tzcnt positions
 lazy_static! {
     pub static ref KNIGHT_ATTACK: [[u64; 8]; 64] = generate_knight_attacks();
     pub static ref FILE_ATTACK: [u64; 64] = generate_file_attacks();
@@ -134,4 +135,9 @@ fn get_knight_attacks(trailing: u64) -> [u64; 8] {
         }
     }
     attacks
+}
+
+#[inline]
+pub const fn intersects(a: u64, b: u64) -> bool {
+    (a & b) != 0
 }

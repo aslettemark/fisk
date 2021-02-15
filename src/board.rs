@@ -205,7 +205,7 @@ impl Board {
 
             for file in &FILES {
                 let pos = row & file;
-                let c = self.piece_representation(self.kind_at(pos));
+                let c = self.piece_representation(self.slow_kind_at(pos));
 
                 print!("{} ", c);
             }
@@ -238,52 +238,28 @@ impl Board {
         }
     }
 
-    pub fn kind_at(&self, pos: u64) -> PieceKind {
-        //TODO: There should be a faster way to do this
-        // Idea 1: Try merging bitboards, binary search? (possibly large overhead)
-        // Idea 2: profile, sort cases, special case for empty?
-        let b = &self.bitboard;
-        if pos & b.white_pawns != 0 {
-            return WhitePawn;
+    pub fn slow_kind_at(&self, pos: u64) -> PieceKind {
+        let pos_tzcnt = pos.tzcnt() as u8;
+        for (i, ptz) in self.piece_positions_tzcnt.iter().enumerate() {
+            if *ptz == pos_tzcnt {
+                return self.piece_kinds[i];
+            }
         }
-        if pos & b.black_pawns != 0 {
-            return BlackPawn;
-        }
-
-        if pos & b.white_bishops != 0 {
-            return WhiteBishop;
-        }
-        if pos & b.white_knights != 0 {
-            return WhiteKnight;
-        }
-        if pos & b.white_rooks != 0 {
-            return WhiteRook;
-        }
-        if pos & b.black_bishops != 0 {
-            return BlackBishop;
-        }
-        if pos & b.black_knights != 0 {
-            return BlackKnight;
-        }
-        if pos & b.black_rooks != 0 {
-            return BlackRook;
-        }
-
-        if pos & b.white_queen != 0 {
-            return WhiteQueen;
-        }
-        if pos & b.white_king != 0 {
-            return WhiteKing;
-        }
-
-        if pos & b.black_queen != 0 {
-            return BlackQueen;
-        }
-        if pos & b.black_king != 0 {
-            return BlackKing;
-        }
-
         EmptySquare
+    }
+
+    pub fn split_occupancy(&self) -> (u64, u64) {
+        if self.white_to_move() {
+            (
+                self.bitboard.white_coverage(),
+                self.bitboard.black_coverage(),
+            )
+        } else {
+            (
+                self.bitboard.black_coverage(),
+                self.bitboard.white_coverage(),
+            )
+        }
     }
 
     pub fn white_to_move(self) -> bool {
