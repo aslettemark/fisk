@@ -1,5 +1,5 @@
+use crate::board::Board;
 use crate::board::PieceKind::*;
-use crate::board::{Board, PieceKind};
 use crate::constants::TZCNT_U64_ZEROS;
 use crate::move_generation::*;
 
@@ -28,16 +28,12 @@ impl Board {
         //  iteration when an empty square is found.
 
         let piece_position_tzcnt = self.piece_positions_tzcnt[piece_index];
-        let piece_position = if piece_position_tzcnt == TZCNT_U64_ZEROS {
-            0
-        } else {
-            1u64 << piece_position_tzcnt
-        };
-        let piece_kind = self.piece_kinds[piece_index];
-
-        if piece_kind == PieceKind::EmptySquare {
+        if piece_position_tzcnt == TZCNT_U64_ZEROS {
+            // No position => empty square
             return;
         }
+        let piece_position = 1u64 << piece_position_tzcnt;
+        let piece_kind = self.piece_kinds[piece_index];
 
         if white ^ piece_kind.is_white() {
             return;
