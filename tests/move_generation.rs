@@ -217,3 +217,29 @@ fn test_iter() {
 fn test_piece_kind_memsize() {
     assert_eq!(size_of::<PieceKind>(), 1); // Not using more memory than u8
 }
+
+#[test]
+fn test_rook_file_slide() {
+    let s1 = succ("8/7k/8/8/4p1p1/4PRP1/8/K7 w - - 0 1");
+    assert_eq!(s1.len(), 3 + 7); // 3 king moves + 7 moves to empty squares
+
+    let s2 = succ("8/5n1k/8/8/4p1p1/4PRP1/8/K7 w - - 0 1");
+    assert_eq!(s2.len(), 3 + 5 + 1); // 3 king + 5 non-capture + 1 capture
+
+    let s3 = succ("8/5n1k/8/8/4ppp1/4PRP1/8/K7 w - - 0 1");
+    assert_eq!(s3.len(), 3 + 2 + 1 + 2); // 2 pawn captures
+
+    let s4 = succ("8/5n1k/8/8/4ppp1/4PRP1/5p2/K7 w - - 0 1");
+    assert_eq!(s4.len(), 3 + 2 + 2);
+    for s in &s4 {
+        if s.bitboard.white_king == 1u64 {
+            // King didn't move
+            // All moves are captures
+            assert_eq!(s.bitboard.black_coverage().popcnt(), 5);
+            test_alive(s, 5 + 4);
+        } else {
+            assert_eq!(s.bitboard.black_coverage().popcnt(), 6);
+            test_alive(s, 6 + 4);
+        }
+    }
+}

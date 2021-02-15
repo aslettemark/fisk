@@ -158,11 +158,54 @@ pub fn rook_moves(
     white: bool,
     outvec: &mut Vec<Board>,
 ) {
-    file_slide_moves(board, position, piece_index, white, outvec);
+    rook_file_slide_moves(board, position, piece_index, white, outvec);
     row_slide_moves(board, position, piece_index, white, outvec);
 }
 
-fn file_slide_moves(
+#[allow(clippy::too_many_arguments)]
+fn rook_target_square(
+    white: bool,
+    piece_index: usize,
+    position: u64,
+    target_pos: u64,
+    our_occupancy: u64,
+    enemy_occupancy: u64,
+    board: &Board,
+    outvec: &mut Vec<Board>,
+) -> bool {
+    let target_pos_tzcnt = target_pos.tzcnt() as u8;
+    if (target_pos & enemy_occupancy) != 0 {
+        // Capture
+        let mut new = board.clone_and_advance(0, true);
+        new.delete_piece(target_pos_tzcnt);
+        new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
+        if white {
+            new.bitboard.white_rooks = (new.bitboard.white_rooks ^ position) | target_pos;
+            new.bitboard.unset_black_piece(target_pos);
+        } else {
+            new.bitboard.black_rooks = (new.bitboard.black_rooks ^ position) | target_pos;
+            new.bitboard.unset_white_piece(target_pos);
+        }
+        outvec.push(new);
+        return false;
+    } else if (target_pos & our_occupancy) != 0 {
+        // Abort
+        return false;
+    } else {
+        // Move to empty square
+        let mut new = board.clone_and_advance(0, false);
+        new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
+        if white {
+            new.bitboard.white_rooks = (new.bitboard.white_rooks ^ position) | target_pos;
+        } else {
+            new.bitboard.black_rooks = (new.bitboard.black_rooks ^ position) | target_pos;
+        }
+        outvec.push(new);
+    }
+    true
+}
+
+fn rook_file_slide_moves(
     board: &Board,
     position: u64,
     piece_index: usize,
@@ -170,9 +213,56 @@ fn file_slide_moves(
     outvec: &mut Vec<Board>,
 ) {
     //TODO
-    if position & ROW_8 == 0 { //Not in row 8, ie can move upwards
+    let our_occupancy;
+    let enemy_occupancy;
+    if white {
+        our_occupancy = board.bitboard.white_coverage();
+        enemy_occupancy = board.bitboard.black_coverage();
+    } else {
+        our_occupancy = board.bitboard.black_coverage();
+        enemy_occupancy = board.bitboard.white_coverage();
     }
-    if position & ROW_1 == 0 { //Not in row 1, ie can move downwards
+
+    if position & ROW_8 == 0 {
+        // Not in row 8, ie can move upwards
+        let mut target_pos = position << 8;
+        loop {
+            let should_continue = rook_target_square(
+                white,
+                piece_index,
+                position,
+                target_pos,
+                our_occupancy,
+                enemy_occupancy,
+                board,
+                outvec,
+            );
+            if !should_continue || (target_pos & ROW_8) != 0 {
+                break;
+            }
+            target_pos <<= 8;
+        }
+    }
+
+    if position & ROW_1 == 0 {
+        // Not in row 1, ie can move downwards
+        let mut target_pos = position >> 8;
+        loop {
+            let should_continue = rook_target_square(
+                white,
+                piece_index,
+                position,
+                target_pos,
+                our_occupancy,
+                enemy_occupancy,
+                board,
+                outvec,
+            );
+            if !should_continue || (target_pos & ROW_1) != 0 {
+                break;
+            }
+            target_pos >>= 8;
+        }
     }
 }
 
