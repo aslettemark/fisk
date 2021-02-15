@@ -64,10 +64,14 @@ fn test_basic_pawn_moves() {
     assert_eq!(succ.len(), 2);
 
     let c = fen("8/8/8/3p4/2QR4/8/8/8 b - - 0 1");
+    assert_eq!(c.bitboard.white_rooklike.popcnt(), 2);
+    assert_eq!(c.bitboard.white_bishoplike.popcnt(), 1);
     let succ = c.generate_successors();
     assert_eq!(succ.len(), 1);
-    test_alive(&succ[0], 2);
-    assert_eq!(succ[0].bitboard.white_queen, 0);
+    let s = succ[0];
+    test_alive(&s, 2);
+    assert_eq!(s.bitboard.white_rooklike.popcnt(), 1);
+    assert_eq!(s.bitboard.white_bishoplike.popcnt(), 0);
 }
 
 /* TODO

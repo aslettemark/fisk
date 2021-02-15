@@ -98,16 +98,22 @@ fn parse_board_string(board: &str) -> (BitBoard, [(PieceKind, u64); 32]) {
 
             match kind {
                 WhitePawn => bb.white_pawns ^= pos,
-                WhiteBishop => bb.white_bishops ^= pos,
+                WhiteBishop => bb.white_bishoplike ^= pos,
                 WhiteKnight => bb.white_knights ^= pos,
-                WhiteRook => bb.white_rooks ^= pos,
-                WhiteQueen => bb.white_queen ^= pos,
+                WhiteRook => bb.white_rooklike ^= pos,
+                WhiteQueen => {
+                    bb.white_rooklike ^= pos;
+                    bb.white_bishoplike ^= pos;
+                },
                 WhiteKing => bb.white_king ^= pos,
                 BlackPawn => bb.black_pawns ^= pos,
-                BlackBishop => bb.black_bishops ^= pos,
+                BlackBishop => bb.black_bishoplike ^= pos,
                 BlackKnight => bb.black_knights ^= pos,
-                BlackRook => bb.black_rooks ^= pos,
-                BlackQueen => bb.black_queen ^= pos,
+                BlackRook => bb.black_rooklike ^= pos,
+                BlackQueen => {
+                    bb.black_rooklike ^= pos;
+                    bb.black_bishoplike ^= pos;
+                },
                 BlackKing => bb.black_king ^= pos,
                 _ => (),
             };

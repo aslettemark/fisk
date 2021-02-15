@@ -32,17 +32,15 @@ pub struct BitBoard {
     // bit 0 is a1, bit 7 is h1, bit 63 is h8
     // TODO: Consider having array(s) of u64 to reduce branching when checking side, ie pawns[white]
     pub white_pawns: u64,
-    pub white_queen: u64,
     pub white_king: u64,
-    pub white_rooks: u64,
-    pub white_bishops: u64,
+    pub white_rooklike: u64,
+    pub white_bishoplike: u64,
     pub white_knights: u64,
 
     pub black_pawns: u64,
-    pub black_queen: u64,
     pub black_king: u64,
-    pub black_rooks: u64,
-    pub black_bishops: u64,
+    pub black_rooklike: u64,
+    pub black_bishoplike: u64,
     pub black_knights: u64,
 }
 
@@ -51,16 +49,14 @@ impl BitBoard {
     pub const fn empty() -> BitBoard {
         BitBoard {
             white_pawns: 0,
-            white_queen: 0,
             white_king: 0,
-            white_rooks: 0,
-            white_bishops: 0,
+            white_rooklike: 0,
+            white_bishoplike: 0,
             white_knights: 0,
             black_pawns: 0,
-            black_queen: 0,
             black_king: 0,
-            black_rooks: 0,
-            black_bishops: 0,
+            black_rooklike: 0,
+            black_bishoplike: 0,
             black_knights: 0,
         }
     }
@@ -68,20 +64,18 @@ impl BitBoard {
     #[inline]
     pub fn white_coverage(&self) -> u64 {
         self.white_king
-            | self.white_queen
             | self.white_knights
-            | self.white_rooks
-            | self.white_bishops
+            | self.white_rooklike
+            | self.white_bishoplike
             | self.white_pawns
     }
 
     #[inline]
     pub fn black_coverage(&self) -> u64 {
         self.black_king
-            | self.black_queen
             | self.black_knights
-            | self.black_rooks
-            | self.black_bishops
+            | self.black_rooklike
+            | self.black_bishoplike
             | self.black_pawns
     }
 
@@ -89,36 +83,32 @@ impl BitBoard {
     pub fn coverage(&self) -> u64 {
         // Might be a silly premature opt to not trust the codegen for doing white_cover | black_cover
         self.white_king
-            | self.white_queen
             | self.white_knights
-            | self.white_rooks
-            | self.white_bishops
+            | self.white_rooklike
+            | self.white_bishoplike
             | self.white_pawns
             | self.black_king
-            | self.black_queen
             | self.black_knights
-            | self.black_rooks
-            | self.black_bishops
+            | self.black_rooklike
+            | self.black_bishoplike
             | self.black_pawns
     }
 
     #[inline]
     pub fn unset_white_piece(&mut self, capture_pos: u64) {
         self.white_pawns &= !capture_pos;
-        self.white_bishops &= !capture_pos;
-        self.white_rooks &= !capture_pos;
+        self.white_bishoplike &= !capture_pos;
+        self.white_rooklike &= !capture_pos;
         self.white_knights &= !capture_pos;
-        self.white_queen &= !capture_pos;
         self.white_king &= !capture_pos;
     }
 
     #[inline]
     pub fn unset_black_piece(&mut self, capture_pos: u64) {
         self.black_pawns &= !capture_pos;
-        self.black_bishops &= !capture_pos;
-        self.black_rooks &= !capture_pos;
+        self.black_bishoplike &= !capture_pos;
+        self.black_rooklike &= !capture_pos;
         self.black_knights &= !capture_pos;
-        self.black_queen &= !capture_pos;
         self.black_king &= !capture_pos;
     }
 }
@@ -367,19 +357,19 @@ impl Default for Board {
             piece_positions[i] = ps[i].1.tzcnt() as u8;
         }
 
+        let white_queen = ROW_1 & FILE_D;
+        let black_queen = ROW_8 & FILE_D;
         Board::new(
             BitBoard {
                 white_pawns: ROW_2,
-                white_queen: ROW_1 & FILE_D,
                 white_king: ROW_1 & FILE_E,
-                white_rooks: ROW_1 & (FILE_A | FILE_H),
-                white_bishops: ROW_1 & (FILE_C | FILE_F),
+                white_rooklike: (ROW_1 & (FILE_A | FILE_H)) | white_queen,
+                white_bishoplike: (ROW_1 & (FILE_C | FILE_F)) | white_queen,
                 white_knights: ROW_1 & (FILE_B | FILE_G),
                 black_pawns: ROW_7,
-                black_queen: ROW_8 & FILE_D,
                 black_king: ROW_8 & FILE_E,
-                black_rooks: ROW_8 & (FILE_A | FILE_H),
-                black_bishops: ROW_8 & (FILE_C | FILE_F),
+                black_rooklike: (ROW_8 & (FILE_A | FILE_H)) | black_queen,
+                black_bishoplike: (ROW_8 & (FILE_C | FILE_F)) | black_queen,
                 black_knights: ROW_8 & (FILE_B | FILE_G),
             },
             piece_positions,

@@ -185,10 +185,10 @@ fn rook_target_square(
         new.delete_piece(target_pos_tzcnt);
         new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
         if white {
-            new.bitboard.white_rooks = (new.bitboard.white_rooks ^ position) | target_pos;
+            new.bitboard.white_rooklike = (new.bitboard.white_rooklike ^ position) | target_pos;
             new.bitboard.unset_black_piece(target_pos);
         } else {
-            new.bitboard.black_rooks = (new.bitboard.black_rooks ^ position) | target_pos;
+            new.bitboard.black_rooklike = (new.bitboard.black_rooklike ^ position) | target_pos;
             new.bitboard.unset_white_piece(target_pos);
         }
         outvec.push(new);
@@ -201,9 +201,9 @@ fn rook_target_square(
         let mut new = board.clone_and_advance(0, false);
         new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
         if white {
-            new.bitboard.white_rooks = (new.bitboard.white_rooks ^ position) | target_pos;
+            new.bitboard.white_rooklike = (new.bitboard.white_rooklike ^ position) | target_pos;
         } else {
-            new.bitboard.black_rooks = (new.bitboard.black_rooks ^ position) | target_pos;
+            new.bitboard.black_rooklike = (new.bitboard.black_rooklike ^ position) | target_pos;
         }
         outvec.push(new);
     }
