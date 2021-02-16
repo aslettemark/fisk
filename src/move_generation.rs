@@ -383,6 +383,10 @@ fn rooklike_target_square(
             if queen {
                 new.bitboard.white_bishoplike =
                     (new.bitboard.white_bishoplike ^ position) | target_pos;
+            } else if position == ROW_1 & FILE_A {
+                new.disqualify_white_queenside_castling();
+            } else if position == ROW_1 & FILE_H {
+                new.disqualify_white_kingside_castling();
             }
             new.bitboard.unset_black_piece(target_pos);
         } else {
@@ -390,6 +394,10 @@ fn rooklike_target_square(
             if queen {
                 new.bitboard.black_bishoplike =
                     (new.bitboard.black_bishoplike ^ position) | target_pos;
+            } else if position == ROW_8 & FILE_A {
+                new.disqualify_black_queenside_castling();
+            } else if position == ROW_8 & FILE_H {
+                new.disqualify_black_kingside_castling();
             }
             new.bitboard.unset_white_piece(target_pos);
         }

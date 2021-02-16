@@ -266,8 +266,24 @@ impl Board {
         self.flags.0 &= !(0b11000);
     }
 
+    pub fn disqualify_white_queenside_castling(&mut self) {
+        self.flags.set_bit(3, false);
+    }
+
+    pub fn disqualify_white_kingside_castling(&mut self) {
+        self.flags.set_bit(4, false);
+    }
+
     pub fn disqualify_black_castling(&mut self) {
         self.flags.0 &= !(0b00110);
+    }
+
+    pub fn disqualify_black_queenside_castling(&mut self) {
+        self.flags.set_bit(1, false);
+    }
+
+    pub fn disqualify_black_kingside_castling(&mut self) {
+        self.flags.set_bit(2, false);
     }
 
     pub fn can_white_castle_kingside(&self) -> bool {

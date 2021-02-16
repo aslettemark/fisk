@@ -34,12 +34,7 @@ fn main() {
                         .long("depth")
                         .takes_value(true),
                 )
-                .arg(
-                    Arg::with_name("Start board")
-                        .short("s")
-                        .default_value("default")
-                        .takes_value(true),
-                )
+                .arg(Arg::with_name("Start board").short("s").takes_value(true))
                 .arg(
                     Arg::with_name("Use iterator")
                         .long("iterator")
@@ -52,7 +47,7 @@ fn main() {
     let matches = opts.get_matches();
 
     match matches.subcommand_name() {
-        Some("bench") => bench_movegen_default(
+        Some("bench") => bench_movegen(
             matches
                 .subcommand()
                 .1
@@ -62,6 +57,7 @@ fn main() {
                 .parse::<i32>()
                 .unwrap(),
             matches.subcommand().1.unwrap().is_present("Use iterator"),
+            matches.subcommand().1.unwrap().value_of("Start board"),
         ),
         Some("debug") => debug(),
         Some("interactive") => interactive(),
