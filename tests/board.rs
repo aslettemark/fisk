@@ -1,4 +1,6 @@
-use fisk::board::Board;
+use fisk::board::{Board, PieceKind};
+use fisk::fen::FEN_DEFAULT_BOARD;
+use std::mem::size_of;
 
 fn fen(fen: &str) -> Board {
     Board::from_fen(fen).unwrap()
@@ -11,12 +13,14 @@ fn test_check(fenstr: &str, white: bool, black: bool) {
 }
 
 #[test]
+fn test_memsizes() {
+    assert_eq!(size_of::<PieceKind>(), 1); // Not using more memory than u8
+    assert_eq!(size_of::<Board>(), 160); // We don't want to accidentally change the Board size
+}
+
+#[test]
 fn test_rooklike_check() {
-    test_check(
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-        false,
-        false,
-    );
+    test_check(FEN_DEFAULT_BOARD, false, false);
     test_check("8/5k2/8/8/8/8/1K2r3/8 w - - 0 1", true, false);
     test_check("8/5k2/8/8/8/8/rK6/8 w - - 0 1", true, false);
     test_check("8/5k2/8/8/1q6/8/1K6/8 w - - 0 1", true, false);

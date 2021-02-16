@@ -1,7 +1,3 @@
-extern crate clap;
-extern crate lazy_static;
-extern crate time;
-
 use std::io;
 use std::io::Write;
 
@@ -11,7 +7,7 @@ use fisk::board::*;
 use fisk::constants::*;
 use fisk::fen::*;
 
-use crate::bench::*;
+use bench::*;
 use std::mem::size_of;
 
 mod bench;

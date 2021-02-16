@@ -1,9 +1,8 @@
 use bitintr::Popcnt;
 
+use fisk::board::Board;
 use fisk::board::PieceKind::EmptySquare;
-use fisk::board::{Board, PieceKind};
 use fisk::constants::*;
-use std::mem::size_of;
 
 fn fen(fen: &str) -> Board {
     Board::from_fen(fen).unwrap()
@@ -76,9 +75,7 @@ fn test_basic_pawn_moves() {
     assert!(a.white_to_move());
     assert_eq!(succ.len(), 3);
 
-    let b = fen("8/8/8/8/6p1/5P2/8/8 w KQkq -");
-    let succ = b.generate_successors();
-    assert_eq!(succ.len(), 2);
+    gen("8/8/8/8/6p1/5P2/8/8 w KQkq -", 2);
 
     let c = fen("8/8/8/3p4/2QR4/8/8/8 b - - 0 1");
     assert_eq!(c.bitboard.white_rooklike.popcnt(), 2);
@@ -129,8 +126,7 @@ fn test_starting_board_movegen(a: Board) {
 
 #[test]
 fn test_locked_knight() {
-    let a = fen("8/8/8/1P1P4/P3P3/2N5/P3P3/1P1P4 w - - 0 1");
-    assert_eq!(a.generate_successors().len(), 8);
+    gen("8/8/8/1P1P4/P3P3/2N5/P3P3/1P1P4 w - - 0 1", 8);
 }
 
 #[test]
@@ -172,8 +168,7 @@ fn test_white_knight_capture() {
 #[test]
 fn test_king_movement() {
     {
-        let s1 = succ("8/8/8/8/3K4/8/8/8 w - - 0 1");
-        assert_eq!(s1.len(), 8);
+        let s1 = gen("8/8/8/8/3K4/8/8/8 w - - 0 1", 8);
         let mut cumulative = 0u64;
         for s in &s1 {
             assert_eq!(s.bitboard.white_coverage().popcnt(), 1);
@@ -185,8 +180,7 @@ fn test_king_movement() {
         }
     }
     {
-        let s2 = succ("8/8/8/8/3k4/8/8/8 b - - 0 1");
-        assert_eq!(s2.len(), 8);
+        let s2 = gen("8/8/8/8/3k4/8/8/8 b - - 0 1", 8);
         let mut cumulative = 0u64;
         for s in &s2 {
             assert_eq!(s.bitboard.black_coverage().popcnt(), 1);
@@ -198,30 +192,22 @@ fn test_king_movement() {
         }
     }
 
-    let s3 = succ("8/8/8/8/8/8/PPP5/1K6 w - - 0 1");
-    assert_eq!(s3.len(), 8);
-
-    let s4 = succ("8/8/8/8/7k/8/8/8 b - - 0 1");
-    assert_eq!(s4.len(), 5);
-
-    let s5 = succ("8/8/8/8/7k/8/8/8 w - - 0 1");
-    assert_eq!(s5.len(), 0);
+    gen("8/8/8/8/8/8/PPP5/1K6 w - - 0 1", 8);
+    gen("8/8/8/8/7k/8/8/8 b - - 0 1", 5);
+    gen("8/8/8/8/7k/8/8/8 w - - 0 1", 0);
 }
 
 #[test]
 fn test_king_capture() {
-    let s1 = succ("8/8/8/8/7k/7P/8/8 b - - 0 1");
-    assert_eq!(s1.len(), 5);
+    gen("8/8/8/8/7k/7P/8/8 b - - 0 1", 5);
 
-    let s2 = succ("8/8/8/6RR/5RRk/6RR/8/8 b - - 0 1");
-    assert_eq!(s2.len(), 5);
+    let s2 = gen("8/8/8/6RR/5RRk/6RR/8/8 b - - 0 1", 5);
     for s in &s2 {
         assert_ne!(s.bitboard.black_coverage(), 0);
         test_alive(s, 6);
     }
 
-    let s3 = succ("8/8/8/8/8/1rr5/1Kr5/1r6 w - - 0 1");
-    assert_eq!(s3.len(), 8);
+    gen("8/8/8/8/8/1rr5/1Kr5/1r6 w - - 0 1", 8);
 }
 
 #[test]
@@ -235,23 +221,12 @@ fn test_iter() {
 }
 
 #[test]
-fn test_piece_kind_memsize() {
-    assert_eq!(size_of::<PieceKind>(), 1); // Not using more memory than u8
-}
-
-#[test]
 fn test_rook_file_slide() {
-    let s1 = succ("8/7k/8/8/4p1p1/4PRP1/8/K7 w - - 0 1");
-    assert_eq!(s1.len(), 3 + 7); // 3 king moves + 7 moves to empty squares
+    gen("8/7k/8/8/4p1p1/4PRP1/8/K7 w - - 0 1", 3 + 7);
+    gen("8/5n1k/8/8/4p1p1/4PRP1/8/K7 w - - 0 1", 3 + 5 + 1);
+    gen("8/5n1k/8/8/4ppp1/4PRP1/8/K7 w - - 0 1", 3 + 2 + 1 + 2);
 
-    let s2 = succ("8/5n1k/8/8/4p1p1/4PRP1/8/K7 w - - 0 1");
-    assert_eq!(s2.len(), 3 + 5 + 1); // 3 king + 5 non-capture + 1 capture
-
-    let s3 = succ("8/5n1k/8/8/4ppp1/4PRP1/8/K7 w - - 0 1");
-    assert_eq!(s3.len(), 3 + 2 + 1 + 2); // 2 pawn captures
-
-    let s4 = succ("8/5n1k/8/8/4ppp1/4PRP1/5p2/K7 w - - 0 1");
-    assert_eq!(s4.len(), 3 + 2 + 2);
+    let s4 = gen("8/5n1k/8/8/4ppp1/4PRP1/5p2/K7 w - - 0 1", 3 + 2 + 2);
     for s in &s4 {
         if s.bitboard.white_king == 1u64 {
             // King didn't move
