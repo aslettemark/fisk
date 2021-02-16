@@ -15,10 +15,10 @@ fn test_table_n_attacks(trailing: usize, n_attacks: u64, table: &[[u64; 8]; 64])
 
 #[test]
 fn test_knight_attack_table() {
-    test_table_n_attacks(0, 2, &KNIGHT_ATTACK);
-    test_table_n_attacks(63, 2, &KNIGHT_ATTACK);
-    test_table_n_attacks(27, 8, &KNIGHT_ATTACK);
-    test_table_n_attacks(4, 4, &KNIGHT_ATTACK);
+    test_table_n_attacks(0, 2, &KNIGHT_ATTACK_LIST);
+    test_table_n_attacks(63, 2, &KNIGHT_ATTACK_LIST);
+    test_table_n_attacks(27, 8, &KNIGHT_ATTACK_LIST);
+    test_table_n_attacks(4, 4, &KNIGHT_ATTACK_LIST);
 }
 
 #[test]

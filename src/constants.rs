@@ -45,7 +45,8 @@ pub const TZCNT_U64_ZEROS: u8 = 64; // 0u64.tzcnt()
 
 // TODO investigate optimization by tzcnt positions
 lazy_static! {
-    pub static ref KNIGHT_ATTACK: [[u64; 8]; 64] = generate_knight_attacks();
+    pub static ref KNIGHT_ATTACK_LIST: [[u64; 8]; 64] = generate_knight_attacks();
+    pub static ref KNIGHT_ATTACK_MASKS: [u64; 64] = generate_knight_attack_mask();
     pub static ref FILE_ATTACK: [u64; 64] = generate_file_attacks();
     pub static ref RANK_ATTACK: [u64; 64] = generate_rank_attacks();
     pub static ref KING_ATTACK: [[u64; 8]; 64] = generate_king_attacks();
@@ -103,7 +104,18 @@ fn generate_rank_attacks() -> [u64; 64] {
     attacks
 }
 
+fn generate_knight_attack_mask() -> [u64; 64] {
+    let mut masks = [0u64; 64];
+    for i in 0..64 {
+        for j in 0..8 {
+            masks[i] |= KNIGHT_ATTACK_LIST[i][j];
+        }
+    }
+    masks
+}
+
 fn generate_knight_attacks() -> [[u64; 8]; 64] {
+    // TODO order to abort iteration in consumers
     let mut attacks: [[u64; 8]; 64] = [[0; 8]; 64];
     for (i, attack) in attacks.iter_mut().enumerate() {
         *attack = get_knight_attacks(i as u64);
@@ -150,4 +162,14 @@ pub fn pos_to_file_index(pos: u64) -> usize {
 
 pub fn file_mask_of_pos(pos: u64) -> u64 {
     FILES[pos_to_file_index(pos)]
+}
+
+#[inline]
+pub fn get_knight_possible_targets(pos: u64) -> [u64; 8] {
+    KNIGHT_ATTACK_LIST[pos.tzcnt() as usize]
+}
+
+#[inline]
+pub fn get_knight_target_mask(pos: u64) -> u64 {
+    KNIGHT_ATTACK_MASKS[pos.tzcnt() as usize]
 }

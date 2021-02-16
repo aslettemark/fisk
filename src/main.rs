@@ -17,7 +17,8 @@ use std::mem::size_of;
 mod bench;
 
 fn main() {
-    lazy_static::initialize(&KNIGHT_ATTACK);
+    lazy_static::initialize(&KNIGHT_ATTACK_LIST);
+    lazy_static::initialize(&KNIGHT_ATTACK_MASKS);
     lazy_static::initialize(&FILE_ATTACK);
     lazy_static::initialize(&RANK_ATTACK);
     lazy_static::initialize(&KING_ATTACK);

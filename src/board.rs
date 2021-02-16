@@ -337,6 +337,45 @@ impl Board {
         self.reset_fullmove_counter();
         self.flags.0 |= (new as u64) << 32;
     }
+
+    pub fn is_in_check(&self, white: bool) -> bool {
+        // TODO Slow approach?
+
+        let white_occupancy = self.bitboard.white_coverage();
+        let black_occupancy = self.bitboard.black_coverage();
+        let total_occupancy = white_occupancy | black_occupancy;
+
+        let king_pos;
+        let enemy_rooklike;
+        let enemy_knights;
+        let enemy_bishoplike;
+        if white {
+            king_pos = self.bitboard.white_king;
+            enemy_rooklike = self.bitboard.black_rooklike;
+            enemy_knights = self.bitboard.black_knights;
+            enemy_bishoplike = self.bitboard.black_bishoplike;
+        } else {
+            king_pos = self.bitboard.black_king;
+            enemy_rooklike = self.bitboard.white_rooklike;
+            enemy_knights = self.bitboard.white_knights;
+            enemy_bishoplike = self.bitboard.white_bishoplike;
+        }
+        let knight_squares_to_check = get_knight_target_mask(king_pos);
+
+        if intersects(knight_squares_to_check, enemy_knights) {
+            return true;
+        }
+        if is_in_rooklike_check(king_pos, enemy_rooklike, total_occupancy) {
+            return true;
+        }
+        if is_in_bishoplike_check(king_pos, enemy_bishoplike, total_occupancy) {
+            return true;
+        }
+
+        // TODO pawn check
+
+        false
+    }
 }
 
 impl Default for Board {
@@ -419,4 +458,120 @@ impl Flags {
     fn toggle_bit(&mut self, i: usize) {
         self.set_bit(i, !self.get_bit(i));
     }
+}
+
+fn is_in_rooklike_check(king_pos: u64, enemy_rooklike: u64, total_occupancy: u64) -> bool {
+    if !intersects(king_pos, FILE_H) {
+        let mut target_pos = king_pos << 1;
+        loop {
+            if intersects(target_pos, enemy_rooklike) {
+                return true;
+            }
+
+            if intersects(target_pos, total_occupancy | FILE_H) {
+                break;
+            }
+            target_pos <<= 1;
+        }
+    }
+    if !intersects(king_pos, FILE_A) {
+        let mut target_pos = king_pos >> 1;
+        loop {
+            if intersects(target_pos, enemy_rooklike) {
+                return true;
+            }
+
+            if intersects(target_pos, total_occupancy | FILE_A) {
+                break;
+            }
+            target_pos >>= 1;
+        }
+    }
+    if !intersects(king_pos, ROW_8) {
+        let mut target_pos = king_pos << 8;
+        loop {
+            if intersects(target_pos, enemy_rooklike) {
+                return true;
+            }
+
+            if intersects(target_pos, total_occupancy | ROW_8) {
+                break;
+            }
+            target_pos <<= 8;
+        }
+    }
+    if !intersects(king_pos, ROW_1) {
+        let mut target_pos = king_pos >> 8;
+        loop {
+            if intersects(target_pos, enemy_rooklike) {
+                return true;
+            }
+
+            if intersects(target_pos, total_occupancy | ROW_1) {
+                break;
+            }
+            target_pos >>= 8;
+        }
+    }
+    false
+}
+
+fn is_in_bishoplike_check(king_pos: u64, enemy_bishoplike: u64, total_occupancy: u64) -> bool {
+    let top = intersects(king_pos, ROW_8);
+    let bottom = intersects(king_pos, ROW_1);
+    let right = intersects(king_pos, FILE_H);
+    let left = intersects(king_pos, FILE_A);
+
+    if !top && !right {
+        let mut target_pos = king_pos << 9;
+        loop {
+            if intersects(target_pos, enemy_bishoplike) {
+                return true;
+            }
+            if intersects(target_pos, total_occupancy | ROW_8 | FILE_H) {
+                break;
+            }
+            target_pos <<= 9;
+        }
+    }
+
+    if !top && !left {
+        let mut target_pos = king_pos << 7;
+        loop {
+            if intersects(target_pos, enemy_bishoplike) {
+                return true;
+            }
+            if intersects(target_pos, total_occupancy | ROW_8 | FILE_A) {
+                break;
+            }
+            target_pos <<= 7;
+        }
+    }
+
+    if !bottom && !right {
+        let mut target_pos = king_pos >> 7;
+        loop {
+            if intersects(target_pos, enemy_bishoplike) {
+                return true;
+            }
+            if intersects(target_pos, total_occupancy | ROW_1 | FILE_H) {
+                break;
+            }
+            target_pos >>= 7;
+        }
+    }
+
+    if !bottom && !left {
+        let mut target_pos = king_pos >> 9;
+        loop {
+            if intersects(target_pos, enemy_bishoplike) {
+                return true;
+            }
+            if intersects(target_pos, total_occupancy | ROW_1 | FILE_A) {
+                break;
+            }
+            target_pos >>= 9;
+        }
+    }
+    false
 }

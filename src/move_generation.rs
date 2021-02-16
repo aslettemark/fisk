@@ -518,7 +518,7 @@ fn row_slide_moves(
     }
 
     if !intersects(position, FILE_A) {
-        // Not in file A, ie can move negative file direction
+        // Not in file A, ie can move in negative file direction
         let mut target_pos = position >> 1;
         loop {
             let should_continue = rooklike_target_square(
@@ -538,11 +538,6 @@ fn row_slide_moves(
             target_pos >>= 1;
         }
     }
-}
-
-#[inline]
-fn get_knight_possible_targets(pos: u64) -> [u64; 8] {
-    KNIGHT_ATTACK[pos.tzcnt() as usize]
 }
 
 pub fn knight_moves(

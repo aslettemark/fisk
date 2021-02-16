@@ -6,5 +6,3 @@ fast operations on these words on modern 64 bit CPUs.
 [BitBoards (Wikipedia)](https://en.wikipedia.org/wiki/Bitboard)  
 [BitBoards (chessprogramming.org)](https://www.chessprogramming.org/Bitboards)  
 [Forsyth–Edwards Notation](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation)   
-
-SUPER incomplete (like, barely does anything)
