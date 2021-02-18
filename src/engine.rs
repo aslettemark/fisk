@@ -116,8 +116,6 @@ impl Board {
                 unreachable!()
             }
         }
-
-        // TODO do castling separately here, after collecting attack data?
     }
 
     pub fn generate_successors(&self) -> Vec<Board> {

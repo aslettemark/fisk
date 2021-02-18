@@ -54,7 +54,7 @@ pub fn white_pawn_moves(
         //TODO turn into queen, rook, bishop, knight if row == 8
     }
 
-    if free_square_in_front && (position & ROW_2 != 0) {
+    if free_square_in_front && intersects(position, ROW_2) {
         // pawn double square move
         let pos_twofront = pos_front << 8;
         if !intersects(pos_twofront, total_occupancy) {
@@ -66,7 +66,7 @@ pub fn white_pawn_moves(
         }
     }
 
-    if position & FILE_A == 0 {
+    if !intersects(position, FILE_A) {
         let front_left_pos = position << 7;
         if intersects(front_left_pos, enemy_occupancy) {
             pawn_capture_pos(
@@ -79,7 +79,7 @@ pub fn white_pawn_moves(
             );
         }
     }
-    if position & FILE_H == 0 {
+    if !intersects(position, FILE_H) {
         let front_right_pos = position << 9;
         if intersects(front_right_pos, enemy_occupancy) {
             pawn_capture_pos(
@@ -92,7 +92,29 @@ pub fn white_pawn_moves(
             );
         }
     }
-    //TODO en passant capture
+
+    let ep_file = board.get_en_passant_file();
+    if ep_file != 0 {
+        let twofront_square = (ep_file as u64 - 1) << (4 * 8);
+        let eligible_pos = if intersects(twofront_square, FILE_A) {
+            twofront_square << 1
+        } else if intersects(twofront_square, FILE_H) {
+            twofront_square >> 1
+        } else {
+            (twofront_square << 1) | (twofront_square >> 1)
+        };
+        if intersects(position, eligible_pos) {
+            // en passant capture
+            let mut new = board.clone_and_advance(0, true);
+            new.delete_piece(twofront_square.tzcnt() as u8);
+            let new_pawn_pos = twofront_square << 8;
+            new.piece_positions_tzcnt[pawn_piece_index] = new_pawn_pos.tzcnt() as u8;
+            new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | new_pawn_pos;
+            new.bitboard.unset_black_piece(twofront_square);
+
+            outvec.push(new);
+        }
+    }
 }
 
 pub fn black_pawn_moves(

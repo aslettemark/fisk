@@ -110,18 +110,35 @@ fn test_en_passant() {
     test_ep_file("8/4k2p/8/8/7r/8/6PP/2K5 w - - 0 1", 7);
 }
 
-/* TODO
 #[test]
 fn test_white_pawn_en_passant_capture() {
-    let a = Board::from_fen("8/8/8/5Pp1/8/8/8/8 w - g6");
+    /* TODO Old
+    let a = Board::from_fen("8/8/8/5Pp1/8/8/8/8 w - g6").unwrap();
     let succ = a.generate_successors();
-    assert_eq!(succ.len(), 2);
+    assert_eq!(succ.len(), 2);*/
 
-    let b = Board::from_fen("8/8/8/5Pp1/8/8/8/8 w - e6");
+    /* TODO old
+    let b = Board::from_fen("8/8/8/5Pp1/8/8/8/8 w - e6").unwrap();
     let succ = b.generate_successors();
     assert_eq!(succ.len(), 2);
+    */
+
+    let s1 = succ("2k5/4p3/8/3P4/8/8/8/1K6 b - g6 0 1");
+    let mut ep_count = 0;
+    for s in &s1 {
+        if s.get_en_passant_file() != 0 {
+            ep_count += 1;
+            assert_eq!(s.get_en_passant_file(), 5);
+
+            let s11 = s.generate_successors();
+            for ss in &s11 {
+                ss.print();
+            }
+            assert_eq!(s11.len(), 5 + 2); // 5 king moves and 2 pawn moves
+        }
+    }
+    assert_eq!(ep_count, 1);
 }
-*/
 
 fn test_starting_board_movegen(a: Board) {
     let succ = a.generate_successors();
