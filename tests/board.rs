@@ -43,3 +43,13 @@ fn test_bishoplike_check() {
     test_check("8/5k2/8/3n4/2B5/8/7K/8 w - - 0 1", false, false);
     test_check("8/5k2/2b5/3n4/2B5/8/6K1/8 w - - 0 1", false, false);
 }
+
+#[test]
+fn test_pawn_check() {
+    test_check("rnbqkbnr/ppp1pppp/8/8/8/8/PPPpPPPP/RNBQKBNR w KQkq - 0 1", true, false);
+    test_check("rnbqkbnr/8/8/8/8/8/ppp1pPpp/RNBQKBNR w KQkq - 0 1", false, false);
+    test_check("rnbqkbnr/8/8/8/8/8/ppp2ppp/RNBQKBNR w KQkq - 0 1", true, false);
+    test_check("rnbqkbnr/PPP1P1PP/8/8/8/8/ppp2ppp/RNBQKBNR w KQkq - 0 1", true, false);
+    test_check("8/8/k7/7P/8/p7/1K6/8 w - - 0 1", true, false);
+    test_check("8/8/6k1/7P/8/p7/1K6/8 w - - 0 1", true, true);
+}

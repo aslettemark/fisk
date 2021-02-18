@@ -1,8 +1,8 @@
+use bitintr::*;
+
 use crate::board::Color::{Black, Empty, White};
 use crate::board::PieceKind::*;
 use crate::constants::*;
-
-use bitintr::*;
 
 /// Bit overview:
 /// 0: white to move
@@ -372,7 +372,19 @@ impl Board {
             return true;
         }
 
-        // TODO pawn check
+        if white {
+            let black_pawns = self.bitboard.black_pawns;
+            let targets = ((black_pawns >> 9) & !FILE_H) | ((black_pawns >> 7) & !FILE_A);
+            if intersects(king_pos, targets) {
+                return true;
+            }
+        } else {
+            let white_pawns = self.bitboard.white_pawns;
+            let targets = ((white_pawns << 9) & !FILE_A) | ((white_pawns << 7) & !FILE_H);
+            if intersects(king_pos, targets) {
+                return true;
+            }
+        }
 
         false
     }
