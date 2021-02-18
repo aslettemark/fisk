@@ -1,12 +1,11 @@
 use crate::board::Board;
 use crate::board::PieceKind::*;
-use crate::constants::TZCNT_U64_ZEROS;
+use crate::constants::{pos_to_file_index, TZCNT_U64_ZEROS};
 use crate::move_generation::*;
 
 impl Board {
     pub fn clone_and_advance(&self, en_passant: u64, reset_halfmove: bool) -> Board {
         let mut new = *self;
-        new.en_passant = en_passant;
         new.toggle_white_to_move();
 
         if reset_halfmove {
@@ -17,6 +16,13 @@ impl Board {
 
         if new.white_to_move() {
             new.increment_fullmove_counter();
+        }
+
+        if en_passant != 0 {
+            let file = (pos_to_file_index(en_passant) + 1) as u8;
+            new.set_en_passant(file);
+        } else {
+            new.reset_en_passant();
         }
 
         new

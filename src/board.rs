@@ -11,7 +11,7 @@ use crate::constants::*;
 /// 3: white queenside castling
 /// 4: white kingside castling
 /// 5-7: unused
-/// 8-15: reserved (en passant file, one-hot encoded)
+/// 8-15: en passant file (bit 8 set = file A en passant opportunity, bit 15 = file H)
 /// 16-31: halfmove_clock
 /// 32-47: fullmove_counter
 #[derive(Copy, Clone, Debug)]
@@ -19,7 +19,6 @@ struct Flags(u64);
 
 #[derive(Copy, Clone, Debug)]
 pub struct Board {
-    pub en_passant: u64,
     pub bitboard: BitBoard,
     pub piece_positions_tzcnt: [u8; 32],
     pub piece_kinds: [PieceKind; 32],
@@ -168,7 +167,6 @@ impl Board {
         castling_availability: u8, // 0b0000KQkq
     ) -> Board {
         let mut board = Board {
-            en_passant,
             bitboard,
             piece_positions_tzcnt,
             piece_kinds,
@@ -183,6 +181,11 @@ impl Board {
         }
         board.set_halfmove_clock(halfmove_clock);
         board.set_fullmove_counter(fullmove_counter);
+
+        if en_passant != 0 {
+            let file = (pos_to_file_index(en_passant) + 1) as u8;
+            board.set_en_passant(file);
+        }
 
         board
     }
@@ -336,6 +339,22 @@ impl Board {
     pub fn set_fullmove_counter(&mut self, new: u16) {
         self.reset_fullmove_counter();
         self.flags.0 |= (new as u64) << 32;
+    }
+
+    #[inline]
+    pub fn set_en_passant(&mut self, file: u8) {
+        self.reset_en_passant();
+        self.flags.0 |= (file as u64) << 8;
+    }
+
+    #[inline]
+    pub fn reset_en_passant(&mut self) {
+        self.flags.0 &= !(0xFF << 8);
+    }
+
+    #[inline]
+    pub fn get_en_passant_file(&self) -> u8 {
+        (self.flags.0 >> 8) as u8
     }
 
     pub fn is_in_check(&self, white: bool) -> bool {

@@ -88,9 +88,31 @@ fn test_basic_pawn_moves() {
     assert_eq!(s.bitboard.white_bishoplike.popcnt(), 0);
 }
 
+fn test_ep_file(fen: &str, file: u8) {
+    let ss = succ(fen);
+    let mut ep_count = 0;
+    for s in ss {
+        if s.get_en_passant_file() != 0 {
+            ep_count += 1;
+            assert_eq!(s.get_en_passant_file(), file);
+        }
+    }
+    assert_eq!(ep_count, 1);
+}
+
+#[test]
+fn test_en_passant() {
+    test_ep_file("8/4k3/8/8/8/8/P7/2K5 w - - 0 1", 1);
+    test_ep_file("8/4k3/8/8/8/8/7P/2K5 w - - 0 1", 8);
+    test_ep_file("8/p3k3/8/8/8/8/7P/2K5 w - - 0 1", 8);
+    test_ep_file("8/p3k3/8/8/8/8/7P/2K5 b - - 0 1", 1);
+    test_ep_file("8/4k2p/8/8/8/8/7P/2K5 b - - 0 1", 8);
+    test_ep_file("8/4k2p/8/8/7r/8/6PP/2K5 w - - 0 1", 7);
+}
+
 /* TODO
 #[test]
-fn test_white_pawn_en_passant() {
+fn test_white_pawn_en_passant_capture() {
     let a = Board::from_fen("8/8/8/5Pp1/8/8/8/8 w - g6");
     let succ = a.generate_successors();
     assert_eq!(succ.len(), 2);
@@ -107,9 +129,8 @@ fn test_starting_board_movegen(a: Board) {
 
     let mut count_en_passant = 0;
     for s in &succ {
-        if s.en_passant != 0 {
+        if s.get_en_passant_file() != 0 {
             count_en_passant += 1;
-            assert_ne!(s.en_passant & ROW_3, 0); // white pawn en passant appears on row 3
         }
     }
     assert_eq!(count_en_passant, 8); // 8 of the pawn moves should produce an en passant square

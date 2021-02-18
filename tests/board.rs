@@ -15,7 +15,7 @@ fn test_check(fenstr: &str, white: bool, black: bool) {
 #[test]
 fn test_memsizes() {
     assert_eq!(size_of::<PieceKind>(), 1); // Not using more memory than u8
-    assert_eq!(size_of::<Board>(), 160); // We don't want to accidentally change the Board size
+    assert_eq!(size_of::<Board>(), 152); // We don't want to accidentally change the Board size
 }
 
 #[test]
@@ -46,10 +46,26 @@ fn test_bishoplike_check() {
 
 #[test]
 fn test_pawn_check() {
-    test_check("rnbqkbnr/ppp1pppp/8/8/8/8/PPPpPPPP/RNBQKBNR w KQkq - 0 1", true, false);
-    test_check("rnbqkbnr/8/8/8/8/8/ppp1pPpp/RNBQKBNR w KQkq - 0 1", false, false);
-    test_check("rnbqkbnr/8/8/8/8/8/ppp2ppp/RNBQKBNR w KQkq - 0 1", true, false);
-    test_check("rnbqkbnr/PPP1P1PP/8/8/8/8/ppp2ppp/RNBQKBNR w KQkq - 0 1", true, false);
+    test_check(
+        "rnbqkbnr/ppp1pppp/8/8/8/8/PPPpPPPP/RNBQKBNR w KQkq - 0 1",
+        true,
+        false,
+    );
+    test_check(
+        "rnbqkbnr/8/8/8/8/8/ppp1pPpp/RNBQKBNR w KQkq - 0 1",
+        false,
+        false,
+    );
+    test_check(
+        "rnbqkbnr/8/8/8/8/8/ppp2ppp/RNBQKBNR w KQkq - 0 1",
+        true,
+        false,
+    );
+    test_check(
+        "rnbqkbnr/PPP1P1PP/8/8/8/8/ppp2ppp/RNBQKBNR w KQkq - 0 1",
+        true,
+        false,
+    );
     test_check("8/8/k7/7P/8/p7/1K6/8 w - - 0 1", true, false);
     test_check("8/8/6k1/7P/8/p7/1K6/8 w - - 0 1", true, true);
 }
