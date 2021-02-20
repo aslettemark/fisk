@@ -1,8 +1,8 @@
+use bitintr::*;
+
 use crate::board::PieceKind::*;
 use crate::board::{BitBoard, Board, PieceKind};
 use crate::constants::*;
-
-use bitintr::*;
 
 pub const FEN_DEFAULT_BOARD: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -39,6 +39,22 @@ impl Board {
             piece_positions[i] = pos.tzcnt() as u8;
         }
 
+        let mut castling_availability = 0u8;
+        let castling_flags = split.get(2).unwrap();
+        for c in castling_flags.chars() {
+            match c {
+                'K' => castling_availability |= 1 << 3,
+                'Q' => castling_availability |= 1 << 2,
+                'k' => castling_availability |= 1 << 1,
+                'q' => castling_availability |= 1 << 0,
+                '-' => {
+                    castling_availability = 0;
+                    break;
+                }
+                _ => return None,
+            }
+        }
+
         Some(Board::new(
             bitboard,
             piece_positions,
@@ -47,7 +63,7 @@ impl Board {
             fullmove_counter,
             0, // TODO
             white_to_move,
-            0, // TODO
+            castling_availability,
         ))
     }
 }

@@ -1,5 +1,6 @@
-use bitintr::Tzcnt;
 use std::cmp::{max, min};
+
+use bitintr::Tzcnt;
 
 pub const ROW_1: u64 = 0xFF;
 pub const ROW_2: u64 = ROW_1 << 8;
@@ -50,6 +51,7 @@ lazy_static! {
     pub static ref FILE_ATTACK: [u64; 64] = generate_file_attacks();
     pub static ref RANK_ATTACK: [u64; 64] = generate_rank_attacks();
     pub static ref KING_ATTACK: [[u64; 8]; 64] = generate_king_attacks();
+    pub static ref KING_ATTACK_MASK: [u64; 64] = generate_king_attack_mask();
 }
 
 fn generate_king_attacks() -> [[u64; 8]; 64] {
@@ -59,6 +61,16 @@ fn generate_king_attacks() -> [[u64; 8]; 64] {
     }
 
     attacks
+}
+
+fn generate_king_attack_mask() -> [u64; 64] {
+    let mut masks = [0u64; 64];
+    for i in 0..64 {
+        for j in 0..8 {
+            masks[i] |= KING_ATTACK[i][j];
+        }
+    }
+    masks
 }
 
 fn get_king_attacks(trailing: u64) -> [u64; 8] {

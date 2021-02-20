@@ -18,6 +18,7 @@ fn main() {
     lazy_static::initialize(&FILE_ATTACK);
     lazy_static::initialize(&RANK_ATTACK);
     lazy_static::initialize(&KING_ATTACK);
+    lazy_static::initialize(&KING_ATTACK_MASK);
 
     let opts = App::new("Fisk")
         .version("0.1.0")

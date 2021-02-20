@@ -12,7 +12,16 @@ fn succ(fen: &str) -> Vec<Board> {
     let b = Board::from_fen(fen).unwrap();
     let succ = b.generate_successors();
 
+    println!("{} successors:", succ.len());
     for s in &succ {
+        s.print();
+    }
+
+    for s in &succ {
+        if b.bitboard == s.bitboard {
+            println!("Two identical boards:");
+            b.print();
+        }
         assert_ne!(b.bitboard, s.bitboard);
 
         let pawn_move = (s.bitboard.white_pawns != b.bitboard.white_pawns)
@@ -328,4 +337,17 @@ fn test_queen_moves() {
 fn test_bishop_moves() {
     let s1 = gen("b7/1Q6/8/8/8/8/8/8 b - - 0 1", 1);
     expect_queens(&s1[0], 0, 0);
+}
+
+#[test]
+fn test_white_kingside_castling() {
+    gen("8/3k4/8/8/8/7p/7P/4K2R w K - 0 1", 5 + 1 + 2);
+    gen("8/3k4/8/8/6r1/7p/7P/4K2R w K - 0 1", 5 + 2);
+}
+
+#[test]
+fn test_white_queenside_castling() {
+    gen("8/8/3k4/8/8/8/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5);
+    gen("8/8/3k4/8/8/1r6/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5);
+    gen("8/8/3k4/8/8/2r5/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5 - 1);
 }

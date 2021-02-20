@@ -379,30 +379,83 @@ impl Board {
             enemy_knights = self.bitboard.white_knights;
             enemy_bishoplike = self.bitboard.white_bishoplike;
         }
-        let knight_squares_to_check = get_knight_target_mask(king_pos);
 
-        if intersects(knight_squares_to_check, enemy_knights) {
+        if is_attacked_by_knight(king_pos, enemy_knights) {
             return true;
         }
-        if is_in_rooklike_check(king_pos, enemy_rooklike, total_occupancy) {
+        if is_attacked_by_rooklike(king_pos, enemy_rooklike, total_occupancy) {
             return true;
         }
-        if is_in_bishoplike_check(king_pos, enemy_bishoplike, total_occupancy) {
+        if is_attacked_by_bishoplike(king_pos, enemy_bishoplike, total_occupancy) {
             return true;
         }
 
         if white {
-            let black_pawns = self.bitboard.black_pawns;
-            let targets = ((black_pawns >> 9) & !FILE_H) | ((black_pawns >> 7) & !FILE_A);
-            if intersects(king_pos, targets) {
+            if is_attacked_by_black_pawns(king_pos, self.bitboard.black_pawns) {
                 return true;
             }
-        } else {
-            let white_pawns = self.bitboard.white_pawns;
-            let targets = ((white_pawns << 9) & !FILE_A) | ((white_pawns << 7) & !FILE_H);
-            if intersects(king_pos, targets) {
-                return true;
-            }
+        } else if is_attacked_by_white_pawns(king_pos, self.bitboard.white_pawns) {
+            return true;
+        }
+
+        false
+    }
+
+    pub fn is_square_attacked_by_white(&self, position: u64) -> bool {
+        let white_occupancy = self.bitboard.white_coverage();
+        let black_occupancy = self.bitboard.black_coverage();
+        let total_occupancy = white_occupancy | black_occupancy;
+
+        let enemy_rooklike = self.bitboard.white_rooklike;
+        let enemy_knights = self.bitboard.white_knights;
+        let enemy_bishoplike = self.bitboard.white_bishoplike;
+
+        if is_attacked_by_knight(position, enemy_knights) {
+            return true;
+        }
+        if is_attacked_by_rooklike(position, enemy_rooklike, total_occupancy) {
+            return true;
+        }
+        if is_attacked_by_bishoplike(position, enemy_bishoplike, total_occupancy) {
+            return true;
+        }
+
+        if is_attacked_by_white_pawns(position, self.bitboard.white_pawns) {
+            return true;
+        }
+
+        if is_attacked_by_king(position, self.bitboard.white_king) {
+            return true;
+        }
+
+        false
+    }
+
+    pub fn is_square_attacked_by_black(&self, position: u64) -> bool {
+        let white_occupancy = self.bitboard.white_coverage();
+        let black_occupancy = self.bitboard.black_coverage();
+        let total_occupancy = white_occupancy | black_occupancy;
+
+        let enemy_rooklike = self.bitboard.black_rooklike;
+        let enemy_knights = self.bitboard.black_knights;
+        let enemy_bishoplike = self.bitboard.black_bishoplike;
+
+        if is_attacked_by_knight(position, enemy_knights) {
+            return true;
+        }
+        if is_attacked_by_rooklike(position, enemy_rooklike, total_occupancy) {
+            return true;
+        }
+        if is_attacked_by_bishoplike(position, enemy_bishoplike, total_occupancy) {
+            return true;
+        }
+
+        if is_attacked_by_black_pawns(position, self.bitboard.black_pawns) {
+            return true;
+        }
+
+        if is_attacked_by_king(position, self.bitboard.black_king) {
+            return true;
         }
 
         false
@@ -491,9 +544,14 @@ impl Flags {
     }
 }
 
-fn is_in_rooklike_check(king_pos: u64, enemy_rooklike: u64, total_occupancy: u64) -> bool {
-    if !intersects(king_pos, FILE_H) {
-        let mut target_pos = king_pos << 1;
+fn is_attacked_by_knight(position: u64, enemy_knights: u64) -> bool {
+    let knight_squares_to_check = get_knight_target_mask(position);
+    intersects(knight_squares_to_check, enemy_knights)
+}
+
+fn is_attacked_by_rooklike(position: u64, enemy_rooklike: u64, total_occupancy: u64) -> bool {
+    if !intersects(position, FILE_H) {
+        let mut target_pos = position << 1;
         loop {
             if intersects(target_pos, enemy_rooklike) {
                 return true;
@@ -505,8 +563,8 @@ fn is_in_rooklike_check(king_pos: u64, enemy_rooklike: u64, total_occupancy: u64
             target_pos <<= 1;
         }
     }
-    if !intersects(king_pos, FILE_A) {
-        let mut target_pos = king_pos >> 1;
+    if !intersects(position, FILE_A) {
+        let mut target_pos = position >> 1;
         loop {
             if intersects(target_pos, enemy_rooklike) {
                 return true;
@@ -518,8 +576,8 @@ fn is_in_rooklike_check(king_pos: u64, enemy_rooklike: u64, total_occupancy: u64
             target_pos >>= 1;
         }
     }
-    if !intersects(king_pos, ROW_8) {
-        let mut target_pos = king_pos << 8;
+    if !intersects(position, ROW_8) {
+        let mut target_pos = position << 8;
         loop {
             if intersects(target_pos, enemy_rooklike) {
                 return true;
@@ -531,8 +589,8 @@ fn is_in_rooklike_check(king_pos: u64, enemy_rooklike: u64, total_occupancy: u64
             target_pos <<= 8;
         }
     }
-    if !intersects(king_pos, ROW_1) {
-        let mut target_pos = king_pos >> 8;
+    if !intersects(position, ROW_1) {
+        let mut target_pos = position >> 8;
         loop {
             if intersects(target_pos, enemy_rooklike) {
                 return true;
@@ -547,14 +605,14 @@ fn is_in_rooklike_check(king_pos: u64, enemy_rooklike: u64, total_occupancy: u64
     false
 }
 
-fn is_in_bishoplike_check(king_pos: u64, enemy_bishoplike: u64, total_occupancy: u64) -> bool {
-    let top = intersects(king_pos, ROW_8);
-    let bottom = intersects(king_pos, ROW_1);
-    let right = intersects(king_pos, FILE_H);
-    let left = intersects(king_pos, FILE_A);
+fn is_attacked_by_bishoplike(position: u64, enemy_bishoplike: u64, total_occupancy: u64) -> bool {
+    let top = intersects(position, ROW_8);
+    let bottom = intersects(position, ROW_1);
+    let right = intersects(position, FILE_H);
+    let left = intersects(position, FILE_A);
 
     if !top && !right {
-        let mut target_pos = king_pos << 9;
+        let mut target_pos = position << 9;
         loop {
             if intersects(target_pos, enemy_bishoplike) {
                 return true;
@@ -567,7 +625,7 @@ fn is_in_bishoplike_check(king_pos: u64, enemy_bishoplike: u64, total_occupancy:
     }
 
     if !top && !left {
-        let mut target_pos = king_pos << 7;
+        let mut target_pos = position << 7;
         loop {
             if intersects(target_pos, enemy_bishoplike) {
                 return true;
@@ -580,7 +638,7 @@ fn is_in_bishoplike_check(king_pos: u64, enemy_bishoplike: u64, total_occupancy:
     }
 
     if !bottom && !right {
-        let mut target_pos = king_pos >> 7;
+        let mut target_pos = position >> 7;
         loop {
             if intersects(target_pos, enemy_bishoplike) {
                 return true;
@@ -593,7 +651,7 @@ fn is_in_bishoplike_check(king_pos: u64, enemy_bishoplike: u64, total_occupancy:
     }
 
     if !bottom && !left {
-        let mut target_pos = king_pos >> 9;
+        let mut target_pos = position >> 9;
         loop {
             if intersects(target_pos, enemy_bishoplike) {
                 return true;
@@ -605,4 +663,19 @@ fn is_in_bishoplike_check(king_pos: u64, enemy_bishoplike: u64, total_occupancy:
         }
     }
     false
+}
+
+fn is_attacked_by_white_pawns(position: u64, white_pawns: u64) -> bool {
+    let targets = ((white_pawns << 9) & !FILE_A) | ((white_pawns << 7) & !FILE_H);
+    intersects(position, targets)
+}
+
+fn is_attacked_by_black_pawns(position: u64, black_pawns: u64) -> bool {
+    let targets = ((black_pawns >> 9) & !FILE_H) | ((black_pawns >> 7) & !FILE_A);
+    intersects(position, targets)
+}
+
+fn is_attacked_by_king(position: u64, king_pos: u64) -> bool {
+    let king_attack_mask = KING_ATTACK_MASK[king_pos.tzcnt() as usize];
+    intersects(position, king_attack_mask)
 }

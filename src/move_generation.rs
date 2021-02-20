@@ -666,5 +666,98 @@ pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut
         outvec.push(new);
     }
 
-    //TODO: castling
+    if white {
+        let kingside = board.can_white_castle_kingside()
+            && !intersects(total_occupancy, ROW_1 & (FILE_F | FILE_G));
+        let queenside = board.can_white_castle_queenside()
+            && !intersects(total_occupancy, ROW_1 & (FILE_B | FILE_C | FILE_D));
+        if !(kingside || queenside) {
+            return;
+        }
+
+        // Can't castle out of check
+        if board.is_in_check(true) {
+            return;
+        }
+
+        if kingside
+            && !board.is_square_attacked_by_black(position << 1)
+            && !board.is_square_attacked_by_black(position << 2)
+        {
+            // perform kingside castle
+            let mut new = board.clone_and_advance(0, false);
+
+            // slow? :/
+            let old_rook_pos = ROW_1 & FILE_H;
+            let rook_pos_tzcnt = old_rook_pos.tzcnt() as u8;
+            let rook_piece_index = slow_get_index_of_pos(&new, rook_pos_tzcnt);
+
+            let new_king_pos = ROW_1 & FILE_G;
+            let new_rook_pos = ROW_1 & FILE_F;
+            update_white_castled_board(
+                &mut new,
+                new_king_pos,
+                old_rook_pos,
+                new_rook_pos,
+                piece_index,
+                rook_piece_index,
+            );
+
+            outvec.push(new);
+        }
+        if queenside
+            && !board.is_square_attacked_by_black(position >> 1)
+            && !board.is_square_attacked_by_black(position >> 2)
+        {
+            // perform queenside castle
+            let mut new = board.clone_and_advance(0, false);
+
+            // slow? :/
+            let old_rook_pos = ROW_1 & FILE_A;
+            let rook_pos_tzcnt = old_rook_pos.tzcnt() as u8;
+            let rook_piece_index = slow_get_index_of_pos(&new, rook_pos_tzcnt);
+
+            let new_king_pos = ROW_1 & FILE_C;
+            let new_rook_pos = ROW_1 & FILE_D;
+            update_white_castled_board(
+                &mut new,
+                new_king_pos,
+                old_rook_pos,
+                new_rook_pos,
+                piece_index,
+                rook_piece_index,
+            );
+
+            outvec.push(new);
+        }
+    } else {
+        // TODO
+    }
+}
+
+fn slow_get_index_of_pos(board: &Board, target_pos_tzcnt: u8) -> usize {
+    let (piece_index, _) = board
+        .piece_positions_tzcnt
+        .iter()
+        .enumerate()
+        .find(|(_, p)| **p == target_pos_tzcnt)
+        .unwrap();
+    piece_index
+}
+
+fn update_white_castled_board(
+    board: &mut Board,
+    new_king_pos: u64,
+    old_rook_pos: u64,
+    new_rook_pos: u64,
+    king_piece_i: usize,
+    rook_piece_i: usize,
+) {
+    board.piece_positions_tzcnt[king_piece_i] = new_king_pos.tzcnt() as u8;
+    board.piece_positions_tzcnt[rook_piece_i] = new_rook_pos.tzcnt() as u8;
+    board.bitboard.white_king = new_king_pos;
+    board.bitboard.white_rooklike &= !old_rook_pos;
+    board.bitboard.white_rooklike |= new_rook_pos;
+
+    board.disqualify_white_castling();
 }
