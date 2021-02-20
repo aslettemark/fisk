@@ -106,10 +106,12 @@ pub fn white_pawn_moves(
         if intersects(position, eligible_pos) {
             // en passant capture
             let mut new = board.clone_and_advance(0, true);
-            new.delete_piece(twofront_square.tzcnt() as u8);
             let new_pawn_pos = twofront_square << 8;
+
             new.piece_positions_tzcnt[pawn_piece_index] = new_pawn_pos.tzcnt() as u8;
             new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | new_pawn_pos;
+
+            new.delete_piece(twofront_square.tzcnt() as u8);
             new.bitboard.unset_black_piece(twofront_square);
 
             outvec.push(new);
