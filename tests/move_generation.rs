@@ -386,6 +386,13 @@ fn white_queenside_castling() {
 }
 
 #[test]
+fn black_castling() {
+    gen("r3k2r/8/8/8/8/8/8/3K4 b kq - 0 1", 5 + 5 + 2 * 7 + 2);
+    gen("r3k2r/8/8/8/8/8/8/3K4 b q - 0 1", 5 + 5 + 2 * 7 + 1);
+    gen("r3k2r/8/8/8/8/8/8/3K4 b k - 0 1", 5 + 5 + 2 * 7 + 1);
+}
+
+#[test]
 fn pawn_promotion() {
     gen("2k5/5P2/8/8/8/8/8/K7 w - g6 0 1", 3 + 4);
     gen("2k2r2/5P2/8/8/8/8/8/K7 w - g6 0 1", 3);
