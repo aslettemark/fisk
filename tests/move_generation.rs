@@ -139,7 +139,11 @@ fn test_white_pawn_en_passant_capture() {
             ep_count += 1;
             assert_eq!(s.get_en_passant_file(), 5);
 
+            println!("EP board:");
+            s.print();
+
             let s11 = s.generate_successors();
+            println!("Ep successors:");
             for ss in &s11 {
                 ss.print();
             }

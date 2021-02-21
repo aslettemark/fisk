@@ -95,7 +95,8 @@ pub fn white_pawn_moves(
 
     let ep_file = board.get_en_passant_file();
     if ep_file != 0 {
-        let twofront_square = (ep_file as u64 - 1) << (4 * 8);
+        let shift = (ep_file as u64 - 1) + 4 * 8;
+        let twofront_square = 1 << shift;
         let eligible_pos = if intersects(twofront_square, FILE_A) {
             twofront_square << 1
         } else if intersects(twofront_square, FILE_H) {
