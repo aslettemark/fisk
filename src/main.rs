@@ -1,14 +1,14 @@
 use std::io;
 use std::io::Write;
+use std::mem::size_of;
 
 use clap::{App, Arg, SubCommand};
 
+use bench::*;
 use fisk::board::*;
 use fisk::constants::*;
 use fisk::fen::*;
-
-use bench::*;
-use std::mem::size_of;
+use fisk::perft::perft_command;
 
 mod bench;
 
@@ -41,6 +41,13 @@ fn main() {
                 ),
         )
         .subcommand(SubCommand::with_name("debug").about("Debug"))
+        .subcommand(
+            SubCommand::with_name("perft")
+                .arg(Arg::with_name("Run").long("run").takes_value(true))
+                .arg(Arg::with_name("All").long("all"))
+                .arg(Arg::with_name("Print available perft tests").long("print"))
+                .arg(Arg::with_name("Stop on error").long("stop-on-error")),
+        )
         .subcommand(SubCommand::with_name("interactive").about("Interactive"));
     let matches = opts.get_matches();
 
@@ -58,6 +65,7 @@ fn main() {
             matches.subcommand().1.unwrap().value_of("Start board"),
         ),
         Some("debug") => debug(),
+        Some("perft") => perft_command(&matches.subcommand().1.unwrap()),
         Some("interactive") => interactive(),
         None => debug(),
         _ => unreachable!(),

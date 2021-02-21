@@ -53,21 +53,26 @@ pub fn white_pawn_moves(
         new1.bitboard.white_pawns &= !position;
         new1.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
         new1.piece_kinds[pawn_piece_index] = WhiteQueen;
+        new1.bitboard.white_rooklike |= pos_front;
+        new1.bitboard.white_bishoplike |= pos_front;
 
         let mut new2 = board.clone_and_advance(0, true);
         new2.bitboard.white_pawns &= !position;
         new2.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
         new2.piece_kinds[pawn_piece_index] = WhiteBishop;
+        new2.bitboard.white_bishoplike |= pos_front;
 
         let mut new3 = board.clone_and_advance(0, true);
         new3.bitboard.white_pawns &= !position;
         new3.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
         new3.piece_kinds[pawn_piece_index] = WhiteRook;
+        new3.bitboard.white_rooklike |= pos_front;
 
         let mut new4 = board.clone_and_advance(0, true);
         new4.bitboard.white_pawns &= !position;
         new4.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
         new4.piece_kinds[pawn_piece_index] = WhiteKnight;
+        new4.bitboard.white_knights |= pos_front;
 
         outvec.reserve(4);
         outvec.push(new1);
@@ -162,21 +167,26 @@ pub fn black_pawn_moves(
         new1.bitboard.black_pawns &= !position;
         new1.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
         new1.piece_kinds[pawn_piece_index] = BlackQueen;
+        new1.bitboard.black_bishoplike |= pos_front;
+        new1.bitboard.black_rooklike |= pos_front;
 
         let mut new2 = board.clone_and_advance(0, true);
         new2.bitboard.black_pawns &= !position;
         new2.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
         new2.piece_kinds[pawn_piece_index] = BlackBishop;
+        new2.bitboard.black_bishoplike |= pos_front;
 
         let mut new3 = board.clone_and_advance(0, true);
         new3.bitboard.black_pawns &= !position;
         new3.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
         new3.piece_kinds[pawn_piece_index] = BlackRook;
+        new3.bitboard.black_rooklike |= pos_front;
 
         let mut new4 = board.clone_and_advance(0, true);
         new4.bitboard.black_pawns &= !position;
         new4.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
         new4.piece_kinds[pawn_piece_index] = BlackKnight;
+        new4.bitboard.black_knights |= pos_front;
 
         outvec.reserve(4);
         outvec.push(new1);
@@ -694,6 +704,28 @@ pub fn knight_moves(
     }
 }
 
+fn verify_white_rook_at(board: &Board, position: u64) -> bool {
+    let rooklike = board.bitboard.white_rooklike;
+    let bishoplike = board.bitboard.white_bishoplike;
+    if !intersects(position, rooklike) {
+        false
+    } else {
+        // Verify no queen
+        !intersects(position, bishoplike)
+    }
+}
+
+fn verify_black_rook_at(board: &Board, position: u64) -> bool {
+    let rooklike = board.bitboard.black_rooklike;
+    let bishoplike = board.bitboard.black_bishoplike;
+    if !intersects(position, rooklike) {
+        false
+    } else {
+        // Verify no queen
+        !intersects(position, bishoplike)
+    }
+}
+
 pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut Vec<Board>) {
     let white = board.white_to_move();
     let trailing = position.tzcnt() as usize;
@@ -749,9 +781,11 @@ pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut
 
     if white {
         let kingside = board.can_white_castle_kingside()
-            && !intersects(total_occupancy, ROW_1 & (FILE_F | FILE_G));
+            && !intersects(total_occupancy, ROW_1 & (FILE_F | FILE_G))
+            && verify_white_rook_at(board, ROW_1 & FILE_H);
         let queenside = board.can_white_castle_queenside()
-            && !intersects(total_occupancy, ROW_1 & (FILE_B | FILE_C | FILE_D));
+            && !intersects(total_occupancy, ROW_1 & (FILE_B | FILE_C | FILE_D))
+            && verify_white_rook_at(board, ROW_1 & FILE_A);
         if !(kingside || queenside) {
             return;
         }
@@ -813,9 +847,11 @@ pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut
         }
     } else {
         let kingside = board.can_black_castle_kingside()
-            && !intersects(total_occupancy, ROW_8 & (FILE_F | FILE_G));
+            && !intersects(total_occupancy, ROW_8 & (FILE_F | FILE_G))
+            && verify_black_rook_at(board, FILE_H & ROW_8);
         let queenside = board.can_black_castle_queenside()
-            && !intersects(total_occupancy, ROW_8 & (FILE_B | FILE_C | FILE_D));
+            && !intersects(total_occupancy, ROW_8 & (FILE_B | FILE_C | FILE_D))
+            && verify_black_rook_at(board, FILE_A & ROW_8);
         if !(kingside || queenside) {
             return;
         }

@@ -6,3 +6,4 @@ pub mod constants;
 pub mod engine;
 pub mod fen;
 pub mod move_generation;
+pub mod perft;
