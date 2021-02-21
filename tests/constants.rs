@@ -14,7 +14,7 @@ fn test_table_n_attacks(trailing: usize, n_attacks: u64, table: &[[u64; 8]; 64])
 }
 
 #[test]
-fn test_knight_attack_table() {
+fn knight_attack_table() {
     test_table_n_attacks(0, 2, &KNIGHT_ATTACK_LIST);
     test_table_n_attacks(63, 2, &KNIGHT_ATTACK_LIST);
     test_table_n_attacks(27, 8, &KNIGHT_ATTACK_LIST);
@@ -22,7 +22,7 @@ fn test_knight_attack_table() {
 }
 
 #[test]
-fn test_king_attack_table() {
+fn king_attack_table() {
     test_table_n_attacks(0, 3, &KING_ATTACK);
     test_table_n_attacks(63, 3, &KING_ATTACK);
     test_table_n_attacks(1, 5, &KING_ATTACK);
@@ -30,7 +30,7 @@ fn test_king_attack_table() {
 }
 
 #[test]
-fn test_rook_attacks() {
+fn rook_attacks() {
     for i in 0..64usize {
         let ra = RANK_ATTACK[i];
         let fa = FILE_ATTACK[i];

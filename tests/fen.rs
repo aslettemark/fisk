@@ -4,7 +4,7 @@ use fisk::constants::*;
 use fisk::fen::FEN_DEFAULT_BOARD;
 
 #[test]
-fn test_default_board_fen() {
+fn default_board_fen() {
     let a = Board::from_fen(FEN_DEFAULT_BOARD).unwrap();
     assert_eq!(a.get_halfmove_clock(), 0, "No turns have been made");
     assert_eq!(a.get_en_passant_file(), 0, "No en passant in initial state");

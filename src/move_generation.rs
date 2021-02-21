@@ -1,6 +1,7 @@
 use bitintr::*;
 
 use crate::board::Board;
+use crate::board::PieceKind::*;
 use crate::constants::*;
 
 fn pawn_capture_pos(
@@ -44,14 +45,41 @@ pub fn white_pawn_moves(
 
     //a white pawn cannot exist on row 8
     let pos_front = position << 8;
+    let pos_front_tzcnt = pos_front.tzcnt() as u8;
     let free_square_in_front = !intersects(pos_front, total_occupancy);
-    if free_square_in_front {
+    if free_square_in_front && intersects(pos_front, ROW_8) {
+        // Promote
+        let mut new1 = board.clone_and_advance(0, true);
+        new1.bitboard.white_pawns &= !position;
+        new1.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
+        new1.piece_kinds[pawn_piece_index] = WhiteQueen;
+
+        let mut new2 = board.clone_and_advance(0, true);
+        new2.bitboard.white_pawns &= !position;
+        new2.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
+        new2.piece_kinds[pawn_piece_index] = WhiteBishop;
+
+        let mut new3 = board.clone_and_advance(0, true);
+        new3.bitboard.white_pawns &= !position;
+        new3.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
+        new3.piece_kinds[pawn_piece_index] = WhiteRook;
+
+        let mut new4 = board.clone_and_advance(0, true);
+        new4.bitboard.white_pawns &= !position;
+        new4.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
+        new4.piece_kinds[pawn_piece_index] = WhiteKnight;
+
+        outvec.reserve(4);
+        outvec.push(new1);
+        outvec.push(new2);
+        outvec.push(new3);
+        outvec.push(new4);
+    } else if free_square_in_front {
         // pawn short forward move
         let mut new = board.clone_and_advance(0, true);
         new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | pos_front;
-        new.piece_positions_tzcnt[pawn_piece_index] = pos_front.tzcnt() as u8;
+        new.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
         outvec.push(new);
-        //TODO turn into queen, rook, bishop, knight if row == 8
     }
 
     if free_square_in_front && intersects(position, ROW_2) {
@@ -126,14 +154,41 @@ pub fn black_pawn_moves(
 
     //a black pawn cannot exist on row 0
     let pos_front = position >> 8;
+    let pos_front_tzcnt = pos_front.tzcnt() as u8;
     let free_square_in_front = !intersects(pos_front, total_occupancy);
-    if free_square_in_front {
+    if free_square_in_front && intersects(pos_front, ROW_1) {
+        // Promote
+        let mut new1 = board.clone_and_advance(0, true);
+        new1.bitboard.black_pawns &= !position;
+        new1.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
+        new1.piece_kinds[pawn_piece_index] = BlackQueen;
+
+        let mut new2 = board.clone_and_advance(0, true);
+        new2.bitboard.black_pawns &= !position;
+        new2.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
+        new2.piece_kinds[pawn_piece_index] = BlackBishop;
+
+        let mut new3 = board.clone_and_advance(0, true);
+        new3.bitboard.black_pawns &= !position;
+        new3.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
+        new3.piece_kinds[pawn_piece_index] = BlackRook;
+
+        let mut new4 = board.clone_and_advance(0, true);
+        new4.bitboard.black_pawns &= !position;
+        new4.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
+        new4.piece_kinds[pawn_piece_index] = BlackKnight;
+
+        outvec.reserve(4);
+        outvec.push(new1);
+        outvec.push(new2);
+        outvec.push(new3);
+        outvec.push(new4);
+    } else if free_square_in_front {
         // pawn short forward move
         let mut new = board.clone_and_advance(0, true);
         new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_front;
-        new.piece_positions_tzcnt[pawn_piece_index] = pos_front.tzcnt() as u8;
+        new.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt;
         outvec.push(new);
-        //TODO turn into queen, rook, bishop, knight if row == 0
     }
 
     if free_square_in_front && intersects(position, ROW_7) {
