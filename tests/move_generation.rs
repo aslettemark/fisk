@@ -153,6 +153,33 @@ fn test_white_pawn_en_passant_capture() {
     assert_eq!(ep_count, 1);
 }
 
+#[test]
+fn test_black_pawn_en_passant_capture() {
+    let s1 = succ("2k5/8/8/8/5p2/8/4P3/1K6 w - g6 0 1");
+    let mut ep_count = 0;
+    for s in &s1 {
+        if s.get_en_passant_file() != 0 {
+            ep_count += 1;
+            assert_eq!(s.get_en_passant_file(), 5);
+
+            println!("EP board:");
+            s.print();
+
+            let s11 = s.generate_successors();
+            println!("Ep successors:");
+            for ss in &s11 {
+                ss.print();
+            }
+
+            // At least one successor removed the white pawn
+            assert!(s11.iter().any(|board| board.bitboard.white_pawns.popcnt() == 0));
+
+            assert_eq!(s11.len(), 5 + 2); // 5 king moves and 2 pawn moves
+        }
+    }
+    assert_eq!(ep_count, 1);
+}
+
 fn test_starting_board_movegen(a: Board) {
     let succ = a.generate_successors();
     assert_eq!(succ.len(), 20);

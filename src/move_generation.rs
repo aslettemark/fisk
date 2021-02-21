@@ -97,13 +97,7 @@ pub fn white_pawn_moves(
     if ep_file != 0 {
         let shift = (ep_file as u64 - 1) + 4 * 8;
         let twofront_square = 1 << shift;
-        let eligible_pos = if intersects(twofront_square, FILE_A) {
-            twofront_square << 1
-        } else if intersects(twofront_square, FILE_H) {
-            twofront_square >> 1
-        } else {
-            (twofront_square << 1) | (twofront_square >> 1)
-        };
+        let eligible_pos = ep_eligible_positions_mask(twofront_square);
         if intersects(position, eligible_pos) {
             // en passant capture
             let mut new = board.clone_and_advance(0, true);
@@ -180,7 +174,36 @@ pub fn black_pawn_moves(
             );
         }
     }
-    //TODO en passant capture
+
+    let ep_file = board.get_en_passant_file();
+    if ep_file != 0 {
+        let shift = (ep_file as u64 - 1) + 3 * 8;
+        let twofront_square = 1 << shift;
+        let eligible_pos = ep_eligible_positions_mask(twofront_square);
+        if intersects(position, eligible_pos) {
+            // en passant capture
+            let mut new = board.clone_and_advance(0, true);
+            let new_pawn_pos = twofront_square >> 8;
+
+            new.piece_positions_tzcnt[pawn_piece_index] = new_pawn_pos.tzcnt() as u8;
+            new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | new_pawn_pos;
+
+            new.delete_piece(twofront_square.tzcnt() as u8);
+            new.bitboard.unset_white_piece(twofront_square);
+
+            outvec.push(new);
+        }
+    }
+}
+
+fn ep_eligible_positions_mask(twofront_square: u64) -> u64 {
+    if intersects(twofront_square, FILE_A) {
+        twofront_square << 1
+    } else if intersects(twofront_square, FILE_H) {
+        twofront_square >> 1
+    } else {
+        (twofront_square << 1) | (twofront_square >> 1)
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
