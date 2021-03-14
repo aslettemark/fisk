@@ -400,3 +400,11 @@ fn pawn_promotion() {
     gen("2k5/5P2/8/8/8/8/3p4/3K4 b - - 0 1", 5);
     gen("r3k2r/4P3/8/8/8/8/8/3K4 w q - 0 1", 5);
 }
+
+/*
+#[test]
+fn perft_pos5_regression() {
+    // I don't really get it yet, but chessprogrammingwiki says this is true
+    gen("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8 ", 44);
+}
+ */

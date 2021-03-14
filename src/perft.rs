@@ -101,6 +101,33 @@ fn init_perft_configs() -> HashMap<&'static str, PerftConfig> {
             depth_level_results: vec![1, 6, 264, 9467, 422333, 15833292, 706045033],
         },
     );
+    map.insert(
+        "pos5", // pos 5 seems kinda scuffed tbh
+        PerftConfig {
+            fen: "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
+            depth: 1, // TODO 5
+            depth_level_results: vec![1, 44, 1486, 62379, 2103487, 89941194],
+        },
+    );
+    map.insert(
+        "pos6",
+        PerftConfig {
+            fen: "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10",
+            depth: 6, // TODO test 7, 8 and 9
+            depth_level_results: vec![
+                1,
+                46,
+                2079,
+                89890,
+                3894594,
+                164075551,
+                6_923_051_137,
+                287_188_994_746,
+                11_923_589_843_526,
+                490_154_852_788_714,
+            ],
+        },
+    );
 
     map
 }
@@ -160,6 +187,14 @@ fn run_config(name: &str, config: &PerftConfig) -> Result<(), PerftError> {
     Ok(())
 }
 
+fn print_pass(n: &str) {
+    println!("PASS\tperft \"{}\"", n);
+}
+
+fn print_fail(n: &str, e: &PerftError) {
+    eprintln!("FAILED\tperft \"{}\": {}", n, e);
+}
+
 fn test_all(stop_on_err: bool) {
     let mut passed: Vec<&str> = Vec::new();
     let mut failed: Vec<(&str, PerftError)> = Vec::new();
@@ -178,18 +213,18 @@ fn test_all(stop_on_err: bool) {
     }
 
     for n in passed {
-        println!("PASS\tperft \"{}\"", n);
+        print_pass(n);
     }
     for (n, e) in &failed {
-        println!("FAILED\tperft \"{}\": {}", n, e);
+        print_fail(n, e);
     }
 }
 
 fn test_single(name: &str, config: &PerftConfig) {
     let result = run_config(name, config);
     match result {
-        Ok(_) => println!("PASS\tperft \"{}\"", name),
-        Err(e) => println!("FAILED\tperft \"{}\": {}", name, e),
+        Ok(_) => print_pass(name),
+        Err(e) => print_fail(name, &e),
     }
 }
 
