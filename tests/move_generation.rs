@@ -10,6 +10,7 @@ fn fen(fen: &str) -> Board {
 
 fn succ(fen: &str) -> Vec<Board> {
     let b = Board::from_fen(fen).unwrap();
+    board_sanity(&b);
     let succ = b.generate_successors();
 
     println!("{} successors:", succ.len());
@@ -71,6 +72,14 @@ fn expect_queens(board: &Board, white: u64, black: u64) {
     );
 }
 
+fn board_sanity(board: &Board) {
+    let bb = board.bitboard;
+    assert!(bb.white_pawns.popcnt() <= 8);
+    assert!(bb.black_pawns.popcnt() <= 8);
+    assert_eq!(bb.black_king.popcnt(), 1);
+    assert_eq!(bb.white_king.popcnt(), 1);
+}
+
 #[test]
 fn default_board_movegen() {
     test_starting_board_movegen(Board::default());
@@ -79,12 +88,12 @@ fn default_board_movegen() {
 
 #[test]
 fn basic_pawn_moves() {
-    let a = fen("8/8/8/8/8/6p1/5P2/8 w KQkq -");
+    let a = fen("k7/8/8/8/8/6p1/5P2/K7 w - - 0 1");
     let succ = a.generate_successors();
     assert!(a.white_to_move());
-    assert_eq!(succ.len(), 3);
+    assert_eq!(succ.len(), 6);
 
-    gen("8/8/8/8/6p1/5P2/8/8 w KQkq -", 2);
+    gen("k7/8/8/8/6p1/5P2/8/K7 w - - 0 1", 5);
 
     let c = fen("8/8/8/3p4/2QR4/8/8/8 b - - 0 1");
     assert_eq!(c.bitboard.white_rooklike.popcnt(), 2);
@@ -205,11 +214,6 @@ fn test_starting_board_movegen(a: Board) {
 }
 
 #[test]
-fn locked_knight() {
-    gen("8/8/8/1P1P4/P3P3/2N5/P3P3/1P1P4 w - - 0 1", 8);
-}
-
-#[test]
 fn white_knight_capture() {
     {
         let a = fen("8/6p1/8/8/1k6/1P6/2p5/N7 w - - 0 1");
@@ -248,11 +252,11 @@ fn white_knight_capture() {
 #[test]
 fn king_movement() {
     {
-        let s1 = gen("8/8/8/8/3K4/8/8/8 w - - 0 1", 8);
+        let s1 = gen("8/4k3/8/8/3K4/8/8/8 w - - 0 1", 8);
         let mut cumulative = 0u64;
         for s in &s1 {
             assert_eq!(s.bitboard.white_coverage().popcnt(), 1);
-            assert_eq!(s.bitboard.black_coverage(), 0);
+            assert_eq!(s.bitboard.black_coverage().popcnt(), 1);
 
             let king_mask = s.bitboard.white_king;
             assert_eq!(cumulative & king_mask, 0); // All 8 moves are different
@@ -260,34 +264,33 @@ fn king_movement() {
         }
     }
     {
-        let s2 = gen("8/8/8/8/3k4/8/8/8 b - - 0 1", 8);
+        let s2 = gen("8/8/8/8/3k4/8/6K1/8 b - - 0 1", 8);
         let mut cumulative = 0u64;
         for s in &s2 {
             assert_eq!(s.bitboard.black_coverage().popcnt(), 1);
-            assert_eq!(s.bitboard.white_coverage(), 0);
+            assert_eq!(s.bitboard.white_coverage().popcnt(), 1);
 
-            let king_mask = s.bitboard.white_king;
+            let king_mask = s.bitboard.black_king;
             assert_eq!(cumulative & king_mask, 0); // All 8 moves are different
             cumulative |= king_mask;
         }
     }
 
-    gen("8/8/8/8/8/8/PPP5/1K6 w - - 0 1", 8);
-    gen("8/8/8/8/7k/8/8/8 b - - 0 1", 5);
-    gen("8/8/8/8/7k/8/8/8 w - - 0 1", 0);
+    gen("8/8/5k2/8/8/8/PPP5/1K6 w - - 0 1", 8);
+    gen("8/8/8/8/7k/8/1K6/8 b - - 0 1", 5);
 }
 
 #[test]
 fn king_capture() {
-    gen("8/8/8/8/7k/7P/8/8 b - - 0 1", 5);
+    gen("8/8/8/8/7k/7P/8/K7 b - - 0 1", 5);
 
-    let s2 = gen("8/8/8/6RR/5RRk/6RR/8/8 b - - 0 1", 5);
+    let s2 = gen("8/8/8/6RR/5RRk/6RR/8/K7 b - - 0 1", 5);
     for s in &s2 {
         assert_ne!(s.bitboard.black_coverage(), 0);
-        alive(s, 6);
+        alive(s, 7);
     }
 
-    gen("8/8/8/8/8/1rr5/1Kr5/1r6 w - - 0 1", 8);
+    gen("8/5k2/8/8/8/1rr5/1Kr5/1r6 w - - 0 1", 8);
 }
 
 #[test]
@@ -322,54 +325,36 @@ fn rook_file_slide() {
 
 #[test]
 fn rook_row_file_slide() {
-    let s1 = gen("7R/6R1/5R2/4R3/3R4/2R5/1R6/R7 w - - 0 1", 8 * (2 * 7));
-    for s in &s1 {
-        assert_eq!(s.get_halfmove_clock(), 1);
-    }
+    let s1 = gen("k6R/6R1/5R2/4R3/3R4/2R5/1R6/R6K w - - 0 1", 8 * (2 * 7) - 2 + 3);
 
-    let s2 = gen("n6R/6R1/5R2/4R3/3R4/2R5/1R6/R6n w - - 0 1", 8 * (2 * 7));
     let mut capture_count = 0;
-    for s in &s2 {
+    for s in &s1 {
         if s.get_halfmove_clock() == 0 {
             capture_count += 1;
-            assert_eq!(s.bitboard.black_coverage().popcnt(), 1);
+            assert_eq!(s.bitboard.black_coverage().popcnt(), 0);
         } else {
-            assert_eq!(s.bitboard.black_coverage().popcnt(), 2);
+            assert_eq!(s.bitboard.black_coverage().popcnt(), 1);
         }
         expect_queens(s, 0, 0);
     }
-    assert_eq!(capture_count, 4);
-
-    let s3 = gen("n6Q/6R1/5R2/4R3/3R4/2R5/1R6/Q6n w - - 0 1", 8 * (2 * 7));
-    let mut capture_count = 0;
-    for s in &s3 {
-        if s.get_halfmove_clock() == 0 {
-            capture_count += 1;
-            assert_eq!(s.bitboard.black_coverage().popcnt(), 1);
-        } else {
-            assert_eq!(s.bitboard.black_coverage().popcnt(), 2);
-        }
-        expect_queens(s, 2, 0);
-    }
-    assert_eq!(capture_count, 4);
+    assert_eq!(capture_count, 2);
 }
 
 #[test]
 fn queen_moves() {
-    gen("8/1r6/8/3p4/3P4/8/1Q6/8 w - - 0 1", 17);
+    gen("8/1r6/3k4/3p4/3P4/8/1Q6/7K w - - 0 1", 20);
 
-    let s2 = gen("8/1r6/8/3p4/3P4/rrr5/rQr5/rrr5 w - - 0 1", 8);
+    let s2 = gen("1k6/8/8/3p2K1/3P4/rrr5/rQr5/rrr5 w - - 0 1", 8 + 8);
     for s in &s2 {
-        assert_eq!(s.get_halfmove_clock(), 0);
-        assert_eq!(s.bitboard.black_rooklike.popcnt(), 8);
         expect_queens(s, 1, 0);
     }
 }
 
 #[test]
 fn bishop_moves() {
-    let s1 = gen("b7/1Q6/8/8/8/8/8/8 b - - 0 1", 1);
-    expect_queens(&s1[0], 0, 0);
+    let s1 = gen("b6k/1Q6/8/8/8/8/8/K7 b - - 0 1", 4);
+    assert_eq!(s1.iter().map(|s| s.bitboard.white_bishoplike.popcnt()).sum::<u64>(), 3);
+    assert_eq!(s1.iter().map(|s| s.bitboard.white_rooklike.popcnt()).sum::<u64>(), 3);
 }
 
 #[test]
