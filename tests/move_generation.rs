@@ -19,23 +19,31 @@ fn succ(fen: &str) -> Vec<Board> {
     }
 
     for s in &succ {
-        if b.bitboard == s.bitboard {
+        let sbb = s.bitboard;
+        if b.bitboard == sbb {
             println!("Two identical boards:");
             b.print();
         }
-        assert_ne!(b.bitboard, s.bitboard);
+        assert_ne!(b.bitboard, sbb);
 
-        let pawn_move = (s.bitboard.white_pawns != b.bitboard.white_pawns)
-            || (s.bitboard.black_pawns != b.bitboard.black_pawns);
-        let has_captured = (b.bitboard.white_coverage() != s.bitboard.white_coverage())
-            && (b.bitboard.black_coverage() != s.bitboard.black_coverage())
-            && (b.bitboard.coverage().popcnt() > s.bitboard.coverage().popcnt());
+        let pawn_move = (sbb.white_pawns != b.bitboard.white_pawns)
+            || (sbb.black_pawns != b.bitboard.black_pawns);
+        let has_captured = (b.bitboard.white_coverage() != sbb.white_coverage())
+            && (b.bitboard.black_coverage() != sbb.black_coverage())
+            && (b.bitboard.coverage().popcnt() > sbb.coverage().popcnt());
 
         if s.get_halfmove_clock() == 0 {
             assert!(pawn_move || has_captured);
         } else {
             assert!(!pawn_move);
             assert!(!has_captured);
+        }
+
+        if pawn_move {
+            assert_eq!(sbb.white_pawns & ROW_1, 0);
+            assert_eq!(sbb.white_pawns & ROW_8, 0);
+            assert_eq!(sbb.black_pawns & ROW_1, 0);
+            assert_eq!(sbb.black_pawns & ROW_8, 0);
         }
     }
 
@@ -78,6 +86,11 @@ fn board_sanity(board: &Board) {
     assert!(bb.black_pawns.popcnt() <= 8);
     assert_eq!(bb.black_king.popcnt(), 1);
     assert_eq!(bb.white_king.popcnt(), 1);
+
+    assert_eq!(bb.white_pawns & ROW_1, 0);
+    assert_eq!(bb.white_pawns & ROW_8, 0);
+    assert_eq!(bb.black_pawns & ROW_1, 0);
+    assert_eq!(bb.black_pawns & ROW_8, 0);
 }
 
 #[test]
@@ -160,6 +173,12 @@ fn white_pawn_en_passant_capture() {
         }
     }
     assert_eq!(ep_count, 1);
+}
+
+#[test]
+fn pawn_always_promotes() {
+    gen("3r4/k3P3/8/8/8/8/8/2K5 w - - 0 1", 4 + 4 + 5);
+    gen("8/k7/8/8/8/8/2K1p3/5R2 b - - 0 1", 4 + 4 + 5);
 }
 
 #[test]
@@ -325,7 +344,10 @@ fn rook_file_slide() {
 
 #[test]
 fn rook_row_file_slide() {
-    let s1 = gen("k6R/6R1/5R2/4R3/3R4/2R5/1R6/R6K w - - 0 1", 8 * (2 * 7) - 2 + 3);
+    let s1 = gen(
+        "k6R/6R1/5R2/4R3/3R4/2R5/1R6/R6K w - - 0 1",
+        8 * (2 * 7) - 2 + 3,
+    );
 
     let mut capture_count = 0;
     for s in &s1 {
@@ -353,8 +375,18 @@ fn queen_moves() {
 #[test]
 fn bishop_moves() {
     let s1 = gen("b6k/1Q6/8/8/8/8/8/K7 b - - 0 1", 4);
-    assert_eq!(s1.iter().map(|s| s.bitboard.white_bishoplike.popcnt()).sum::<u64>(), 3);
-    assert_eq!(s1.iter().map(|s| s.bitboard.white_rooklike.popcnt()).sum::<u64>(), 3);
+    assert_eq!(
+        s1.iter()
+            .map(|s| s.bitboard.white_bishoplike.popcnt())
+            .sum::<u64>(),
+        3
+    );
+    assert_eq!(
+        s1.iter()
+            .map(|s| s.bitboard.white_rooklike.popcnt())
+            .sum::<u64>(),
+        3
+    );
 }
 
 #[test]

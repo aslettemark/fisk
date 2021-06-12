@@ -17,7 +17,7 @@ impl Board {
         let has_move_data = split.len() == 6;
 
         let board = split.get(0).unwrap();
-        let (bitboard, pieces) = parse_board_string(board);
+        let (bitboard, pieces) = parse_board_string(board)?;
 
         let (halfmove_clock, fullmove_counter) = if has_move_data {
             (
@@ -69,28 +69,28 @@ impl Board {
 }
 
 /// Map FEN pieces to kinds
-fn fen_kind(piece: char) -> PieceKind {
+fn fen_kind(piece: char) -> Option<PieceKind> {
     match piece {
-        'r' => BlackRook,
-        'n' => BlackKnight,
-        'b' => BlackBishop,
-        'q' => BlackQueen,
-        'k' => BlackKing,
-        'p' => BlackPawn,
-        'R' => WhiteRook,
-        'N' => WhiteKnight,
-        'B' => WhiteBishop,
-        'Q' => WhiteQueen,
-        'K' => WhiteKing,
-        'P' => WhitePawn,
-        _ => panic!("Invalid piece: {}", piece),
+        'r' => Some(BlackRook),
+        'n' => Some(BlackKnight),
+        'b' => Some(BlackBishop),
+        'q' => Some(BlackQueen),
+        'k' => Some(BlackKing),
+        'p' => Some(BlackPawn),
+        'R' => Some(WhiteRook),
+        'N' => Some(WhiteKnight),
+        'B' => Some(WhiteBishop),
+        'Q' => Some(WhiteQueen),
+        'K' => Some(WhiteKing),
+        'P' => Some(WhitePawn),
+        _ => None,
     }
 }
 
-fn parse_board_string(board: &str) -> (BitBoard, [(PieceKind, u64); 32]) {
+fn parse_board_string(board: &str) -> Option<(BitBoard, [(PieceKind, u64); 32])> {
     let board_rows: Vec<&str> = board.split('/').collect::<Vec<_>>();
     if board_rows.len() != 8 {
-        panic!("Missing board row(s)");
+        return None;
     }
 
     let mut bb = BitBoard::empty();
@@ -108,7 +108,7 @@ fn parse_board_string(board: &str) -> (BitBoard, [(PieceKind, u64); 32]) {
                 j += c.to_digit(10).unwrap() as u64;
                 continue;
             }
-            let kind = fen_kind(c);
+            let kind = fen_kind(c)?;
             let file_mask = FILE_A << j;
             let pos = row_mask & file_mask;
 
@@ -139,5 +139,5 @@ fn parse_board_string(board: &str) -> (BitBoard, [(PieceKind, u64); 32]) {
             j += 1;
         }
     }
-    (bb, pieces)
+    Some((bb, pieces))
 }
