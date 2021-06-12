@@ -133,25 +133,16 @@ fn init_perft_configs() -> HashMap<&'static str, PerftConfig> {
         PerftConfig {
             fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q2/PPPB1P1P/R2BK2b w Qkq - 0 1",
             depth: 2,
-            depth_level_results: vec![
-                1,
-                38,
-                1767,
-            ],
-        }
+            depth_level_results: vec![1, 38, 1767],
+        },
     );
     map.insert(
         "kiwidebug2",
         PerftConfig {
             fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q2/PPPB1PpP/R2BK2R b KQkq - 0 1",
             depth: 3,
-            depth_level_results: vec![
-                1,
-                53,
-                1918,
-                97502,
-            ],
-        }
+            depth_level_results: vec![1, 53, 1918, 97502],
+        },
     );
 
     map
@@ -265,7 +256,7 @@ fn perft_debug(board: &Board, search_depth: usize) {
         let config = PerftConfig {
             fen: "",
             depth: search_depth - 1,
-            depth_level_results: vec![]
+            depth_level_results: vec![],
         };
 
         let results = perft_results(&s, &config);

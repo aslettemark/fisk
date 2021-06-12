@@ -55,7 +55,7 @@ impl Board {
             }
         }
 
-        Some(Board::new(
+        let board = Board::new(
             bitboard,
             piece_positions,
             piece_kinds,
@@ -64,7 +64,23 @@ impl Board {
             0, // TODO
             white_to_move,
             castling_availability,
-        ))
+        );
+
+        if board.is_sane_position() {
+            return Some(board);
+        }
+
+        None
+    }
+
+    pub fn is_sane_position(&self) -> bool {
+        let bb = self.bitboard;
+
+        (bb.white_pawns.popcnt() <= 8)
+            && (bb.black_pawns.popcnt() <= 8)
+            && (bb.white_king.popcnt() == 1)
+            && (bb.black_king.popcnt() == 1)
+            && (((bb.white_pawns | bb.black_pawns) & (ROW_1 | ROW_8)) == 0)
     }
 }
 

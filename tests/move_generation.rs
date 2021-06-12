@@ -10,7 +10,6 @@ fn fen(fen: &str) -> Board {
 
 fn succ(fen: &str) -> Vec<Board> {
     let b = Board::from_fen(fen).unwrap();
-    board_sanity(&b);
     let succ = b.generate_successors();
 
     println!("{} successors:", succ.len());
@@ -56,7 +55,15 @@ fn gen(fen: &str, expected_succ: usize) -> Vec<Board> {
     v
 }
 
-fn alive(board: &Board, n_alive: u64) {
+fn count_alive(board: &Board) -> usize {
+    board
+        .piece_kinds
+        .iter()
+        .filter(|pk| **pk != EmptySquare)
+        .count()
+}
+
+fn assert_alive(board: &Board, n_alive: u64) {
     let mut alive = 0;
     for (i, kind) in board.piece_kinds.iter().enumerate() {
         if *kind != EmptySquare {
@@ -80,19 +87,6 @@ fn expect_queens(board: &Board, white: u64, black: u64) {
     );
 }
 
-fn board_sanity(board: &Board) {
-    let bb = board.bitboard;
-    assert!(bb.white_pawns.popcnt() <= 8);
-    assert!(bb.black_pawns.popcnt() <= 8);
-    assert_eq!(bb.black_king.popcnt(), 1);
-    assert_eq!(bb.white_king.popcnt(), 1);
-
-    assert_eq!(bb.white_pawns & ROW_1, 0);
-    assert_eq!(bb.white_pawns & ROW_8, 0);
-    assert_eq!(bb.black_pawns & ROW_1, 0);
-    assert_eq!(bb.black_pawns & ROW_8, 0);
-}
-
 #[test]
 fn default_board_movegen() {
     test_starting_board_movegen(Board::default());
@@ -108,15 +102,14 @@ fn basic_pawn_moves() {
 
     gen("k7/8/8/8/6p1/5P2/8/K7 w - - 0 1", 5);
 
-    let c = fen("8/8/8/3p4/2QR4/8/8/8 b - - 0 1");
+    let c = fen("k7/8/8/3p4/2QR4/8/8/K7 b - - 0 1");
     assert_eq!(c.bitboard.white_rooklike.popcnt(), 2);
     assert_eq!(c.bitboard.white_bishoplike.popcnt(), 1);
     let succ = c.generate_successors();
-    assert_eq!(succ.len(), 1);
-    let s = succ[0];
-    alive(&s, 2);
-    assert_eq!(s.bitboard.white_rooklike.popcnt(), 1);
-    assert_eq!(s.bitboard.white_bishoplike.popcnt(), 0);
+    assert_eq!(succ.len(), 1 + 3);
+
+    assert_eq!(succ.iter().filter(|b| count_alive(*b) == 4).count(), 1);
+    assert_eq!(succ.iter().filter(|b| count_alive(*b) == 5).count(), 3);
 }
 
 fn ep_file(fen: &str, file: u8) {
@@ -143,17 +136,6 @@ fn en_passant() {
 
 #[test]
 fn white_pawn_en_passant_capture() {
-    /* TODO Old
-    let a = Board::from_fen("8/8/8/5Pp1/8/8/8/8 w - g6").unwrap();
-    let succ = a.generate_successors();
-    assert_eq!(succ.len(), 2);*/
-
-    /* TODO old
-    let b = Board::from_fen("8/8/8/5Pp1/8/8/8/8 w - e6").unwrap();
-    let succ = b.generate_successors();
-    assert_eq!(succ.len(), 2);
-    */
-
     let s1 = succ("2k5/4p3/8/3P4/8/8/8/1K6 b - g6 0 1");
     let mut ep_count = 0;
     for s in &s1 {
@@ -235,34 +217,39 @@ fn test_starting_board_movegen(a: Board) {
 #[test]
 fn white_knight_capture() {
     {
-        let a = fen("8/6p1/8/8/1k6/1P6/2p5/N7 w - - 0 1");
+        let a = fen("8/6p1/8/8/1k6/1P6/2p5/N6K w - - 0 1");
         let succ = a.generate_successors();
-        assert_eq!(succ.len(), 1);
-        let b = succ.get(0).unwrap();
+        assert_eq!(succ.len(), 1 + 3);
+        let b = succ
+            .iter()
+            .filter(|b| b.get_halfmove_clock() == 0)
+            .collect::<Vec<&Board>>();
+        assert_eq!(b.len(), 1);
+
+        let b = b[0];
         assert_eq!(b.get_halfmove_clock(), 0);
         let bb = b.bitboard;
         assert_ne!(bb.white_pawns, 0);
         assert_ne!(bb.black_pawns, 0);
         assert_ne!(bb.black_king, 0);
         assert_ne!(bb.black_pawns, a.bitboard.black_pawns);
-        assert_eq!(bb.white_coverage().popcnt(), 2);
+        assert_eq!(bb.white_coverage().popcnt(), 3);
         assert_eq!(bb.black_coverage().popcnt(), 2);
-        alive(b, 4);
-        //assert_eq!(b.generate_successors().len(), 9); // TODO enable (black king, black pawn)
+        assert_alive(b, 5);
     }
     {
-        let a = fen("7n/5P2/4P3/8/8/8/8/8 b - - 0 1");
+        let a = fen("k6n/5P2/4P3/8/8/8/8/K7 b - - 0 1");
         let succ = a.generate_successors();
-        assert_eq!(succ.len(), 2);
+        assert_eq!(succ.len(), 2 + 3);
         for s in &succ {
             if s.bitboard.white_pawns != a.bitboard.white_pawns {
-                assert_eq!(s.bitboard.white_coverage().popcnt(), 1);
-                alive(s, 2);
-                let sb = s.generate_successors();
-                assert_eq!(sb.len(), 2);
-            } else {
                 assert_eq!(s.bitboard.white_coverage().popcnt(), 2);
-                alive(s, 3);
+                assert_alive(s, 4);
+                let sb = s.generate_successors();
+                assert_eq!(sb.len(), 2 + 3);
+            } else {
+                assert_eq!(s.bitboard.white_coverage().popcnt(), 3);
+                assert_alive(s, 5);
             }
         }
     }
@@ -306,7 +293,7 @@ fn king_capture() {
     let s2 = gen("8/8/8/6RR/5RRk/6RR/8/K7 b - - 0 1", 5);
     for s in &s2 {
         assert_ne!(s.bitboard.black_coverage(), 0);
-        alive(s, 7);
+        assert_alive(s, 7);
     }
 
     gen("8/5k2/8/8/8/1rr5/1Kr5/1r6 w - - 0 1", 8);
@@ -334,10 +321,10 @@ fn rook_file_slide() {
             // King didn't move
             // All moves are captures
             assert_eq!(s.bitboard.black_coverage().popcnt(), 5);
-            alive(s, 5 + 4);
+            assert_alive(s, 5 + 4);
         } else {
             assert_eq!(s.bitboard.black_coverage().popcnt(), 6);
-            alive(s, 6 + 4);
+            assert_alive(s, 6 + 4);
         }
     }
 }
@@ -418,10 +405,10 @@ fn pawn_promotion() {
     gen("r3k2r/4P3/8/8/8/8/8/3K4 w q - 0 1", 5);
 }
 
-/*
 #[test]
 fn perft_pos5_regression() {
-    // I don't really get it yet, but chessprogrammingwiki says this is true
-    gen("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8 ", 44);
+    gen(
+        "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
+        44,
+    );
 }
- */
