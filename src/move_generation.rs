@@ -19,6 +19,7 @@ fn pawn_capture_pos(
         if white {
             let mut new1 = board.clone_and_advance(0, true);
             new1.bitboard.white_pawns &= !pawn_pos;
+            new1.delete_piece(capture_pos_tzcnt);
             new1.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new1.piece_kinds[pawn_piece_index] = WhiteQueen;
             new1.bitboard.white_rooklike |= capture_pos;
@@ -26,26 +27,24 @@ fn pawn_capture_pos(
 
             let mut new2 = board.clone_and_advance(0, true);
             new2.bitboard.white_pawns &= !pawn_pos;
+            new2.delete_piece(capture_pos_tzcnt);
             new2.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new2.piece_kinds[pawn_piece_index] = WhiteBishop;
             new2.bitboard.white_bishoplike |= capture_pos;
 
             let mut new3 = board.clone_and_advance(0, true);
             new3.bitboard.white_pawns &= !pawn_pos;
+            new3.delete_piece(capture_pos_tzcnt);
             new3.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new3.piece_kinds[pawn_piece_index] = WhiteRook;
             new3.bitboard.white_rooklike |= capture_pos;
 
             let mut new4 = board.clone_and_advance(0, true);
             new4.bitboard.white_pawns &= !pawn_pos;
+            new4.delete_piece(capture_pos_tzcnt);
             new4.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new4.piece_kinds[pawn_piece_index] = WhiteKnight;
             new4.bitboard.white_knights |= capture_pos;
-
-            new1.delete_piece(capture_pos_tzcnt);
-            new2.delete_piece(capture_pos_tzcnt);
-            new3.delete_piece(capture_pos_tzcnt);
-            new4.delete_piece(capture_pos_tzcnt);
 
             new1.bitboard.unset_black_piece(capture_pos);
             new2.bitboard.unset_black_piece(capture_pos);
@@ -60,6 +59,7 @@ fn pawn_capture_pos(
         } else {
             let mut new1 = board.clone_and_advance(0, true);
             new1.bitboard.black_pawns &= !pawn_pos;
+            new1.delete_piece(capture_pos_tzcnt);
             new1.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new1.piece_kinds[pawn_piece_index] = BlackQueen;
             new1.bitboard.black_bishoplike |= capture_pos;
@@ -67,26 +67,24 @@ fn pawn_capture_pos(
 
             let mut new2 = board.clone_and_advance(0, true);
             new2.bitboard.black_pawns &= !pawn_pos;
+            new2.delete_piece(capture_pos_tzcnt);
             new2.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new2.piece_kinds[pawn_piece_index] = BlackBishop;
             new2.bitboard.black_bishoplike |= capture_pos;
 
             let mut new3 = board.clone_and_advance(0, true);
             new3.bitboard.black_pawns &= !pawn_pos;
+            new3.delete_piece(capture_pos_tzcnt);
             new3.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new3.piece_kinds[pawn_piece_index] = BlackRook;
             new3.bitboard.black_rooklike |= capture_pos;
 
             let mut new4 = board.clone_and_advance(0, true);
             new4.bitboard.black_pawns &= !pawn_pos;
+            new4.delete_piece(capture_pos_tzcnt);
             new4.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new4.piece_kinds[pawn_piece_index] = BlackKnight;
             new4.bitboard.black_knights |= capture_pos;
-
-            new1.delete_piece(capture_pos_tzcnt);
-            new2.delete_piece(capture_pos_tzcnt);
-            new3.delete_piece(capture_pos_tzcnt);
-            new4.delete_piece(capture_pos_tzcnt);
 
             new1.bitboard.unset_white_piece(capture_pos);
             new2.bitboard.unset_white_piece(capture_pos);

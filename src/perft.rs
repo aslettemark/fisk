@@ -71,7 +71,7 @@ fn init_perft_configs() -> HashMap<&'static str, PerftConfig> {
         "kiwipete",
         PerftConfig {
             fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
-            depth: 4, // TODO 6
+            depth: 5, // TODO 6
             depth_level_results: vec![1, 48, 2039, 97862, 4_085_603, 193_690_690, 8_031_647_685],
         },
     );
@@ -127,6 +127,31 @@ fn init_perft_configs() -> HashMap<&'static str, PerftConfig> {
                 490_154_852_788_714,
             ],
         },
+    );
+    map.insert(
+        "kiwidebug1",
+        PerftConfig {
+            fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q2/PPPB1P1P/R2BK2b w Qkq - 0 1",
+            depth: 2,
+            depth_level_results: vec![
+                1,
+                38,
+                1767,
+            ],
+        }
+    );
+    map.insert(
+        "kiwidebug2",
+        PerftConfig {
+            fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q2/PPPB1PpP/R2BK2R b KQkq - 0 1",
+            depth: 3,
+            depth_level_results: vec![
+                1,
+                53,
+                1918,
+                97502,
+            ],
+        }
     );
 
     map
@@ -228,6 +253,29 @@ fn test_single(name: &str, config: &PerftConfig) {
     }
 }
 
+fn perft_debug(board: &Board, search_depth: usize) {
+    let successors = board.generate_successors();
+    let mut sum = 0;
+    for s in successors {
+        if s.is_in_check(!s.white_to_move()) {
+            // illegal successor
+            continue;
+        }
+        // Hack
+        let config = PerftConfig {
+            fen: "",
+            depth: search_depth - 1,
+            depth_level_results: vec![]
+        };
+
+        let results = perft_results(&s, &config);
+        let count = results.last().unwrap();
+        println!("{}", count);
+        sum += count;
+    }
+    println!("Sum {}", sum);
+}
+
 pub fn perft_command(args: &ArgMatches) {
     if args.is_present("All") {
         println!();
@@ -265,6 +313,25 @@ pub fn perft_command(args: &ArgMatches) {
             dur.num_seconds(),
             dur.num_milliseconds() % 1000
         );
+        return;
+    }
+
+    if args.is_present("Debug") {
+        let which = args.value_of("Debug").unwrap();
+        let config = PERFT_CONFIGS.get(which);
+        let fen = match config {
+            None => which,
+            Some(c) => c.fen,
+        };
+
+        let board = Board::from_fen(fen);
+        if board.is_none() {
+            println!("Bad FEN string: {}", which);
+            return;
+        }
+
+        let board = board.unwrap();
+        perft_debug(&board, 2); // TODO
         return;
     }
 
