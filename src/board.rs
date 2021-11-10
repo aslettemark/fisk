@@ -110,6 +110,21 @@ impl BitBoard {
         self.black_knights &= !capture_pos;
         self.black_king &= !capture_pos;
     }
+
+    #[inline]
+    pub fn white_queen_coverage(&self) -> u64 {
+        self.white_bishoplike & self.white_rooklike
+    }
+
+    #[inline]
+    pub fn black_queen_coverage(&self) -> u64 {
+        self.black_bishoplike & self.black_rooklike
+    }
+
+    #[inline]
+    pub fn king_coverage(&self) -> u64 {
+        self.black_king | self.white_king
+    }
 }
 
 #[derive(PartialEq)]

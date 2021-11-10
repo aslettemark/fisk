@@ -14,3 +14,5 @@ time = "0.1.44"
 opt-level = 3
 codegen-units = 1
 lto = true
+# debug = true
+panic = "abort"

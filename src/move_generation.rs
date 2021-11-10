@@ -16,93 +16,70 @@ fn pawn_capture_pos(
 
     // Capture and promote
     if intersects(capture_pos, ROW_1 | ROW_8) {
+        let mut new1 = board.clone_and_advance(0, true);
+        let mut new2: Board;
+        let mut new3: Board;
+        let mut new4: Board;
+
         if white {
-            let mut new1 = board.clone_and_advance(0, true);
+            // Do the common modification in new1
             new1.bitboard.white_pawns &= !pawn_pos;
-            new1.delete_piece(capture_pos_tzcnt);
+            new1.delete_from_piecelist(capture_pos_tzcnt);
             new1.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
+            new1.bitboard.unset_black_piece(capture_pos);
+
+            new2 = new1;
+            new3 = new1;
+            new4 = new1;
+
             new1.piece_kinds[pawn_piece_index] = WhiteQueen;
             new1.bitboard.white_rooklike |= capture_pos;
             new1.bitboard.white_bishoplike |= capture_pos;
 
-            let mut new2 = board.clone_and_advance(0, true);
-            new2.bitboard.white_pawns &= !pawn_pos;
-            new2.delete_piece(capture_pos_tzcnt);
-            new2.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new2.piece_kinds[pawn_piece_index] = WhiteBishop;
             new2.bitboard.white_bishoplike |= capture_pos;
 
-            let mut new3 = board.clone_and_advance(0, true);
-            new3.bitboard.white_pawns &= !pawn_pos;
-            new3.delete_piece(capture_pos_tzcnt);
-            new3.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new3.piece_kinds[pawn_piece_index] = WhiteRook;
             new3.bitboard.white_rooklike |= capture_pos;
 
-            let mut new4 = board.clone_and_advance(0, true);
-            new4.bitboard.white_pawns &= !pawn_pos;
-            new4.delete_piece(capture_pos_tzcnt);
-            new4.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new4.piece_kinds[pawn_piece_index] = WhiteKnight;
             new4.bitboard.white_knights |= capture_pos;
-
-            new1.bitboard.unset_black_piece(capture_pos);
-            new2.bitboard.unset_black_piece(capture_pos);
-            new3.bitboard.unset_black_piece(capture_pos);
-            new4.bitboard.unset_black_piece(capture_pos);
-
-            outvec.reserve(4);
-            outvec.push(new1);
-            outvec.push(new2);
-            outvec.push(new3);
-            outvec.push(new4);
         } else {
-            let mut new1 = board.clone_and_advance(0, true);
+            // Do the common modification in new1
             new1.bitboard.black_pawns &= !pawn_pos;
-            new1.delete_piece(capture_pos_tzcnt);
+            new1.delete_from_piecelist(capture_pos_tzcnt);
             new1.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
+            new1.bitboard.unset_white_piece(capture_pos);
+
+            new2 = new1;
+            new3 = new1;
+            new4 = new1;
+
             new1.piece_kinds[pawn_piece_index] = BlackQueen;
             new1.bitboard.black_bishoplike |= capture_pos;
             new1.bitboard.black_rooklike |= capture_pos;
 
-            let mut new2 = board.clone_and_advance(0, true);
-            new2.bitboard.black_pawns &= !pawn_pos;
-            new2.delete_piece(capture_pos_tzcnt);
-            new2.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new2.piece_kinds[pawn_piece_index] = BlackBishop;
             new2.bitboard.black_bishoplike |= capture_pos;
 
-            let mut new3 = board.clone_and_advance(0, true);
-            new3.bitboard.black_pawns &= !pawn_pos;
-            new3.delete_piece(capture_pos_tzcnt);
-            new3.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new3.piece_kinds[pawn_piece_index] = BlackRook;
             new3.bitboard.black_rooklike |= capture_pos;
 
-            let mut new4 = board.clone_and_advance(0, true);
-            new4.bitboard.black_pawns &= !pawn_pos;
-            new4.delete_piece(capture_pos_tzcnt);
-            new4.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
             new4.piece_kinds[pawn_piece_index] = BlackKnight;
             new4.bitboard.black_knights |= capture_pos;
-
-            new1.bitboard.unset_white_piece(capture_pos);
-            new2.bitboard.unset_white_piece(capture_pos);
-            new3.bitboard.unset_white_piece(capture_pos);
-            new4.bitboard.unset_white_piece(capture_pos);
-
-            outvec.reserve(4);
-            outvec.push(new1);
-            outvec.push(new2);
-            outvec.push(new3);
-            outvec.push(new4);
         }
+
+        outvec.reserve(4);
+        outvec.push(new1);
+        outvec.push(new2);
+        outvec.push(new3);
+        outvec.push(new4);
         return;
     }
 
     // Normal capture
     let mut new = board.clone_and_advance(0, true);
-    new.delete_piece(capture_pos_tzcnt);
+    new.delete_from_piecelist(capture_pos_tzcnt);
     new.piece_positions_tzcnt[pawn_piece_index] = capture_pos_tzcnt;
 
     if white {
@@ -190,7 +167,7 @@ pub fn white_pawn_moves(
         let front_left_pos = position << 7;
         if intersects(front_left_pos, enemy_occupancy) {
             pawn_capture_pos(
-                &board,
+                board,
                 position,
                 front_left_pos,
                 pawn_piece_index,
@@ -203,7 +180,7 @@ pub fn white_pawn_moves(
         let front_right_pos = position << 9;
         if intersects(front_right_pos, enemy_occupancy) {
             pawn_capture_pos(
-                &board,
+                board,
                 position,
                 front_right_pos,
                 pawn_piece_index,
@@ -226,7 +203,7 @@ pub fn white_pawn_moves(
             new.piece_positions_tzcnt[pawn_piece_index] = new_pawn_pos.tzcnt() as u8;
             new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | new_pawn_pos;
 
-            new.delete_piece(twofront_square.tzcnt() as u8);
+            new.delete_from_piecelist(twofront_square.tzcnt() as u8);
             new.bitboard.unset_black_piece(twofront_square);
 
             outvec.push(new);
@@ -340,7 +317,7 @@ pub fn black_pawn_moves(
             new.piece_positions_tzcnt[pawn_piece_index] = new_pawn_pos.tzcnt() as u8;
             new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | new_pawn_pos;
 
-            new.delete_piece(twofront_square.tzcnt() as u8);
+            new.delete_from_piecelist(twofront_square.tzcnt() as u8);
             new.bitboard.unset_white_piece(twofront_square);
 
             outvec.push(new);
@@ -374,7 +351,7 @@ fn bishoplike_target_square(
     if (target_pos & enemy_occupancy) != 0 {
         // Capture
         let mut new = board.clone_and_advance(0, true);
-        new.delete_piece(target_pos_tzcnt);
+        new.delete_from_piecelist(target_pos_tzcnt);
         new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
         if white {
             new.bitboard.white_bishoplike = (new.bitboard.white_bishoplike ^ position) | target_pos;
@@ -576,7 +553,7 @@ fn rooklike_target_square(
     if (target_pos & enemy_occupancy) != 0 {
         // Capture
         let mut new = board.clone_and_advance(0, true);
-        new.delete_piece(target_pos_tzcnt);
+        new.delete_from_piecelist(target_pos_tzcnt);
         new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
         if white {
             new.bitboard.white_rooklike = (new.bitboard.white_rooklike ^ position) | target_pos;
@@ -772,7 +749,7 @@ pub fn knight_moves(
             outvec.push(new);
         } else if intersects(target_pos, enemy_occupancy) {
             let mut new = board.clone_and_advance(0, true);
-            new.delete_piece(target_pos_tzcnt);
+            new.delete_from_piecelist(target_pos_tzcnt);
             new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
 
             let mut bb = &mut new.bitboard;
@@ -849,7 +826,7 @@ pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut
 
         // Capture
         let mut new = board.clone_and_advance(0, true);
-        new.delete_piece(target_pos_tzcnt);
+        new.delete_from_piecelist(target_pos_tzcnt);
         new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
 
         let mut bb = &mut new.bitboard;

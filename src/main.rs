@@ -66,7 +66,7 @@ fn main() {
             matches.subcommand().1.unwrap().value_of("Start board"),
         ),
         Some("debug") => debug(),
-        Some("perft") => perft_command(&matches.subcommand().1.unwrap()),
+        Some("perft") => perft_command(matches.subcommand().1.unwrap()),
         Some("interactive") => interactive(),
         None => debug(),
         _ => unreachable!(),
@@ -133,4 +133,32 @@ fn debug() {
         size_of::<Color>(),
     );
     println!("PieceKind {}", size_of::<PieceKind>());
+
+    let mut b = Board::default();
+    //let mut b = Board::from_fen("k7/7R/8/8/8/8/1K6/5R2 w - - 0 1").unwrap();
+    println!("Board eval: {}", b.eval());
+    println!("Play game:");
+    b.print();
+    for i in 0..1000 {
+        let result = b.best_move(4);
+        let eval = result.1;
+        match result.0 {
+            Some(c) => {
+                println!("Eval {}", eval);
+                c.print();
+                b = c;
+            }
+            None => {
+                println!("Finished");
+                if eval == 0 {
+                    println!("Stalemate");
+                } else if eval > 0 {
+                    println!("White won");
+                } else {
+                    println!("Black won");
+                }
+                break;
+            }
+        }
+    }
 }

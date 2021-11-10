@@ -49,7 +49,7 @@ impl Board {
 
         match piece_kind {
             WhitePawn => white_pawn_moves(
-                &self,
+                self,
                 piece_position,
                 piece_index,
                 our_occupancy,
@@ -57,7 +57,7 @@ impl Board {
                 &mut outvec,
             ),
             BlackPawn => black_pawn_moves(
-                &self,
+                self,
                 piece_position,
                 piece_index,
                 our_occupancy,
@@ -65,7 +65,7 @@ impl Board {
                 &mut outvec,
             ),
             WhiteRook | BlackRook => rooklike_moves(
-                &self,
+                self,
                 piece_position,
                 piece_index,
                 our_occupancy,
@@ -74,17 +74,17 @@ impl Board {
                 &mut outvec,
             ),
             WhiteKnight | BlackKnight => knight_moves(
-                &self,
+                self,
                 piece_position,
                 piece_index,
                 our_occupancy,
                 enemy_occupancy,
                 &mut outvec,
             ),
-            WhiteKing | BlackKing => king_moves(&self, piece_position, piece_index, &mut outvec),
+            WhiteKing | BlackKing => king_moves(self, piece_position, piece_index, &mut outvec),
             WhiteQueen | BlackQueen => {
                 rooklike_moves(
-                    &self,
+                    self,
                     piece_position,
                     piece_index,
                     our_occupancy,
@@ -93,7 +93,7 @@ impl Board {
                     &mut outvec,
                 );
                 bishoplike_moves(
-                    &self,
+                    self,
                     piece_position,
                     piece_index,
                     our_occupancy,
@@ -103,7 +103,7 @@ impl Board {
                 );
             }
             WhiteBishop | BlackBishop => bishoplike_moves(
-                &self,
+                self,
                 piece_position,
                 piece_index,
                 our_occupancy,
@@ -128,7 +128,7 @@ impl Board {
         states
     }
 
-    pub fn delete_piece(&mut self, capture_pos_tzcnt: u8) {
+    pub fn delete_from_piecelist(&mut self, capture_pos_tzcnt: u8) {
         let piece_positions_tzcnt = &mut self.piece_positions_tzcnt;
         for (i, p) in piece_positions_tzcnt.iter().enumerate() {
             if *p == capture_pos_tzcnt {
