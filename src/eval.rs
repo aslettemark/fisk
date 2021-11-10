@@ -1,4 +1,4 @@
-use bitintr::Popcnt;
+use bitintr::{Popcnt, Tzcnt};
 
 use crate::board::Board;
 
@@ -13,6 +13,12 @@ pub const QUEEN: i32 = 900;
 pub const KING: i32 = 30000;
 pub const QUEEN_BONUS: i32 = QUEEN - (ROOK + BISHOP);
 pub const BISHOP_PAIR_BONUS: i32 = 10;
+
+pub const WHITE_BISHOP_TABLE: [i32; 64] = [
+    -20, -10, -10, -10, -10, -10, -10, -20, -10, 5, 0, 0, 0, 0, 5, -10, -10, 10, 10, 10, 10, 10,
+    10, -10, -10, 0, 10, 10, 10, 10, 0, -10, -10, 5, 5, 10, 10, 5, 5, -10, -10, 0, 5, 10, 10, 5, 0,
+    -10, -10, 0, 0, 0, 0, 0, 0, -10, -20, -10, -10, -10, -10, -10, -10, -20,
+];
 
 #[inline]
 fn count(bits: u64) -> i32 {
@@ -35,14 +41,24 @@ impl Board {
 
         let white_queen_count = count(bb.white_queen_coverage());
         let white_bishoplike_count = count(bb.white_bishoplike);
+        let real_white_bishops = bb.white_bishoplike & !bb.white_rooklike;
         eval += count(bb.white_pawns) * PAWN;
         eval += count(bb.white_knights) * KNIGHT;
         eval += white_bishoplike_count * BISHOP;
         eval += count(bb.white_rooklike) * ROOK;
         eval += white_queen_count * QUEEN_BONUS;
-        if white_bishoplike_count == white_queen_count + 2 {
-            // Likely bishop pair
-            eval += BISHOP_PAIR_BONUS;
+
+        if real_white_bishops != 0 {
+            if real_white_bishops.popcnt() == 2 {
+                // Likely bishop pair
+                eval += BISHOP_PAIR_BONUS;
+            }
+
+            for i in (real_white_bishops.tzcnt())..63 {
+                if (real_white_bishops & (1 << i)) != 0 {
+                    eval += WHITE_BISHOP_TABLE[i as usize];
+                }
+            }
         }
 
         eval -= count(bb.black_pawns) * PAWN;

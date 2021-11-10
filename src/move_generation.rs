@@ -281,7 +281,7 @@ pub fn black_pawn_moves(
         let pos_file_lower = position >> 9;
         if intersects(pos_file_lower, enemy_occupancy) {
             pawn_capture_pos(
-                &board,
+                board,
                 position,
                 pos_file_lower,
                 pawn_piece_index,
@@ -294,7 +294,7 @@ pub fn black_pawn_moves(
         let pos_file_higher = position >> 7;
         if intersects(pos_file_higher, enemy_occupancy) {
             pawn_capture_pos(
-                &board,
+                board,
                 position,
                 pos_file_higher,
                 pawn_piece_index,
@@ -752,7 +752,7 @@ pub fn knight_moves(
             new.delete_from_piecelist(target_pos_tzcnt);
             new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
 
-            let mut bb = &mut new.bitboard;
+            let mut bb = &  mut new.bitboard;
             if white {
                 bb.white_knights = (bb.white_knights ^ position) | target_pos;
 
