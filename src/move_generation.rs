@@ -846,10 +846,10 @@ pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut
     if white {
         let kingside = board.can_white_castle_kingside()
             && !intersects(total_occupancy, ROW_1 & (FILE_F | FILE_G))
-            && verify_white_rook_at(board, ROW_1 & FILE_H);
+            && verify_white_rook_at(board, ROW_1 & FILE_H); // TODO not necessary, assume consistency
         let queenside = board.can_white_castle_queenside()
             && !intersects(total_occupancy, ROW_1 & (FILE_B | FILE_C | FILE_D))
-            && verify_white_rook_at(board, ROW_1 & FILE_A);
+            && verify_white_rook_at(board, ROW_1 & FILE_A); // TODO not necessary, assume consistency
         if !(kingside || queenside) {
             return;
         }
@@ -912,10 +912,10 @@ pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut
     } else {
         let kingside = board.can_black_castle_kingside()
             && !intersects(total_occupancy, ROW_8 & (FILE_F | FILE_G))
-            && verify_black_rook_at(board, FILE_H & ROW_8);
+            && verify_black_rook_at(board, FILE_H & ROW_8); // TODO not necessary, assume consistency
         let queenside = board.can_black_castle_queenside()
             && !intersects(total_occupancy, ROW_8 & (FILE_B | FILE_C | FILE_D))
-            && verify_black_rook_at(board, FILE_A & ROW_8);
+            && verify_black_rook_at(board, FILE_A & ROW_8); // TODO not necessary, assume consistency
         if !(kingside || queenside) {
             return;
         }
