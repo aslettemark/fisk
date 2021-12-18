@@ -92,11 +92,9 @@ impl Board {
         }
     }
 
-    pub fn generate_successors(&self) -> Vec<Board> {
+    pub fn generate_pseudo_legal_moves(&self) -> Vec<Move> {
         let (our_occupancy, enemy_occupancy) = self.split_occupancy();
-
         let mut moves = Vec::with_capacity(64);
-
         for i in 0..32 {
             self.piece_moves(
                 i,
@@ -106,6 +104,12 @@ impl Board {
                 &mut moves,
             );
         }
+
+        moves
+    }
+
+    pub fn generate_successors(&self) -> Vec<Board> {
+        let moves = self.generate_pseudo_legal_moves();
         let mut states = Vec::with_capacity(moves.len());
         for m in &moves {
             let b = self.make_move(m);

@@ -139,7 +139,7 @@ fn debug() {
     println!("Board eval: {}", b.eval());
     println!("Play game:");
     b.print();
-    for i in 0..1000 {
+    for _ in 0..1000 {
         let result = b.best_move(4);
         let eval = result.1;
         match result.0 {
