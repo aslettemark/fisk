@@ -10,14 +10,17 @@ fn fen(fen: &str) -> Board {
 
 fn succ(fen: &str) -> Vec<Board> {
     let b = Board::from_fen(fen).unwrap();
-    let succ = b.generate_successors();
+    println!("Parent board:");
+    b.print();
+    println!("Fullmove {} Halfmove {} White to move {}", b.get_fullmove_counter(), b.get_halfmove_clock(), b.white_to_move());
 
+    let succ = b.generate_successors();
     println!("{} successors:", succ.len());
+
     for s in &succ {
         s.print();
-    }
+        println!("Fullmove {} Halfmove {} White to move {}", s.get_fullmove_counter(), s.get_halfmove_clock(), s.white_to_move());
 
-    for s in &succ {
         let sbb = s.bitboard;
         if b.bitboard == sbb {
             println!("Two identical boards:");

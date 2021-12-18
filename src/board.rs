@@ -170,7 +170,7 @@ impl PieceKind {
     }
 
     pub fn is_pawn(&self) -> bool {
-        ((*self as u8) & WHITE_PAWN) != 0
+        *self == WhitePawn || *self == BlackPawn
     }
 }
 
@@ -481,16 +481,16 @@ impl Board {
         false
     }
 
-    pub fn make_move(&self, mov: Move) -> Board {
+    pub fn make_move(&self, mov: &Move) -> Board {
         let mut new = *self;
         new.make_move_in_place(mov);
         new
     }
 
-    pub fn make_move_in_place(&mut self, mov: Move) {
+    pub fn make_move_in_place(&mut self, mov: &Move) {
         let white = self.white_to_move();
-
         if !white {
+            // TODO huh??
             self.increment_fullmove_counter();
         }
         self.reset_en_passant();
@@ -513,6 +513,7 @@ impl Board {
         } else {
             self.increment_halfmove_clock();
         }
+        self.castling_maintenance(from_tzcnt);
 
         if is_promotion {
             if white {
@@ -621,13 +622,11 @@ impl Board {
             0b010 => {
                 // Kingside castle
                 if white {
-                    self.disqualify_white_castling();
                     self.bitboard.white_king = 1 << 6;
                     self.bitboard.white_rooklike ^= (1 << 7) | (1 << 5);
                     let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(7);
                     self.piece_positions_tzcnt[piecelist_rook_i] = 5;
                 } else {
-                    self.disqualify_black_castling();
                     self.bitboard.black_king = 1 << 62;
                     self.bitboard.black_rooklike ^= (1 << 61) | (1 << 63);
                     let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(63);
@@ -638,13 +637,11 @@ impl Board {
             0b011 => {
                 // Queenside castle
                 if white {
-                    self.disqualify_white_castling();
                     self.bitboard.white_king = 1 << 2;
                     self.bitboard.white_rooklike ^= 1 | (1 << 3);
                     let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(0);
                     self.piece_positions_tzcnt[piecelist_rook_i] = 3;
                 } else {
-                    self.disqualify_black_castling();
                     self.bitboard.black_king = 1 << 58;
                     self.bitboard.black_rooklike ^= (1 << 56) | (1 << 59);
                     let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(56);
@@ -728,6 +725,19 @@ impl Board {
                 self.piece_kinds[i] = EmptySquare;
                 break;
             }
+        }
+    }
+
+    #[inline]
+    fn castling_maintenance(&mut self, pos_from_tzcnt: u8) {
+        match pos_from_tzcnt {
+            4 => self.disqualify_white_castling(),
+            60 => self.disqualify_black_castling(),
+            0 => self.disqualify_black_queenside_castling(),
+            7 => self.disqualify_white_kingside_castling(),
+            56 => self.disqualify_black_queenside_castling(),
+            63 => self.disqualify_black_kingside_castling(),
+            _ => {}
         }
     }
 }

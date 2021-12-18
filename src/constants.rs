@@ -189,6 +189,11 @@ pub fn get_knight_possible_targets(pos: u64) -> [u64; 8] {
 }
 
 #[inline]
+pub fn get_knight_possible_targets_tzcnt(pos_tzcnt: u8) -> [u64; 8] {
+    KNIGHT_ATTACK_LIST[pos_tzcnt as usize]
+}
+
+#[inline]
 pub fn get_knight_target_mask(pos: u64) -> u64 {
     KNIGHT_ATTACK_MASKS[pos.tzcnt() as usize]
 }

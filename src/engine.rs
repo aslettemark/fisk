@@ -1,7 +1,8 @@
 use crate::board::Board;
 use crate::board::PieceKind::*;
 use crate::constants::{pos_to_file_index, TZCNT_U64_ZEROS};
-use crate::move_generation::*;
+use crate::move_representation::Move;
+use crate::movegen_movelist::*;
 
 impl Board {
     pub fn clone_and_advance(&self, en_passant: u64, reset_halfmove: bool) -> Board {
@@ -29,10 +30,14 @@ impl Board {
     }
 
     #[inline]
-    fn piece_moves(&self, piece_index: usize, mut outvec: &mut Vec<Board>) {
-        // TODO Keep pieces ordered with empty square pieces at the end to abort entire
-        //  iteration when an empty square is found.
-
+    fn piece_moves(
+        &self,
+        piece_index: usize,
+        our_occupancy: u64,
+        enemy_occupancy: u64,
+        white_to_move: bool,
+        outvec: &mut Vec<Move>,
+    ) {
         let piece_position_tzcnt = self.piece_positions_tzcnt[piece_index];
         if piece_position_tzcnt == TZCNT_U64_ZEROS {
             // No position => empty square
@@ -41,76 +46,45 @@ impl Board {
         let piece_position = 1u64 << piece_position_tzcnt;
         let piece_kind = self.piece_kinds[piece_index];
 
-        if self.white_to_move() ^ piece_kind.is_white() {
+        if white_to_move ^ piece_kind.is_white() {
             return;
         }
 
-        let (our_occupancy, enemy_occupancy) = self.split_occupancy();
-
         match piece_kind {
-            WhitePawn => white_pawn_moves(
-                self,
-                piece_position,
-                piece_index,
-                our_occupancy,
-                enemy_occupancy,
-                &mut outvec,
-            ),
-            BlackPawn => black_pawn_moves(
-                self,
-                piece_position,
-                piece_index,
-                our_occupancy,
-                enemy_occupancy,
-                &mut outvec,
-            ),
-            WhiteRook | BlackRook => rooklike_moves(
-                self,
-                piece_position,
-                piece_index,
-                our_occupancy,
-                enemy_occupancy,
-                false,
-                &mut outvec,
-            ),
-            WhiteKnight | BlackKnight => knight_moves(
-                self,
-                piece_position,
-                piece_index,
-                our_occupancy,
-                enemy_occupancy,
-                &mut outvec,
-            ),
-            WhiteKing | BlackKing => king_moves(self, piece_position, piece_index, &mut outvec),
-            WhiteQueen | BlackQueen => {
-                rooklike_moves(
+            WhitePawn => {
+                white_pawn_moves(
                     self,
-                    piece_position,
-                    piece_index,
+                    piece_position_tzcnt,
                     our_occupancy,
                     enemy_occupancy,
-                    true,
-                    &mut outvec,
-                );
-                bishoplike_moves(
-                    self,
-                    piece_position,
-                    piece_index,
-                    our_occupancy,
-                    enemy_occupancy,
-                    true,
-                    &mut outvec,
+                    outvec,
                 );
             }
-            WhiteBishop | BlackBishop => bishoplike_moves(
-                self,
-                piece_position,
-                piece_index,
-                our_occupancy,
-                enemy_occupancy,
-                false,
-                &mut outvec,
-            ),
+            BlackPawn => {
+                black_pawn_moves(
+                    self,
+                    piece_position_tzcnt,
+                    our_occupancy,
+                    enemy_occupancy,
+                    outvec,
+                );
+            }
+            WhiteRook | BlackRook => {
+                rooklike_moves(piece_position, our_occupancy, enemy_occupancy, outvec);
+            }
+            WhiteKnight | BlackKnight => {
+                knight_moves(piece_position_tzcnt, our_occupancy, enemy_occupancy, outvec);
+            }
+            WhiteKing | BlackKing => {
+                king_moves(self, piece_position, our_occupancy, enemy_occupancy, outvec);
+            }
+            WhiteQueen | BlackQueen => {
+                rooklike_moves(piece_position, our_occupancy, enemy_occupancy, outvec);
+                bishoplike_moves(piece_position, our_occupancy, enemy_occupancy, outvec);
+            }
+            WhiteBishop | BlackBishop => {
+                bishoplike_moves(piece_position, our_occupancy, enemy_occupancy, outvec);
+            }
 
             EmptySquare => {
                 unreachable!()
@@ -119,12 +93,24 @@ impl Board {
     }
 
     pub fn generate_successors(&self) -> Vec<Board> {
-        let mut states = Vec::with_capacity(64);
+        let (our_occupancy, enemy_occupancy) = self.split_occupancy();
+
+        let mut moves = Vec::with_capacity(64);
 
         for i in 0..32 {
-            self.piece_moves(i, &mut states);
+            self.piece_moves(
+                i,
+                our_occupancy,
+                enemy_occupancy,
+                self.white_to_move(),
+                &mut moves,
+            );
         }
-
+        let mut states = Vec::with_capacity(moves.len());
+        for m in &moves {
+            let b = self.make_move(m);
+            states.push(b);
+        }
         states
     }
 
@@ -139,7 +125,7 @@ impl Board {
 
 pub struct SuccessorIter<'a> {
     board: &'a Board,
-    buf: Vec<Board>,
+    buf: Vec<Move>,
     piece_index: usize,
 }
 
@@ -148,8 +134,8 @@ impl<'a> Iterator for SuccessorIter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if !self.buf.is_empty() {
-            let board = self.buf.swap_remove(0);
-            return Some(board);
+            let mov = self.buf.swap_remove(0);
+            return Some(self.board.make_move(&mov));
         }
 
         let piece_kinds = &self.board.piece_kinds;
@@ -159,12 +145,19 @@ impl<'a> Iterator for SuccessorIter<'a> {
                 self.piece_index += 1;
                 continue;
             }
-
-            self.board.piece_moves(self.piece_index, &mut self.buf);
+            let (our_occupancy, enemy_occupancy) = self.board.split_occupancy();
+            self.board.piece_moves(
+                self.piece_index,
+                our_occupancy,
+                enemy_occupancy,
+                self.board.white_to_move(),
+                &mut self.buf,
+            );
             self.piece_index += 1;
 
             if !self.buf.is_empty() {
-                return Some(self.buf.swap_remove(0));
+                let mov = self.buf.swap_remove(0);
+                return Some(self.board.make_move(&mov));
             }
         }
         None

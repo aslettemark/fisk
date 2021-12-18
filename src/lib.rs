@@ -8,5 +8,6 @@ pub mod eval;
 pub mod fen;
 pub mod move_generation;
 pub mod move_representation;
+pub mod movegen_movelist;
 pub mod perft;
 pub mod search;
