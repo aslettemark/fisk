@@ -6,7 +6,7 @@ use crate::move_generation::*;
 impl Board {
     pub fn clone_and_advance(&self, en_passant: u64, reset_halfmove: bool) -> Board {
         let mut new = *self;
-        new.toggle_white_to_move();
+        new.toggle_side_to_move();
 
         if reset_halfmove {
             new.reset_halfmove_clock();
@@ -126,17 +126,6 @@ impl Board {
         }
 
         states
-    }
-
-    pub fn delete_from_piecelist(&mut self, capture_pos_tzcnt: u8) {
-        let piece_positions_tzcnt = &mut self.piece_positions_tzcnt;
-        for (i, p) in piece_positions_tzcnt.iter().enumerate() {
-            if *p == capture_pos_tzcnt {
-                piece_positions_tzcnt[i] = TZCNT_U64_ZEROS;
-                self.piece_kinds[i] = EmptySquare;
-                break;
-            }
-        }
     }
 
     pub fn iter_successors(&self) -> SuccessorIter {

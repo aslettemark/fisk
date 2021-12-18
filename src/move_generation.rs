@@ -158,7 +158,7 @@ pub fn white_pawn_moves(
             //All clear, sir
             let mut new = board.clone_and_advance(pos_front, true);
             new.bitboard.white_pawns = (new.bitboard.white_pawns ^ position) | pos_twofront;
-            new.piece_positions_tzcnt[pawn_piece_index] = pos_twofront.tzcnt() as u8;
+            new.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt + 8;
             outvec.push(new);
         }
     }
@@ -272,7 +272,7 @@ pub fn black_pawn_moves(
             //All clear, sir
             let mut new = board.clone_and_advance(pos_front, true);
             new.bitboard.black_pawns = (new.bitboard.black_pawns ^ position) | pos_twofront;
-            new.piece_positions_tzcnt[pawn_piece_index] = pos_twofront.tzcnt() as u8;
+            new.piece_positions_tzcnt[pawn_piece_index] = pos_front_tzcnt - 8;
             outvec.push(new);
         }
     }
@@ -752,7 +752,7 @@ pub fn knight_moves(
             new.delete_from_piecelist(target_pos_tzcnt);
             new.piece_positions_tzcnt[piece_index] = target_pos_tzcnt;
 
-            let mut bb = &  mut new.bitboard;
+            let mut bb = &mut new.bitboard;
             if white {
                 bb.white_knights = (bb.white_knights ^ position) | target_pos;
 
@@ -869,7 +869,7 @@ pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut
             // slow? :/
             let old_rook_pos = ROW_1 & FILE_H;
             let rook_pos_tzcnt = old_rook_pos.tzcnt() as u8;
-            let rook_piece_index = slow_get_index_of_pos(&new, rook_pos_tzcnt);
+            let rook_piece_index = new.slow_get_piecelist_index_of_pos(rook_pos_tzcnt);
 
             let new_king_pos = ROW_1 & FILE_G;
             let new_rook_pos = ROW_1 & FILE_F;
@@ -894,7 +894,7 @@ pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut
             // slow? :/
             let old_rook_pos = ROW_1 & FILE_A;
             let rook_pos_tzcnt = old_rook_pos.tzcnt() as u8;
-            let rook_piece_index = slow_get_index_of_pos(&new, rook_pos_tzcnt);
+            let rook_piece_index = new.slow_get_piecelist_index_of_pos(rook_pos_tzcnt);
 
             let new_king_pos = ROW_1 & FILE_C;
             let new_rook_pos = ROW_1 & FILE_D;
@@ -935,7 +935,7 @@ pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut
             // slow? :/
             let old_rook_pos = ROW_8 & FILE_H;
             let rook_pos_tzcnt = old_rook_pos.tzcnt() as u8;
-            let rook_piece_index = slow_get_index_of_pos(&new, rook_pos_tzcnt);
+            let rook_piece_index = new.slow_get_piecelist_index_of_pos(rook_pos_tzcnt);
 
             let new_king_pos = ROW_8 & FILE_G;
             let new_rook_pos = ROW_8 & FILE_F;
@@ -960,7 +960,7 @@ pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut
             // slow? :/
             let old_rook_pos = ROW_8 & FILE_A;
             let rook_pos_tzcnt = old_rook_pos.tzcnt() as u8;
-            let rook_piece_index = slow_get_index_of_pos(&new, rook_pos_tzcnt);
+            let rook_piece_index = new.slow_get_piecelist_index_of_pos(rook_pos_tzcnt);
 
             let new_king_pos = ROW_8 & FILE_C;
             let new_rook_pos = ROW_8 & FILE_D;
@@ -976,16 +976,6 @@ pub fn king_moves(board: &Board, position: u64, piece_index: usize, outvec: &mut
             outvec.push(new);
         }
     }
-}
-
-fn slow_get_index_of_pos(board: &Board, target_pos_tzcnt: u8) -> usize {
-    let (piece_index, _) = board
-        .piece_positions_tzcnt
-        .iter()
-        .enumerate()
-        .find(|(_, p)| **p == target_pos_tzcnt)
-        .unwrap();
-    piece_index
 }
 
 fn update_white_castled_board(

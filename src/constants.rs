@@ -27,13 +27,13 @@ pub const FILES: [u64; 8] = [
 pub const EMPTY_SQUARE: u8 = 0;
 
 pub const WHITE_PAWN: u8 = 1;
-pub const WHITE_BISHOP: u8 = 1 << 1;
-pub const WHITE_KNIGHT: u8 = 1 << 2;
-pub const WHITE_ROOK: u8 = 1 << 3;
-pub const WHITE_QUEEN: u8 = 1 << 4;
-pub const WHITE_KING: u8 = 1 << 5;
+pub const WHITE_BISHOP: u8 = 2;
+pub const WHITE_KNIGHT: u8 = 3;
+pub const WHITE_ROOK: u8 = 4;
+pub const WHITE_QUEEN: u8 = 5;
+pub const WHITE_KING: u8 = 6;
 
-pub const BLACK_BIT: u8 = 1 << 7;
+pub const BLACK_BIT: u8 = 1 << 3;
 
 pub const BLACK_PAWN: u8 = WHITE_PAWN | BLACK_BIT;
 pub const BLACK_BISHOP: u8 = WHITE_BISHOP | BLACK_BIT;

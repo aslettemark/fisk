@@ -14,11 +14,12 @@ use crate::constants::SQUARE_NAME;
 pub struct Move {
     repr: u16,
 }
+// TODO from_kind
 
 impl Move {
     #[inline]
     pub fn new(from: u8, to: u8, capture: bool, special_bits: u8) -> Move {
-        let capture_bit = if capture { 0x8000u16 } else { 0 };
+        let capture_bit = if capture { 0x4000u16 } else { 0 };
         Move {
             repr: (from as u16) | ((to as u16) << 6) | capture_bit | ((special_bits as u16) << 12),
         }
@@ -32,12 +33,8 @@ impl Move {
         ((self.repr >> 6) & 0x3F) as u8
     }
 
-    pub fn special_bits(&self) -> u8 {
-        ((self.repr >> 12) & 0x3) as u8
-    }
-
-    pub fn promo_bits(&self) -> u8 {
-        self.special_bits()
+    pub fn flags_nibble(&self) -> u8 {
+        ((self.repr >> 12) & 0xF) as u8
     }
 
     pub fn is_promotion(&self) -> bool {
@@ -54,12 +51,12 @@ impl fmt::Display for Move {
         let capture = self.is_capture();
         let promotion = self.is_promotion();
         if promotion {
-            let promo = match self.special_bits() {
+            let promo = match self.flags_nibble() & 0b11 {
                 0 => 'K',
                 1 => 'B',
                 2 => 'R',
                 3 => 'Q',
-                _ => panic!(),
+                _ => unreachable!(),
             };
             if capture {
                 write!(

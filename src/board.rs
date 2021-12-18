@@ -3,6 +3,7 @@ use bitintr::*;
 use crate::board::Color::{Black, Empty, White};
 use crate::board::PieceKind::*;
 use crate::constants::*;
+use crate::move_representation::Move;
 
 /// Bit overview:
 /// 0: white to move
@@ -167,6 +168,10 @@ impl PieceKind {
         }
         White
     }
+
+    pub fn is_pawn(&self) -> bool {
+        ((*self as u8) & WHITE_PAWN) != 0
+    }
 }
 
 impl Board {
@@ -276,7 +281,7 @@ impl Board {
         self.flags.get_bit(0)
     }
 
-    pub fn toggle_white_to_move(&mut self) {
+    pub fn toggle_side_to_move(&mut self) {
         self.flags.toggle_bit(0);
     }
 
@@ -474,6 +479,256 @@ impl Board {
         }
 
         false
+    }
+
+    pub fn make_move(&self, mov: Move) -> Board {
+        let mut new = *self;
+        new.make_move_in_place(mov);
+        new
+    }
+
+    pub fn make_move_in_place(&mut self, mov: Move) {
+        let white = self.white_to_move();
+
+        if !white {
+            self.increment_fullmove_counter();
+        }
+        self.reset_en_passant();
+        self.toggle_side_to_move();
+
+        let from_tzcnt = mov.from();
+        let to_tzcnt = mov.to();
+        let from: u64 = 1 << from_tzcnt;
+        let to: u64 = 1 << to_tzcnt;
+        let from_piecelist_i = self.slow_get_piecelist_index_of_pos(from_tzcnt);
+        let from_kind = self.piece_kinds[from_piecelist_i];
+        let toggle_bits = from | to;
+
+        let flags = mov.flags_nibble();
+        let is_promotion = (flags & 0b1000) != 0;
+        let is_capture = (flags & 0b0100) != 0;
+
+        if is_capture || from_kind.is_pawn() {
+            self.reset_halfmove_clock()
+        } else {
+            self.increment_halfmove_clock();
+        }
+
+        if is_promotion {
+            if white {
+                self.bitboard.white_pawns ^= from;
+                match flags & 0b11 {
+                    0b00 => {
+                        self.piece_kinds[from_piecelist_i] = PieceKind::WhiteKnight;
+                        self.bitboard.white_knights |= to;
+                    }
+                    0b01 => {
+                        self.piece_kinds[from_piecelist_i] = PieceKind::WhiteBishop;
+                        self.bitboard.white_bishoplike |= to;
+                    }
+                    0b10 => {
+                        self.piece_kinds[from_piecelist_i] = PieceKind::WhiteRook;
+                        self.bitboard.white_rooklike |= to;
+                    }
+                    0b11 => {
+                        self.piece_kinds[from_piecelist_i] = PieceKind::WhiteQueen;
+                        self.bitboard.white_bishoplike |= to;
+                        self.bitboard.white_rooklike |= to;
+                    }
+                    _ => unreachable!(),
+                }
+                if is_capture {
+                    self.delete_from_piecelist(to_tzcnt);
+                    self.bitboard.unset_black_piece(to);
+                }
+            } else {
+                self.bitboard.black_pawns ^= from;
+                match flags & 0b11 {
+                    0b00 => {
+                        self.piece_kinds[from_piecelist_i] = PieceKind::BlackKnight;
+                        self.bitboard.black_knights |= to;
+                    }
+                    0b01 => {
+                        self.piece_kinds[from_piecelist_i] = PieceKind::BlackBishop;
+                        self.bitboard.black_bishoplike |= to;
+                    }
+                    0b10 => {
+                        self.piece_kinds[from_piecelist_i] = PieceKind::BlackRook;
+                        self.bitboard.black_rooklike |= to;
+                    }
+                    0b11 => {
+                        self.piece_kinds[from_piecelist_i] = PieceKind::BlackQueen;
+                        self.bitboard.black_bishoplike |= to;
+                        self.bitboard.black_rooklike |= to;
+                    }
+                    _ => unreachable!(),
+                }
+                if is_capture {
+                    self.delete_from_piecelist(to_tzcnt);
+                    self.bitboard.unset_white_piece(to);
+                }
+            }
+            self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+
+            return;
+        }
+
+        match flags & 0b111 {
+            0b000 => {
+                // "Normal" move
+                if white {
+                    match from_kind {
+                        WhiteQueen => {
+                            self.bitboard.white_rooklike ^= toggle_bits;
+                            self.bitboard.white_bishoplike ^= toggle_bits;
+                        }
+                        WhiteKing => self.bitboard.white_king ^= toggle_bits,
+                        WhiteRook => self.bitboard.white_rooklike ^= toggle_bits,
+                        WhiteBishop => self.bitboard.white_bishoplike ^= toggle_bits,
+                        WhiteKnight => self.bitboard.white_knights ^= toggle_bits,
+                        WhitePawn => self.bitboard.white_pawns ^= toggle_bits,
+                        _ => unreachable!(),
+                    }
+                } else {
+                    match from_kind {
+                        BlackQueen => {
+                            self.bitboard.black_rooklike ^= toggle_bits;
+                            self.bitboard.black_bishoplike ^= toggle_bits;
+                        }
+                        BlackKing => self.bitboard.black_king ^= toggle_bits,
+                        BlackRook => self.bitboard.black_rooklike ^= toggle_bits,
+                        BlackBishop => self.bitboard.black_bishoplike ^= toggle_bits,
+                        BlackKnight => self.bitboard.black_knights ^= toggle_bits,
+                        BlackPawn => self.bitboard.black_pawns ^= toggle_bits,
+                        _ => unreachable!(),
+                    }
+                }
+                self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+            }
+            0b001 => {
+                // Double pawn push
+                if white {
+                    self.bitboard.white_pawns ^= toggle_bits;
+                    let ep_file = (pos_to_file_index(from << 8) + 1) as u8;
+                    self.set_en_passant(ep_file);
+                } else {
+                    self.bitboard.black_pawns ^= toggle_bits;
+                    let ep_file = (pos_to_file_index(from >> 8) + 1) as u8;
+                    self.set_en_passant(ep_file);
+                }
+                self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+            }
+            0b010 => {
+                // Kingside castle
+                if white {
+                    self.disqualify_white_castling();
+                    self.bitboard.white_king = 1 << 6;
+                    self.bitboard.white_rooklike ^= (1 << 7) | (1 << 5);
+                    let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(7);
+                    self.piece_positions_tzcnt[piecelist_rook_i] = 5;
+                } else {
+                    self.disqualify_black_castling();
+                    self.bitboard.black_king = 1 << 62;
+                    self.bitboard.black_rooklike ^= (1 << 61) | (1 << 63);
+                    let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(63);
+                    self.piece_positions_tzcnt[piecelist_rook_i] = 61;
+                }
+                self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+            }
+            0b011 => {
+                // Queenside castle
+                if white {
+                    self.disqualify_white_castling();
+                    self.bitboard.white_king = 1 << 2;
+                    self.bitboard.white_rooklike ^= 1 | (1 << 3);
+                    let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(0);
+                    self.piece_positions_tzcnt[piecelist_rook_i] = 3;
+                } else {
+                    self.disqualify_black_castling();
+                    self.bitboard.black_king = 1 << 58;
+                    self.bitboard.black_rooklike ^= (1 << 56) | (1 << 59);
+                    let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(56);
+                    self.piece_positions_tzcnt[piecelist_rook_i] = 59;
+                }
+                self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+            }
+            0b100 => {
+                // "Normal" capture
+                if white {
+                    match from_kind {
+                        WhiteQueen => {
+                            self.bitboard.white_rooklike ^= toggle_bits;
+                            self.bitboard.white_bishoplike ^= toggle_bits;
+                        }
+                        WhiteKing => self.bitboard.white_king ^= toggle_bits,
+                        WhiteRook => self.bitboard.white_rooklike ^= toggle_bits,
+                        WhiteBishop => self.bitboard.white_bishoplike ^= toggle_bits,
+                        WhiteKnight => self.bitboard.white_knights ^= toggle_bits,
+                        WhitePawn => self.bitboard.white_pawns ^= toggle_bits,
+                        _ => unreachable!(),
+                    }
+                } else {
+                    match from_kind {
+                        BlackQueen => {
+                            self.bitboard.black_rooklike ^= toggle_bits;
+                            self.bitboard.black_bishoplike ^= toggle_bits;
+                        }
+                        BlackKing => self.bitboard.black_king ^= toggle_bits,
+                        BlackRook => self.bitboard.black_rooklike ^= toggle_bits,
+                        BlackBishop => self.bitboard.black_bishoplike ^= toggle_bits,
+                        BlackKnight => self.bitboard.black_knights ^= toggle_bits,
+                        BlackPawn => self.bitboard.black_pawns ^= toggle_bits,
+                        _ => unreachable!(),
+                    }
+                }
+
+                self.delete_from_piecelist(to_tzcnt);
+                if white {
+                    self.bitboard.unset_black_piece(to);
+                } else {
+                    self.bitboard.unset_white_piece(to);
+                }
+
+                self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+            }
+            0b101 => {
+                // Ep capture
+                let opponent_square;
+                if white {
+                    opponent_square = to >> 8;
+                    self.bitboard.white_pawns ^= toggle_bits;
+                    self.bitboard.black_pawns ^= opponent_square;
+                } else {
+                    opponent_square = to << 8;
+                    self.bitboard.black_pawns ^= toggle_bits;
+                    self.bitboard.white_pawns ^= opponent_square;
+                }
+                self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+                self.delete_from_piecelist(opponent_square.tzcnt() as u8);
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn slow_get_piecelist_index_of_pos(&self, pos_tzcnt: u8) -> usize {
+        let (piece_index, _) = self
+            .piece_positions_tzcnt
+            .iter()
+            .enumerate()
+            .find(|(_, p)| **p == pos_tzcnt)
+            .unwrap();
+        piece_index
+    }
+
+    pub fn delete_from_piecelist(&mut self, capture_pos_tzcnt: u8) {
+        let piece_positions_tzcnt = &mut self.piece_positions_tzcnt;
+        for (i, p) in piece_positions_tzcnt.iter().enumerate() {
+            if *p == capture_pos_tzcnt {
+                piece_positions_tzcnt[i] = TZCNT_U64_ZEROS;
+                self.piece_kinds[i] = EmptySquare;
+                break;
+            }
+        }
     }
 }
 
