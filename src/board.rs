@@ -190,7 +190,7 @@ impl Board {
             bitboard,
             piece_positions_tzcnt,
             piece_kinds,
-            flags: Flags { 0: 0 },
+            flags: Flags(0),
         };
 
         board.flags.set_bit(0, white_to_move);

@@ -67,12 +67,11 @@ fn get_best_eval(board: &Board, white: bool, depth: usize) -> Option<i32> {
         };
     }
     let first = first.unwrap();
-    let mut best: Option<i32>;
-    if first.is_in_check(white) {
-        best = None;
+    let mut best: Option<i32> = if first.is_in_check(white) {
+        None
     } else {
-        best = Some(first.eval());
-    }
+        Some(first.eval())
+    };
 
     if max {
         for s in iter {

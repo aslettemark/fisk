@@ -55,13 +55,24 @@ impl Board {
             }
         }
 
+        let ep_pos = {
+            let ep_field = split.get(3).unwrap();
+            let square_index = SQUARE_NAME.iter().position(|x| x == ep_field);
+
+            if let Some(i) = square_index {
+                1u64 << i
+            } else {
+                0
+            }
+        };
+
         let board = Board::new(
             bitboard,
             piece_positions,
             piece_kinds,
             halfmove_clock,
             fullmove_counter,
-            0, // TODO
+            ep_pos,
             white_to_move,
             castling_availability,
         );
@@ -150,6 +161,9 @@ fn parse_board_string(board: &str) -> Option<(BitBoard, [(PieceKind, u64); 32])>
                 _ => (),
             };
 
+            if piece_i >= 32 {
+                return None;
+            }
             pieces[piece_i] = (kind, pos);
             piece_i += 1;
             j += 1;
