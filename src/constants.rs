@@ -44,6 +44,7 @@ pub const BLACK_KING: u8 = WHITE_KING | BLACK_BIT;
 
 pub const TZCNT_U64_ZEROS: u8 = 64; // 0u64.tzcnt()
 
+// TODO reverse lookup of this table
 pub const SQUARE_NAME: [&str; 64] = [
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1", "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
     "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3", "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",

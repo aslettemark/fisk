@@ -9,6 +9,7 @@ use fisk::board::*;
 use fisk::constants::*;
 use fisk::fen::*;
 use fisk::perft::perft_command;
+use fisk::uci::UciState;
 
 mod bench;
 
@@ -49,7 +50,8 @@ fn main() {
                 .arg(Arg::with_name("Stop on error").long("stop-on-error"))
                 .arg(Arg::with_name("Debug").long("debug").takes_value(true)),
         )
-        .subcommand(SubCommand::with_name("interactive").about("Interactive"));
+        .subcommand(SubCommand::with_name("interactive").about("Interactive"))
+        .subcommand(SubCommand::with_name("uci").about("UCI"));
     let matches = opts.get_matches();
 
     match matches.subcommand_name() {
@@ -68,6 +70,12 @@ fn main() {
         Some("debug") => debug(),
         Some("perft") => perft_command(matches.subcommand().1.unwrap()),
         Some("interactive") => interactive(),
+        Some("uci") => {
+            let mut uci_state = UciState::new();
+            uci_state
+                .run_uci_input(&mut io::stdin(), &mut io::stdout())
+                .unwrap();
+        }
         None => debug(),
         _ => unreachable!(),
     }

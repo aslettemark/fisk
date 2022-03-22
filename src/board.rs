@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use bitintr::*;
 
 use crate::board::Color::{Black, Empty, White};
@@ -174,6 +176,26 @@ impl PieceKind {
     }
 }
 
+impl Display for PieceKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WhitePawn => write! {f, "♙"},
+            WhiteBishop => write! {f, "♗"},
+            WhiteKnight => write! {f, "♘"},
+            WhiteRook => write! {f, "♖"},
+            WhiteQueen => write! {f, "♕"},
+            WhiteKing => write! {f, "♔"},
+            BlackPawn => write! {f, "♟"},
+            BlackBishop => write! {f, "♝"},
+            BlackKnight => write! {f, "♞"},
+            BlackRook => write! {f, "♜"},
+            BlackQueen => write! {f, "♛"},
+            BlackKing => write! {f, "♚"},
+            EmptySquare => write! {f, " "},
+        }
+    }
+}
+
 impl Board {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -211,44 +233,7 @@ impl Board {
     }
 
     pub fn print(&self) {
-        println!(" A B C D E F G H");
-
-        for (i, row) in ROWS.iter().rev().enumerate() {
-            print!("{}", 7 - i + 1);
-
-            for file in &FILES {
-                let pos = row & file;
-                let c = self.piece_representation(self.slow_kind_at(pos));
-
-                print!("{} ", c);
-            }
-
-            println!();
-        }
-
-        println!(" A B C D E F G H");
-
-        /*for p in self.pieces.iter() {
-            println!("{:#066b}: {}", p.position, self.piece_representation(p.kind));
-        }*/
-    }
-
-    fn piece_representation(&self, kind: PieceKind) -> char {
-        match kind {
-            WhitePawn => '♙',
-            WhiteBishop => '♗',
-            WhiteKnight => '♘',
-            WhiteRook => '♖',
-            WhiteQueen => '♕',
-            WhiteKing => '♔',
-            BlackPawn => '♟',
-            BlackBishop => '♝',
-            BlackKnight => '♞',
-            BlackRook => '♜',
-            BlackQueen => '♛',
-            BlackKing => '♚',
-            _ => ' ',
-        }
+        println!("{}", self);
     }
 
     pub fn slow_kind_at(&self, pos: u64) -> PieceKind {
@@ -801,6 +786,26 @@ impl Default for Board {
             true,
             0b00001111,
         )
+    }
+}
+
+impl Display for Board {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, " A B C D E F G H")?;
+
+        for (i, row) in ROWS.iter().rev().enumerate() {
+            write!(f, "{}", 7 - i + 1)?;
+
+            for file in &FILES {
+                let pos = row & file;
+                let piece = self.slow_kind_at(pos);
+                write!(f, "{} ", piece)?;
+            }
+
+            writeln!(f)?;
+        }
+
+        writeln!(f, " A B C D E F G H")
     }
 }
 
