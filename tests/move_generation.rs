@@ -392,14 +392,16 @@ fn bishop_moves() {
 #[test]
 fn white_kingside_castling() {
     gen("8/3k4/8/8/8/7p/7P/4K2R w K - 0 1", 5 + 1 + 2);
-    gen("8/3k4/8/8/6r1/7p/7P/4K2R w K - 0 1", 5 + 2);
+    gen("8/3k4/8/8/6r1/7p/7P/4K2R w K - 0 1", 5 + 2 + 1);
+    gen("8/3k4/8/8/5r2/7p/7P/4K2R w - - 0 1", 5 + 2);
 }
 
 #[test]
 fn white_queenside_castling() {
     gen("8/8/3k4/8/8/8/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5);
     gen("8/8/3k4/8/8/1r6/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5);
-    gen("8/8/3k4/8/8/2r5/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5 - 1);
+    gen("8/8/3k4/8/8/2r5/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5);
+    gen("8/8/3k4/8/8/3r4/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5 - 1);
 }
 
 #[test]

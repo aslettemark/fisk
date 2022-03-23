@@ -474,8 +474,6 @@ pub fn king_moves(
 
         if kingside
             && !board.is_square_attacked_by_black(position << 1)
-            // TODO not necessary, caught by in_check
-            && !board.is_square_attacked_by_black(position << 2)
         {
             // Kingside white castle
             let mov = Move::new(position_tzcnt, 6, false, 0b10);
@@ -483,8 +481,6 @@ pub fn king_moves(
         }
         if queenside
             && !board.is_square_attacked_by_black(position >> 1)
-            // TODO not necessary, caught by in_check
-            && !board.is_square_attacked_by_black(position >> 2)
         {
             // Queenside white castle
             let mov = Move::new(position_tzcnt, 2, false, 0b11);
@@ -506,8 +502,6 @@ pub fn king_moves(
 
         if kingside
             && !board.is_square_attacked_by_white(position << 1)
-            // TODO not necessary, caught by in_check
-            && !board.is_square_attacked_by_white(position << 2)
         {
             // Kingside black castle
             let mov = Move::new(position_tzcnt, 62, false, 0b10);
@@ -515,8 +509,6 @@ pub fn king_moves(
         }
         if queenside
             && !board.is_square_attacked_by_white(position >> 1)
-            // TODO not necessary, caught by in_check
-            && !board.is_square_attacked_by_white(position >> 2)
         {
             // Queenside black castle
             let mov = Move::new(position_tzcnt, 58, false, 0b11);
