@@ -47,7 +47,6 @@ fn main() {
                 .arg(Arg::with_name("Run").long("run").takes_value(true))
                 .arg(Arg::with_name("All").long("all"))
                 .arg(Arg::with_name("Print available perft tests").long("print"))
-                .arg(Arg::with_name("Stop on error").long("stop-on-error"))
                 .arg(Arg::with_name("Debug").long("debug").takes_value(true)),
         )
         .subcommand(SubCommand::with_name("interactive").about("Interactive"))

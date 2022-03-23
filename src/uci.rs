@@ -48,16 +48,16 @@ impl UciState {
                     moves,
                 } => self.position(startpos, fen, moves),
                 UciMessage::SetOption { name: _, value: _ } => todo!(),
-                UciMessage::UciNewGame => todo!(),
+                UciMessage::UciNewGame => self.board = None,
                 UciMessage::Stop => todo!(),
                 UciMessage::PonderHit => todo!(),
-                UciMessage::Quit => todo!(),
+                UciMessage::Quit => {
+                    return Ok(());
+                }
                 UciMessage::Go {
                     time_control: _,
                     search_control: _,
                 } => todo!(),
-                UciMessage::CopyProtection(_) => todo!(),
-                UciMessage::Registration(_) => todo!(),
                 UciMessage::Unknown(_, _) => todo!(),
                 _ => {}
             }

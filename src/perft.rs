@@ -4,6 +4,7 @@ use std::fmt;
 use std::fmt::{Display, Formatter};
 
 use clap::ArgMatches;
+use rayon::prelude::*;
 
 use crate::board::Board;
 use crate::fen::FEN_DEFAULT_BOARD;
@@ -26,7 +27,7 @@ impl Display for PerftError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Perft error at depth {}: expected: {} but found {}",
+            "Perft error at depth {}: expected {} but found {}",
             self.error_depth, self.expected, self.actual
         )
     }
@@ -79,7 +80,7 @@ fn init_perft_configs() -> HashMap<&'static str, PerftConfig> {
         "pos3",
         PerftConfig {
             fen: "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - ",
-            depth: 6, // TODO 8
+            depth: 8,
             depth_level_results: vec![
                 1, 14, 191, 2812, 43238, 674624, 11030083, 178633661, 3009794393,
             ],
@@ -89,7 +90,7 @@ fn init_perft_configs() -> HashMap<&'static str, PerftConfig> {
         "pos4",
         PerftConfig {
             fen: "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
-            depth: 2, // TODO 6
+            depth: 5, // TODO 6
             depth_level_results: vec![1, 6, 264, 9467, 422333, 15833292, 706045033],
         },
     );
@@ -97,7 +98,7 @@ fn init_perft_configs() -> HashMap<&'static str, PerftConfig> {
         "pos4mirror",
         PerftConfig {
             fen: "r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1",
-            depth: 2, // TODO 6
+            depth: 5, // TODO 6
             depth_level_results: vec![1, 6, 264, 9467, 422333, 15833292, 706045033],
         },
     );
@@ -105,7 +106,7 @@ fn init_perft_configs() -> HashMap<&'static str, PerftConfig> {
         "pos5", // pos 5 seems kinda scuffed tbh
         PerftConfig {
             fen: "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
-            depth: 1, // TODO 5
+            depth: 2, // TODO 5
             depth_level_results: vec![1, 44, 1486, 62379, 2103487, 89941194],
         },
     );
@@ -211,20 +212,20 @@ fn print_fail(n: &str, e: &PerftError) {
     eprintln!("FAILED\tperft \"{}\": {}", n, e);
 }
 
-fn test_all(stop_on_err: bool) {
+fn test_all() {
+    let results: Vec<(&str, Result<(), PerftError>)> = PERFT_CONFIGS
+        .iter()
+        .collect::<Vec<(&&str, &PerftConfig)>>()
+        .par_iter()
+        .map(|(key, config)| (**key, run_config(key, config)))
+        .collect();
+
     let mut passed: Vec<&str> = Vec::new();
     let mut failed: Vec<(&str, PerftError)> = Vec::new();
-
-    for (key, config) in PERFT_CONFIGS.iter() {
-        let result = run_config(key, config);
+    for (key, result) in results {
         match result {
             Ok(_) => passed.push(key),
-            Err(e) => {
-                failed.push((key, e));
-                if stop_on_err {
-                    break;
-                }
-            }
+            Err(e) => failed.push((key, e)),
         }
     }
 
@@ -272,7 +273,7 @@ pub fn perft_command(args: &ArgMatches) {
         println!();
         println!("Running all configs");
         let t1 = time::get_time();
-        test_all(args.is_present("Stop on error"));
+        test_all();
         let t2 = time::get_time();
         let dur = t2 - t1;
         println!(
