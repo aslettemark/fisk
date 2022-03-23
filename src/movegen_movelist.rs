@@ -474,6 +474,7 @@ pub fn king_moves(
 
         if kingside
             && !board.is_square_attacked_by_black(position << 1)
+            // TODO not necessary, caught by in_check
             && !board.is_square_attacked_by_black(position << 2)
         {
             // Kingside white castle
@@ -482,6 +483,7 @@ pub fn king_moves(
         }
         if queenside
             && !board.is_square_attacked_by_black(position >> 1)
+            // TODO not necessary, caught by in_check
             && !board.is_square_attacked_by_black(position >> 2)
         {
             // Queenside white castle
@@ -504,6 +506,7 @@ pub fn king_moves(
 
         if kingside
             && !board.is_square_attacked_by_white(position << 1)
+            // TODO not necessary, caught by in_check
             && !board.is_square_attacked_by_white(position << 2)
         {
             // Kingside black castle
@@ -512,6 +515,7 @@ pub fn king_moves(
         }
         if queenside
             && !board.is_square_attacked_by_white(position >> 1)
+            // TODO not necessary, caught by in_check
             && !board.is_square_attacked_by_white(position >> 2)
         {
             // Queenside black castle

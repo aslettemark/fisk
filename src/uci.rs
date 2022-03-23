@@ -67,7 +67,6 @@ impl UciState {
     }
 
     fn position(&mut self, startpos: bool, fen: Option<UciFen>, moves: Vec<UciMove>) {
-        dbg!(&moves);
         let fen_string = match (startpos, &fen) {
             (true, _) => fen::FEN_DEFAULT_BOARD,
             (false, Some(uci_fen)) => uci_fen.0.as_str(),

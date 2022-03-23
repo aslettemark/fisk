@@ -725,7 +725,7 @@ impl Board {
         match pos_from_tzcnt {
             4 => self.disqualify_white_castling(),
             60 => self.disqualify_black_castling(),
-            0 => self.disqualify_black_queenside_castling(),
+            0 => self.disqualify_white_queenside_castling(),
             7 => self.disqualify_white_kingside_castling(),
             56 => self.disqualify_black_queenside_castling(),
             63 => self.disqualify_black_kingside_castling(),
