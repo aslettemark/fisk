@@ -373,16 +373,19 @@ impl Board {
         let enemy_rooklike;
         let enemy_knights;
         let enemy_bishoplike;
+        let enemy_king;
         if white {
             king_pos = self.bitboard.white_king;
             enemy_rooklike = self.bitboard.black_rooklike;
             enemy_knights = self.bitboard.black_knights;
             enemy_bishoplike = self.bitboard.black_bishoplike;
+            enemy_king = self.bitboard.black_king;
         } else {
             king_pos = self.bitboard.black_king;
             enemy_rooklike = self.bitboard.white_rooklike;
             enemy_knights = self.bitboard.white_knights;
             enemy_bishoplike = self.bitboard.white_bishoplike;
+            enemy_king = self.bitboard.white_king;
         }
 
         if is_attacked_by_knight(king_pos, enemy_knights) {
@@ -400,6 +403,10 @@ impl Board {
                 return true;
             }
         } else if is_attacked_by_white_pawns(king_pos, self.bitboard.white_pawns) {
+            return true;
+        }
+
+        if is_attacked_by_king(king_pos, enemy_king) {
             return true;
         }
 

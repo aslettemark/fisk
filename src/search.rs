@@ -28,10 +28,12 @@ impl Board {
 
         let best = get_best_eval(self, white, depth);
 
-        let depth_penalty = 50 - (depth as i32);
-        if best.is_none() {
+        if let Some(eval) = best {
+            eval
+        } else {
             if self.is_in_check(white) {
                 // Mated
+                let depth_penalty = 50 - (depth as i32);
                 return if white {
                     NEGINF + depth_penalty
                 } else {
@@ -40,10 +42,8 @@ impl Board {
             }
 
             // Stalemate
-            return 0;
+            0
         }
-
-        best.unwrap()
     }
 }
 
@@ -52,26 +52,8 @@ fn get_best_eval(board: &Board, white: bool, depth: usize) -> Option<i32> {
     let max = white;
     //let mut iter = self.iter_successors();
     let ss = board.generate_successors();
-    let mut iter = ss.iter();
-    let first = iter.next();
-    if first.is_none() {
-        let in_check = board.is_in_check(white);
-        return if in_check {
-            if white {
-                Some(NEGINF)
-            } else {
-                Some(INF)
-            }
-        } else {
-            Some(0) // Stalemate
-        };
-    }
-    let first = first.unwrap();
-    let mut best: Option<i32> = if first.is_in_check(white) {
-        None
-    } else {
-        Some(first.eval())
-    };
+    let iter = ss.iter();
+    let mut best = None;
 
     if max {
         for s in iter {
@@ -95,6 +77,19 @@ fn get_best_eval(board: &Board, white: bool, depth: usize) -> Option<i32> {
                 best = Some(e);
             }
         }
+    }
+
+    if best.is_none() {
+        let in_check = board.is_in_check(white);
+        return if in_check {
+            if white {
+                Some(NEGINF)
+            } else {
+                Some(INF)
+            }
+        } else {
+            Some(0) // Stalemate
+        };
     }
 
     best

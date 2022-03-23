@@ -453,7 +453,7 @@ pub fn king_moves(
         }
 
         let target_pos_tzcnt = target_pos.tzcnt() as u8;
-        let capture = intersects(target_pos, total_occupancy);
+        let capture = intersects(target_pos, enemy_occupancy);
         let mov = Move::new(position_tzcnt, target_pos_tzcnt, capture, 0);
         outvec.push(mov);
     }
