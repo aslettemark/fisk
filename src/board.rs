@@ -737,7 +737,7 @@ impl Board {
             7 => self.disqualify_white_kingside_castling(),
             56 => self.disqualify_black_queenside_castling(),
             63 => self.disqualify_black_kingside_castling(),
-            _ => {},
+            _ => {}
         }
     }
 }

@@ -472,16 +472,12 @@ pub fn king_moves(
             return;
         }
 
-        if kingside
-            && !board.is_square_attacked_by_black(position << 1)
-        {
+        if kingside && !board.is_square_attacked_by_black(position << 1) {
             // Kingside white castle
             let mov = Move::new(position_tzcnt, 6, false, 0b10);
             outvec.push(mov);
         }
-        if queenside
-            && !board.is_square_attacked_by_black(position >> 1)
-        {
+        if queenside && !board.is_square_attacked_by_black(position >> 1) {
             // Queenside white castle
             let mov = Move::new(position_tzcnt, 2, false, 0b11);
             outvec.push(mov);
@@ -500,16 +496,12 @@ pub fn king_moves(
             return;
         }
 
-        if kingside
-            && !board.is_square_attacked_by_white(position << 1)
-        {
+        if kingside && !board.is_square_attacked_by_white(position << 1) {
             // Kingside black castle
             let mov = Move::new(position_tzcnt, 62, false, 0b10);
             outvec.push(mov);
         }
-        if queenside
-            && !board.is_square_attacked_by_white(position >> 1)
-        {
+        if queenside && !board.is_square_attacked_by_white(position >> 1) {
             // Queenside black castle
             let mov = Move::new(position_tzcnt, 58, false, 0b11);
             outvec.push(mov);
