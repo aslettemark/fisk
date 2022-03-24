@@ -1,12 +1,12 @@
 use crate::board::Board;
 use crate::eval::{INF, NEGINF};
+use crate::move_representation::Move;
 
 impl Board {
-    // TODO change to -> Move, bench
-    pub fn best_move(&self, depth: usize) -> (Option<Board>, i32) {
+    pub fn best_move(&self, depth: usize) -> (Option<Move>, i32) {
         let white = self.white_to_move();
 
-        let best = get_best_board_and_eval(self, white, depth);
+        let best = get_best_move_and_eval(self, white, depth);
 
         if best.is_none() {
             if self.is_in_check(white) {
@@ -50,29 +50,29 @@ impl Board {
 #[inline]
 fn get_best_eval(board: &Board, white: bool, depth: usize) -> Option<i32> {
     let max = white;
-    //let mut iter = self.iter_successors();
-    let ss = board.generate_successors();
-    let iter = ss.iter();
+    let moves = board.generate_pseudo_legal_moves();
     let mut best = None;
 
     if max {
-        for s in iter {
-            if s.is_in_check(white) {
+        for m in moves.iter() {
+            let b = board.make_move(m);
+            if b.is_in_check(white) {
                 // Illegal, can't move into check
                 continue;
             }
-            let e = s.minimax(depth - 1, 0, 0);
+            let e = b.minimax(depth - 1, 0, 0);
             if best.is_none() || e > best.unwrap() {
                 best = Some(e);
             }
         }
     } else {
-        for s in iter {
-            if s.is_in_check(white) {
+        for m in moves.iter() {
+            let b = board.make_move(m);
+            if b.is_in_check(white) {
                 // Illegal, can't move into check
                 continue;
             }
-            let e = s.minimax(depth - 1, 0, 0);
+            let e = b.minimax(depth - 1, 0, 0);
             if best.is_none() || e < best.unwrap() {
                 best = Some(e);
             }
@@ -96,41 +96,34 @@ fn get_best_eval(board: &Board, white: bool, depth: usize) -> Option<i32> {
 }
 
 #[inline]
-fn get_best_board_and_eval(board: &Board, white: bool, depth: usize) -> Option<(Board, i32)> {
-    let successors = board.generate_successors();
-    if successors.is_empty() {
-        // Checkmate or stalemate
-        return None;
-    }
-
-    let mut best: Option<(&Board, i32)> = None;
+fn get_best_move_and_eval(board: &Board, white: bool, depth: usize) -> Option<(Move, i32)> {
+    let moves = board.generate_pseudo_legal_moves();
+    let mut best: Option<(Move, i32)> = None;
     if white {
-        for s in successors.iter() {
-            if s.is_in_check(white) {
+        for m in moves.iter() {
+            let b = board.make_move(m);
+            if b.is_in_check(white) {
                 // Illegal, can't move into check
                 continue;
             }
-            let e = s.minimax(depth - 1, 0, 0);
+            let e = b.minimax(depth - 1, 0, 0);
             if best.is_none() || e > best.unwrap().1 {
-                best = Some((s, e));
+                best = Some((*m, e));
             }
         }
     } else {
-        for s in successors.iter() {
-            if s.is_in_check(white) {
+        for m in moves.iter() {
+            let b = board.make_move(m);
+            if b.is_in_check(white) {
                 // Illegal, can't move into check
                 continue;
             }
-            let e = s.minimax(depth - 1, 0, 0);
+            let e = b.minimax(depth - 1, 0, 0);
             if best.is_none() || e < best.unwrap().1 {
-                best = Some((s, e));
+                best = Some((*m, e));
             }
         }
     }
 
-    if let Some((b, e)) = best {
-        Some((*b, e))
-    } else {
-        None
-    }
+    best
 }

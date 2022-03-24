@@ -150,10 +150,10 @@ fn debug() {
         let result = b.best_move(4);
         let eval = result.1;
         match result.0 {
-            Some(c) => {
+            Some(m) => {
                 println!("Eval {}", eval);
-                c.print();
-                b = c;
+                b = b.make_move(&m);
+                b.print();
             }
             None => {
                 println!("Finished");
