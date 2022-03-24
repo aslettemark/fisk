@@ -505,7 +505,7 @@ impl Board {
         } else {
             self.increment_halfmove_clock();
         }
-        self.castling_maintenance(from_tzcnt);
+        self.castling_maintenance(from_tzcnt, to_tzcnt);
 
         if is_promotion {
             if white {
@@ -721,7 +721,7 @@ impl Board {
     }
 
     #[inline]
-    fn castling_maintenance(&mut self, pos_from_tzcnt: u8) {
+    fn castling_maintenance(&mut self, pos_from_tzcnt: u8, pos_to_tzcnt: u8) {
         match pos_from_tzcnt {
             4 => self.disqualify_white_castling(),
             60 => self.disqualify_black_castling(),
@@ -730,6 +730,14 @@ impl Board {
             56 => self.disqualify_black_queenside_castling(),
             63 => self.disqualify_black_kingside_castling(),
             _ => {}
+        }
+
+        match pos_to_tzcnt {
+            0 => self.disqualify_white_queenside_castling(),
+            7 => self.disqualify_white_kingside_castling(),
+            56 => self.disqualify_black_queenside_castling(),
+            63 => self.disqualify_black_kingside_castling(),
+            _ => {},
         }
     }
 }

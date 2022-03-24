@@ -72,7 +72,7 @@ fn init_perft_configs() -> HashMap<&'static str, PerftConfig> {
         "kiwipete",
         PerftConfig {
             fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
-            depth: 5, // TODO 6
+            depth: 6,
             depth_level_results: vec![1, 48, 2039, 97862, 4_085_603, 193_690_690, 8_031_647_685],
         },
     );
@@ -103,10 +103,10 @@ fn init_perft_configs() -> HashMap<&'static str, PerftConfig> {
         },
     );
     map.insert(
-        "pos5", // pos 5 seems kinda scuffed tbh
+        "pos5",
         PerftConfig {
             fen: "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
-            depth: 2, // TODO 5
+            depth: 5,
             depth_level_results: vec![1, 44, 1486, 62379, 2103487, 89941194],
         },
     );
