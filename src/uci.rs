@@ -1,6 +1,6 @@
 use std::io::{self, BufRead, BufReader, Result};
 
-use vampirc_uci::{UciFen, UciMessage, UciMove, UciSquare};
+use vampirc_uci::{UciFen, UciMessage, UciMove, UciSearchControl, UciSquare, UciTimeControl};
 
 use crate::{
     board::{Board, PieceKind},
@@ -55,9 +55,9 @@ impl UciState {
                     return Ok(());
                 }
                 UciMessage::Go {
-                    time_control: _,
-                    search_control: _,
-                } => todo!(),
+                    time_control,
+                    search_control,
+                } => self.go(time_control, search_control, output),
                 UciMessage::Unknown(_, _) => todo!(),
                 _ => {}
             }
@@ -88,6 +88,34 @@ impl UciState {
         }
 
         self.board = Some(board);
+    }
+
+    fn go(
+        &mut self,
+        time_control: Option<UciTimeControl>,
+        search_control: Option<UciSearchControl>,
+        output: &mut impl io::Write,
+    ) {
+        let board = if let Some(board) = self.board {
+            board
+        } else {
+            eprint!("Go with no position");
+            return;
+        };
+
+        // TODO if-let-chain
+        let depth = if let Some(control) = search_control {
+            if let Some(depth) = control.depth {
+                depth
+            } else {
+                6
+            }
+        } else {
+            6
+        };
+
+        let (eval, best_move) = board.best_move(depth as usize);
+        writeln!(output, "bestmove {}", best_move.unwrap()).unwrap();
     }
 }
 
