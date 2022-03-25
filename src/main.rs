@@ -69,13 +69,12 @@ fn main() {
         Some("debug") => debug(),
         Some("perft") => perft_command(matches.subcommand().1.unwrap()),
         Some("interactive") => interactive(),
-        Some("uci") => {
+        Some("uci") | None => {
             let mut uci_state = UciState::new();
             uci_state
                 .run_uci_input(&mut io::stdin(), &mut io::stdout())
                 .unwrap();
         }
-        None => debug(),
         _ => unreachable!(),
     }
 }

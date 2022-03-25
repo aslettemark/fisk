@@ -114,7 +114,7 @@ impl UciState {
             6
         };
 
-        let (eval, best_move) = board.best_move(depth as usize);
+        let (_eval, best_move) = board.best_move(depth as usize);
         writeln!(output, "bestmove {}", best_move.unwrap()).unwrap();
     }
 }
