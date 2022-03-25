@@ -128,6 +128,7 @@ impl Default for UciState {
 fn uci_move_to_fisk_move(uci_move: UciMove, board: &Board) -> Option<Move> {
     let from = uci_square_to_tzcnt_pos(&uci_move.from)?;
     let to = uci_square_to_tzcnt_pos(&uci_move.to)?;
+    let from_pos = 1u64 << from;
     let to_pos = 1u64 << to;
     let coverage = board.bitboard.coverage();
 
@@ -143,41 +144,41 @@ fn uci_move_to_fisk_move(uci_move: UciMove, board: &Board) -> Option<Move> {
         };
     }
 
-    let from_piece = board.slow_kind_at(1u64 << (from as u64));
+    let from_piece = board.slow_kind_at(from_pos);
     let bitboard_square_index_abs_diff = (from as i32 - to as i32).abs() as u32;
 
     if from_piece.is_pawn() {
         if bitboard_square_index_abs_diff == 16 {
             // Double pawn push
-            return Some(Move::new(from, to, false, 0x1));
+            return Some(Move::new(from, to, false, 0b1));
         }
         if !intersects(coverage, to_pos)
             && (bitboard_square_index_abs_diff == 7 || bitboard_square_index_abs_diff == 9)
         {
             // EP capture
-            return Some(Move::new(from, to, true, 0x1));
+            return Some(Move::new(from, to, true, 0b1));
         }
     }
 
     if from_piece == PieceKind::WhiteKing && from == 4 {
         if to == 6 {
             // Kingside castle
-            return Some(Move::new(from, to, false, 0x10));
+            return Some(Move::new(from, to, false, 0b10));
         }
         if to == 2 {
             // Queenside castle
-            return Some(Move::new(from, to, false, 0x11));
+            return Some(Move::new(from, to, false, 0b11));
         }
     }
 
     if from_piece == PieceKind::BlackKing && from == 60 {
         if to == 62 {
             // Kingside castle
-            return Some(Move::new(from, to, false, 0x10));
+            return Some(Move::new(from, to, false, 0b10));
         }
         if to == 58 {
             // Queenside castle
-            return Some(Move::new(from, to, false, 0x11));
+            return Some(Move::new(from, to, false, 0b11));
         }
     }
 

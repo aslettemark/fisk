@@ -26,3 +26,10 @@ fn engine_finds_obvious_move() {
         "bestmove e1e8\n",
     );
 }
+
+#[test]
+fn engine_interprets_castling() {
+    let mut state = UciState::new();
+    let mut out_buf: Vec<u8> = Vec::new();
+    state.run_uci_input(&mut "position startpos moves e2e3 d7d5 b1c3 g8f6 g1f3 e7e6 f1b5 b8d7 f3e5 f8e7 d2d4 e8g8 e1g1 f6e4 d1f3 a7a6 f3f7 f8f7\n".as_bytes(), &mut out_buf).unwrap();
+}
