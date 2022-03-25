@@ -4,7 +4,7 @@ use vampirc_uci::{UciFen, UciMessage, UciMove, UciSearchControl, UciSquare, UciT
 
 use crate::{
     board::{Board, PieceKind},
-    constants::{self, intersects},
+    constants::{self, intersects, SQUARE_NAME},
     fen,
     move_representation::Move,
 };
@@ -115,7 +115,7 @@ impl UciState {
         };
 
         let (_eval, best_move) = board.best_move(depth as usize);
-        writeln!(output, "bestmove {}", best_move.unwrap()).unwrap();
+        writeln!(output, "bestmove {}", fisk_move_to_uci_text(&best_move.unwrap())).unwrap();
     }
 }
 
@@ -191,4 +191,10 @@ fn uci_square_to_tzcnt_pos(square: &UciSquare) -> Option<u8> {
         .iter()
         .position(|x| x == &square_name)
         .map(|x| x as u8)
+}
+
+fn fisk_move_to_uci_text(mov: &Move) -> String {
+    let from = SQUARE_NAME[mov.from() as usize];
+    let to = SQUARE_NAME[mov.to() as usize];
+    format!("{}{}", from, to)
 }
