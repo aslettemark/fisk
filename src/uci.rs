@@ -115,7 +115,12 @@ impl UciState {
         };
 
         let (_eval, best_move) = board.best_move(depth as usize);
-        writeln!(output, "bestmove {}", fisk_move_to_uci_text(&best_move.unwrap())).unwrap();
+        writeln!(
+            output,
+            "bestmove {}",
+            fisk_move_to_uci_text(&best_move.unwrap())
+        )
+        .unwrap();
     }
 }
 
@@ -133,13 +138,12 @@ fn uci_move_to_fisk_move(uci_move: UciMove, board: &Board) -> Option<Move> {
     let coverage = board.bitboard.coverage();
 
     let capture = intersects(coverage, to_pos);
-
     if let Some(promotion) = uci_move.promotion {
         return match promotion {
-            vampirc_uci::UciPiece::Knight => Some(Move::new(from, to, capture, 0)),
-            vampirc_uci::UciPiece::Bishop => Some(Move::new(from, to, capture, 0x1)),
-            vampirc_uci::UciPiece::Rook => Some(Move::new(from, to, capture, 0x2)),
-            vampirc_uci::UciPiece::Queen => Some(Move::new(from, to, capture, 0x3)),
+            vampirc_uci::UciPiece::Knight => Some(Move::new(from, to, capture, 0b1000)),
+            vampirc_uci::UciPiece::Bishop => Some(Move::new(from, to, capture, 0b1001)),
+            vampirc_uci::UciPiece::Rook => Some(Move::new(from, to, capture, 0b1010)),
+            vampirc_uci::UciPiece::Queen => Some(Move::new(from, to, capture, 0b1011)),
             _ => None,
         };
     }
@@ -197,5 +201,17 @@ fn uci_square_to_tzcnt_pos(square: &UciSquare) -> Option<u8> {
 fn fisk_move_to_uci_text(mov: &Move) -> String {
     let from = SQUARE_NAME[mov.from() as usize];
     let to = SQUARE_NAME[mov.to() as usize];
+
+    if mov.is_promotion() {
+        let char = match mov.flags_nibble() & 0b11 {
+            0b00 => "k",
+            0b01 => "b",
+            0b10 => "r",
+            0b11 => "q",
+            _ => unreachable!(),
+        };
+        return format!("{}{}{}", from, to, char);
+    }
+
     format!("{}{}", from, to)
 }
