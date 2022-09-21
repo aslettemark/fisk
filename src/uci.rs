@@ -104,7 +104,7 @@ impl UciState {
         };
 
         // TODO if-let-chain
-        let mut depth = if let Some(control) = search_control {
+        let depth = if let Some(control) = search_control {
             if let Some(depth) = control.depth {
                 depth
             } else {
@@ -113,24 +113,6 @@ impl UciState {
         } else {
             6
         };
-
-        if let Some(UciTimeControl::TimeLeft {
-            white_time,
-            black_time,
-            white_increment: _,
-            black_increment: _,
-            moves_to_go: _,
-        }) = time_control
-        {
-            if let Some(board) = self.board {
-                let white_to_move = board.white_to_move();
-                if white_to_move && let Some(wtime) = white_time && wtime.num_seconds() > 120 {
-                    depth = 8;
-                } else if !white_to_move && let Some(btime) = black_time && btime.num_seconds() > 120 {
-                    depth = 8;
-                }
-            }
-        }
 
         let (_eval, best_move) = board.best_move(depth as usize);
         writeln!(
