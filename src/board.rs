@@ -28,7 +28,7 @@ pub struct Board {
     flags: Flags,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct BitBoard {
     // Little-Endian Rank-File (LERF) https://www.chessprogramming.org/Square_Mapping_Considerations
     // bit 0 is a1, bit 7 is h1, bit 63 is h8
@@ -130,14 +130,14 @@ impl BitBoard {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum Color {
     White,
     Black,
     Empty,
 }
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum PieceKind {
     EmptySquare = EMPTY_SQUARE as isize,
 
@@ -482,7 +482,6 @@ impl Board {
     pub fn make_move_in_place(&mut self, mov: &Move) {
         let white = self.white_to_move();
         if !white {
-            // TODO huh??
             self.increment_fullmove_counter();
         }
         self.reset_en_passant();

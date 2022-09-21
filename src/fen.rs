@@ -16,7 +16,7 @@ impl Board {
         }
         let has_move_data = split.len() == 6;
 
-        let board = split.get(0).unwrap();
+        let board = split.first().unwrap();
         let (bitboard, pieces) = parse_board_string(board)?;
 
         let (halfmove_clock, fullmove_counter) = if has_move_data {
@@ -131,7 +131,7 @@ fn parse_board_string(board: &str) -> Option<(BitBoard, [(PieceKind, u64); 32])>
 
         let mut j = 0u64;
         for c in pieces_str.chars() {
-            if c.is_digit(10) {
+            if c.is_ascii_digit() {
                 j += c.to_digit(10).unwrap() as u64;
                 continue;
             }
