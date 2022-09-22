@@ -15,3 +15,4 @@ pub mod movegen_movelist;
 pub mod perft;
 pub mod search;
 pub mod uci;
+pub mod flags;

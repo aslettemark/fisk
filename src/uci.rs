@@ -92,7 +92,7 @@ impl UciState {
 
     fn go(
         &mut self,
-        time_control: Option<UciTimeControl>,
+        _time_control: Option<UciTimeControl>,
         search_control: Option<UciSearchControl>,
         output: &mut impl io::Write,
     ) {
@@ -149,7 +149,7 @@ fn uci_move_to_fisk_move(uci_move: UciMove, board: &Board) -> Option<Move> {
     }
 
     let from_piece = board.slow_kind_at(from_pos);
-    let bitboard_square_index_abs_diff = (from as i32 - to as i32).abs() as u32;
+    let bitboard_square_index_abs_diff = (from as i32 - to as i32).unsigned_abs();
 
     if from_piece.is_pawn() {
         if bitboard_square_index_abs_diff == 16 {

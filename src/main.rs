@@ -80,7 +80,7 @@ fn main() {
 }
 
 fn generate_and_print(fen_string: String) -> Result<(), ()> {
-    let board = Board::from_fen(&*fen_string).ok_or(())?;
+    let board = Board::from_fen(&fen_string).ok_or(())?;
 
     let succ = board.generate_successors();
     for s in &succ {

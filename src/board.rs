@@ -6,8 +6,9 @@ use crate::board::Color::{Black, Empty, White};
 use crate::board::PieceKind::*;
 use crate::constants::*;
 use crate::move_representation::Move;
+use crate::flags::Flags;
 
-/// Bit overview:
+/// Bit overview of flags:
 /// 0: white to move
 /// 1: black queenside castling availability
 /// 2: black kingside castling
@@ -17,9 +18,6 @@ use crate::move_representation::Move;
 /// 8-15: en passant file (bit 8 set = file A en passant opportunity, bit 15 = file H)
 /// 16-31: halfmove_clock
 /// 32-47: fullmove_counter
-#[derive(Copy, Clone, Debug)]
-struct Flags(u64);
-
 #[derive(Copy, Clone, Debug)]
 pub struct Board {
     pub bitboard: BitBoard,
@@ -820,26 +818,6 @@ impl Display for Board {
         }
 
         writeln!(f, " A B C D E F G H")
-    }
-}
-
-impl Flags {
-    #[inline]
-    const fn get_bit(&self, i: usize) -> bool {
-        self.0 & (1 << i) != 0
-    }
-
-    #[inline]
-    fn set_bit(&mut self, i: usize, value: bool) {
-        self.0 &= !(1 << i);
-        if value {
-            self.0 |= 1 << i;
-        }
-    }
-
-    #[inline]
-    fn toggle_bit(&mut self, i: usize) {
-        self.set_bit(i, !self.get_bit(i));
     }
 }
 
