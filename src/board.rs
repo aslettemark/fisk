@@ -5,8 +5,8 @@ use bitintr::*;
 use crate::board::Color::{Black, Empty, White};
 use crate::board::PieceKind::*;
 use crate::constants::*;
-use crate::move_representation::Move;
 use crate::flags::Flags;
+use crate::move_representation::Move;
 
 /// Bit overview of flags:
 /// 0: white to move
