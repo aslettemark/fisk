@@ -39,6 +39,12 @@ fn main() {
                         .long("iterator")
                         .takes_value(false)
                         .help("Run benchmark using iterator internally"),
+                )
+                .arg(
+                    Arg::with_name("Benchmark search")
+                        .long("search")
+                        .takes_value(false)
+                        .help("Run benchmark on search function"),
                 ),
         )
         .subcommand(SubCommand::with_name("debug").about("Debug"))
@@ -54,18 +60,31 @@ fn main() {
     let matches = opts.get_matches();
 
     match matches.subcommand_name() {
-        Some("bench") => bench_movegen(
-            matches
+        Some("bench") => {
+            let depth = matches
                 .subcommand()
                 .1
                 .unwrap()
                 .value_of("Depth")
                 .unwrap_or("5")
                 .parse::<i32>()
-                .unwrap(),
-            matches.subcommand().1.unwrap().is_present("Use iterator"),
-            matches.subcommand().1.unwrap().value_of("Start board"),
-        ),
+                .unwrap();
+            let starting_board = matches.subcommand().1.unwrap().value_of("Start board");
+            if matches
+                .subcommand()
+                .1
+                .unwrap()
+                .is_present("Benchmark search")
+            {
+                bench_search(depth, starting_board)
+            } else {
+                bench_movegen(
+                    depth,
+                    matches.subcommand().1.unwrap().is_present("Use iterator"),
+                    starting_board,
+                )
+            }
+        }
         Some("debug") => debug(),
         Some("perft") => perft_command(matches.subcommand().1.unwrap()),
         Some("interactive") => interactive(),

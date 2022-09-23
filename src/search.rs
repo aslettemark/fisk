@@ -14,7 +14,8 @@ impl Board {
             return (self.eval(), None);
         }
 
-        let moves = self.generate_pseudo_legal_moves();
+        let mut moves = self.generate_pseudo_legal_moves();
+        order_moves(&mut moves);
 
         let max = white;
         let mut best: Option<(i32, Move)> = None;
@@ -74,4 +75,21 @@ impl Board {
             (0, None)
         }
     }
+}
+
+fn order_moves(moves: &mut [Move]) {
+    moves.sort_unstable_by_key(|m| -score_move(m))
+}
+
+fn score_move(m: &Move) -> i32 {
+    if m.is_promotion() {
+        return 10;
+    }
+    if m.is_capture() {
+        return 5;
+    }
+
+    // TODO from/to kind
+
+    0
 }
