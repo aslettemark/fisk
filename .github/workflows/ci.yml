@@ -14,12 +14,10 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Install latest nightly
-      uses: actions-rs/toolchain@v1
+    - uses: actions/checkout@v4
+    - name: Install stable Rust
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: nightly
-        override: true
         components: rustfmt, clippy
     - name: Build
       run: cargo build --verbose
