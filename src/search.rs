@@ -4,10 +4,25 @@ use crate::move_representation::Move;
 
 impl Board {
     pub fn best_move(&self, depth: usize) -> (i32, Option<Move>) {
-        self.minimax(depth, NEGINF, INF)
+        let mut nodes = 0u64;
+        let result = self.minimax(depth, NEGINF, INF, &mut nodes);
+        (result.0, result.1)
     }
 
-    fn minimax(&self, depth: usize, mut alpha: i32, mut beta: i32) -> (i32, Option<Move>) {
+    pub fn best_move_counted(&self, depth: usize) -> (i32, Option<Move>, u64) {
+        let mut nodes = 0u64;
+        let result = self.minimax(depth, NEGINF, INF, &mut nodes);
+        (result.0, result.1, nodes)
+    }
+
+    fn minimax(
+        &self,
+        depth: usize,
+        mut alpha: i32,
+        mut beta: i32,
+        nodes: &mut u64,
+    ) -> (i32, Option<Move>) {
+        *nodes += 1;
         let white = self.white_to_move();
 
         if depth == 0 {
@@ -27,7 +42,7 @@ impl Board {
                     // Illegal, can't move into check
                     continue;
                 }
-                let score = b.minimax(depth - 1, alpha, beta).0;
+                let score = b.minimax(depth - 1, alpha, beta, nodes).0;
 
                 if score >= beta {
                     return (beta, None); // fail hard beta-cutoff
@@ -45,7 +60,7 @@ impl Board {
                     // Illegal, can't move into check
                     continue;
                 }
-                let score = b.minimax(depth - 1, alpha, beta).0;
+                let score = b.minimax(depth - 1, alpha, beta, nodes).0;
 
                 if score <= alpha {
                     return (alpha, None); // fail hard alpha-cutoff
