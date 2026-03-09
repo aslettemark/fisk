@@ -226,10 +226,11 @@ impl Board {
 #[inline]
 fn bitboard_position_boost_table_eval(bb: u64, table: &[i32; 64]) -> i32 {
     let mut e = 0;
-    for i in (bb.tzcnt())..63 {
-        if (bb & (1 << i)) != 0 {
-            e += table[i as usize];
-        }
+    let mut remaining = bb;
+    while remaining != 0 {
+        let pos = remaining.tzcnt() as usize;
+        e += table[pos];
+        remaining &= remaining - 1; // Clear lowest set bit
     }
     e
 }

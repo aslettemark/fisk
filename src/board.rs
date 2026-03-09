@@ -23,6 +23,8 @@ pub struct Board {
     pub bitboard: BitBoard,
     pub piece_positions_tzcnt: [u8; 32],
     pub piece_kinds: [PieceKind; 32],
+    /// Reverse lookup: square index (0..63) -> piece-list index (0..31), or 0xFF if empty
+    pub piecelist_index_by_square: [u8; 64],
     flags: Flags,
 }
 
@@ -206,10 +208,18 @@ impl Board {
         white_to_move: bool,
         castling_availability: u8, // 0b0000KQkq
     ) -> Board {
+        let mut piecelist_index_by_square = [0xFFu8; 64];
+        for (i, &pos) in piece_positions_tzcnt.iter().enumerate() {
+            if pos != TZCNT_U64_ZEROS {
+                piecelist_index_by_square[pos as usize] = i as u8;
+            }
+        }
+
         let mut board = Board {
             bitboard,
             piece_positions_tzcnt,
             piece_kinds,
+            piecelist_index_by_square,
             flags: Flags(0),
         };
 
@@ -489,7 +499,7 @@ impl Board {
         let to_tzcnt = mov.to();
         let from: u64 = 1 << from_tzcnt;
         let to: u64 = 1 << to_tzcnt;
-        let from_piecelist_i = self.slow_get_piecelist_index_of_pos(from_tzcnt);
+        let from_piecelist_i = self.piecelist_index_by_square[from_tzcnt as usize] as usize;
         let from_kind = self.piece_kinds[from_piecelist_i];
         let toggle_bits = from | to;
 
@@ -559,6 +569,8 @@ impl Board {
                 }
             }
             self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+            self.piecelist_index_by_square[from_tzcnt as usize] = 0xFF;
+            self.piecelist_index_by_square[to_tzcnt as usize] = from_piecelist_i as u8;
 
             return;
         }
@@ -594,6 +606,8 @@ impl Board {
                     }
                 }
                 self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+                self.piecelist_index_by_square[from_tzcnt as usize] = 0xFF;
+                self.piecelist_index_by_square[to_tzcnt as usize] = from_piecelist_i as u8;
             }
             0b001 => {
                 // Double pawn push
@@ -607,36 +621,50 @@ impl Board {
                     self.set_en_passant(ep_file);
                 }
                 self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+                self.piecelist_index_by_square[from_tzcnt as usize] = 0xFF;
+                self.piecelist_index_by_square[to_tzcnt as usize] = from_piecelist_i as u8;
             }
             0b010 => {
                 // Kingside castle
                 if white {
                     self.bitboard.white_king = 1 << 6;
                     self.bitboard.white_rooklike ^= (1 << 7) | (1 << 5);
-                    let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(7);
+                    let piecelist_rook_i = self.piecelist_index_by_square[7] as usize;
                     self.piece_positions_tzcnt[piecelist_rook_i] = 5;
+                    self.piecelist_index_by_square[7] = 0xFF;
+                    self.piecelist_index_by_square[5] = piecelist_rook_i as u8;
                 } else {
                     self.bitboard.black_king = 1 << 62;
                     self.bitboard.black_rooklike ^= (1 << 61) | (1 << 63);
-                    let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(63);
+                    let piecelist_rook_i = self.piecelist_index_by_square[63] as usize;
                     self.piece_positions_tzcnt[piecelist_rook_i] = 61;
+                    self.piecelist_index_by_square[63] = 0xFF;
+                    self.piecelist_index_by_square[61] = piecelist_rook_i as u8;
                 }
                 self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+                self.piecelist_index_by_square[from_tzcnt as usize] = 0xFF;
+                self.piecelist_index_by_square[to_tzcnt as usize] = from_piecelist_i as u8;
             }
             0b011 => {
                 // Queenside castle
                 if white {
                     self.bitboard.white_king = 1 << 2;
                     self.bitboard.white_rooklike ^= 1 | (1 << 3);
-                    let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(0);
+                    let piecelist_rook_i = self.piecelist_index_by_square[0] as usize;
                     self.piece_positions_tzcnt[piecelist_rook_i] = 3;
+                    self.piecelist_index_by_square[0] = 0xFF;
+                    self.piecelist_index_by_square[3] = piecelist_rook_i as u8;
                 } else {
                     self.bitboard.black_king = 1 << 58;
                     self.bitboard.black_rooklike ^= (1 << 56) | (1 << 59);
-                    let piecelist_rook_i = self.slow_get_piecelist_index_of_pos(56);
+                    let piecelist_rook_i = self.piecelist_index_by_square[56] as usize;
                     self.piece_positions_tzcnt[piecelist_rook_i] = 59;
+                    self.piecelist_index_by_square[56] = 0xFF;
+                    self.piecelist_index_by_square[59] = piecelist_rook_i as u8;
                 }
                 self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+                self.piecelist_index_by_square[from_tzcnt as usize] = 0xFF;
+                self.piecelist_index_by_square[to_tzcnt as usize] = from_piecelist_i as u8;
             }
             0b100 => {
                 // "Normal" capture
@@ -676,6 +704,8 @@ impl Board {
                 }
 
                 self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+                self.piecelist_index_by_square[from_tzcnt as usize] = 0xFF;
+                self.piecelist_index_by_square[to_tzcnt as usize] = from_piecelist_i as u8;
             }
             0b101 => {
                 // Ep capture
@@ -690,6 +720,8 @@ impl Board {
                     self.bitboard.white_pawns ^= opponent_square;
                 }
                 self.piece_positions_tzcnt[from_piecelist_i] = to_tzcnt;
+                self.piecelist_index_by_square[from_tzcnt as usize] = 0xFF;
+                self.piecelist_index_by_square[to_tzcnt as usize] = from_piecelist_i as u8;
                 self.delete_from_piecelist(opponent_square.tzcnt() as u8);
             }
             _ => unreachable!(),
@@ -707,14 +739,10 @@ impl Board {
     }
 
     pub fn delete_from_piecelist(&mut self, capture_pos_tzcnt: u8) {
-        let piece_positions_tzcnt = &mut self.piece_positions_tzcnt;
-        for (i, p) in piece_positions_tzcnt.iter().enumerate() {
-            if *p == capture_pos_tzcnt {
-                piece_positions_tzcnt[i] = TZCNT_U64_ZEROS;
-                self.piece_kinds[i] = EmptySquare;
-                break;
-            }
-        }
+        let i = self.piecelist_index_by_square[capture_pos_tzcnt as usize] as usize;
+        self.piece_positions_tzcnt[i] = TZCNT_U64_ZEROS;
+        self.piece_kinds[i] = EmptySquare;
+        self.piecelist_index_by_square[capture_pos_tzcnt as usize] = 0xFF;
     }
 
     #[inline]

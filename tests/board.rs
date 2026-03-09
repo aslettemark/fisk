@@ -15,7 +15,7 @@ fn test_check(fenstr: &str, white: bool, black: bool) {
 #[test]
 fn memsizes() {
     assert_eq!(size_of::<PieceKind>(), 1); // Not using more memory than u8
-    assert_eq!(size_of::<Board>(), 152); // We don't want to accidentally change the Board size
+    assert_eq!(size_of::<Board>(), 216); // We don't want to accidentally change the Board size
 }
 
 #[test]
