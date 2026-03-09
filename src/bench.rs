@@ -32,7 +32,7 @@ pub fn bench_movegen(depth: i32, use_iterator: bool, starting_board: Option<&str
     }
     let board = starting_board
         .map(|fen| Board::from_fen(fen).expect("Invalid starting board"))
-        .unwrap_or_else(Board::default);
+        .unwrap_or_default();
     let t1 = time::get_time();
     let nodes = if use_iterator {
         count_nodes_iterator(&board, depth)
@@ -58,7 +58,7 @@ pub fn bench_search(depth: i32, starting_board: Option<&str>) {
     println!("Benchmarking search with depth={}", depth);
     let board = starting_board
         .map(|fen| Board::from_fen(fen).expect("Invalid starting board"))
-        .unwrap_or_else(Board::default);
+        .unwrap_or_default();
 
     let t1 = time::get_time();
     board.best_move(depth as usize);

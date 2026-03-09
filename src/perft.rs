@@ -181,7 +181,7 @@ fn perft_recurse(board: &Board, config: &PerftConfig, depth: usize, results: &mu
 
         count += 1;
     }
-    results[depth as usize] += count;
+    results[depth] += count;
 }
 
 fn run_config(name: &str, config: &PerftConfig) -> Result<(), PerftError> {
