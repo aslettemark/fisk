@@ -62,7 +62,7 @@ fn succ(fen: &str) -> Vec<Board> {
     succ
 }
 
-fn gen(fen: &str, expected_succ: usize) -> Vec<Board> {
+fn gen_moves(fen: &str, expected_succ: usize) -> Vec<Board> {
     let v = succ(fen);
     assert_eq!(v.len(), expected_succ);
     v
@@ -113,7 +113,7 @@ fn basic_pawn_moves() {
     assert!(a.white_to_move());
     assert_eq!(succ.len(), 6);
 
-    gen("k7/8/8/8/6p1/5P2/8/K7 w - - 0 1", 5);
+    gen_moves("k7/8/8/8/6p1/5P2/8/K7 w - - 0 1", 5);
 
     let c = fen("k7/8/8/3p4/2QR4/8/8/K7 b - - 0 1");
     assert_eq!(c.bitboard.white_rooklike.popcnt(), 2);
@@ -172,8 +172,8 @@ fn white_pawn_en_passant_capture() {
 
 #[test]
 fn pawn_always_promotes() {
-    gen("3r4/k3P3/8/8/8/8/8/2K5 w - - 0 1", 4 + 4 + 5);
-    gen("8/k7/8/8/8/8/2K1p3/5R2 b - - 0 1", 4 + 4 + 5);
+    gen_moves("3r4/k3P3/8/8/8/8/8/2K5 w - - 0 1", 4 + 4 + 5);
+    gen_moves("8/k7/8/8/8/8/2K1p3/5R2 b - - 0 1", 4 + 4 + 5);
 }
 
 #[test]
@@ -271,7 +271,7 @@ fn white_knight_capture() {
 #[test]
 fn king_movement() {
     {
-        let s1 = gen("8/4k3/8/8/3K4/8/8/8 w - - 0 1", 8);
+        let s1 = gen_moves("8/4k3/8/8/3K4/8/8/8 w - - 0 1", 8);
         let mut cumulative = 0u64;
         for s in &s1 {
             assert_eq!(s.bitboard.white_coverage().popcnt(), 1);
@@ -283,7 +283,7 @@ fn king_movement() {
         }
     }
     {
-        let s2 = gen("8/8/8/8/3k4/8/6K1/8 b - - 0 1", 8);
+        let s2 = gen_moves("8/8/8/8/3k4/8/6K1/8 b - - 0 1", 8);
         let mut cumulative = 0u64;
         for s in &s2 {
             assert_eq!(s.bitboard.black_coverage().popcnt(), 1);
@@ -295,21 +295,21 @@ fn king_movement() {
         }
     }
 
-    gen("8/8/5k2/8/8/8/PPP5/1K6 w - - 0 1", 8);
-    gen("8/8/8/8/7k/8/1K6/8 b - - 0 1", 5);
+    gen_moves("8/8/5k2/8/8/8/PPP5/1K6 w - - 0 1", 8);
+    gen_moves("8/8/8/8/7k/8/1K6/8 b - - 0 1", 5);
 }
 
 #[test]
 fn king_capture() {
-    gen("8/8/8/8/7k/7P/8/K7 b - - 0 1", 5);
+    gen_moves("8/8/8/8/7k/7P/8/K7 b - - 0 1", 5);
 
-    let s2 = gen("8/8/8/6RR/5RRk/6RR/8/K7 b - - 0 1", 5);
+    let s2 = gen_moves("8/8/8/6RR/5RRk/6RR/8/K7 b - - 0 1", 5);
     for s in &s2 {
         assert_ne!(s.bitboard.black_coverage(), 0);
         assert_alive(s, 7);
     }
 
-    gen("8/5k2/8/8/8/1rr5/1Kr5/1r6 w - - 0 1", 8);
+    gen_moves("8/5k2/8/8/8/1rr5/1Kr5/1r6 w - - 0 1", 8);
 }
 
 #[test]
@@ -324,11 +324,11 @@ fn iter() {
 
 #[test]
 fn rook_file_slide() {
-    gen("8/7k/8/8/4p1p1/4PRP1/8/K7 w - - 0 1", 3 + 7);
-    gen("8/5n1k/8/8/4p1p1/4PRP1/8/K7 w - - 0 1", 3 + 5 + 1);
-    gen("8/5n1k/8/8/4ppp1/4PRP1/8/K7 w - - 0 1", 3 + 2 + 1 + 2);
+    gen_moves("8/7k/8/8/4p1p1/4PRP1/8/K7 w - - 0 1", 3 + 7);
+    gen_moves("8/5n1k/8/8/4p1p1/4PRP1/8/K7 w - - 0 1", 3 + 5 + 1);
+    gen_moves("8/5n1k/8/8/4ppp1/4PRP1/8/K7 w - - 0 1", 3 + 2 + 1 + 2);
 
-    let s4 = gen("8/5n1k/8/8/4ppp1/4PRP1/5p2/K7 w - - 0 1", 3 + 2 + 2);
+    let s4 = gen_moves("8/5n1k/8/8/4ppp1/4PRP1/5p2/K7 w - - 0 1", 3 + 2 + 2);
     for s in &s4 {
         if s.bitboard.white_king == 1u64 {
             // King didn't move
@@ -344,7 +344,7 @@ fn rook_file_slide() {
 
 #[test]
 fn rook_row_file_slide() {
-    let s1 = gen(
+    let s1 = gen_moves(
         "k6R/6R1/5R2/4R3/3R4/2R5/1R6/R6K w - - 0 1",
         8 * (2 * 7) - 2 + 3,
     );
@@ -364,9 +364,9 @@ fn rook_row_file_slide() {
 
 #[test]
 fn queen_moves() {
-    gen("8/1r6/3k4/3p4/3P4/8/1Q6/7K w - - 0 1", 20);
+    gen_moves("8/1r6/3k4/3p4/3P4/8/1Q6/7K w - - 0 1", 20);
 
-    let s2 = gen("1k6/8/8/3p2K1/3P4/rrr5/rQr5/rrr5 w - - 0 1", 8 + 8);
+    let s2 = gen_moves("1k6/8/8/3p2K1/3P4/rrr5/rQr5/rrr5 w - - 0 1", 8 + 8);
     for s in &s2 {
         expect_queens(s, 1, 0);
     }
@@ -374,7 +374,7 @@ fn queen_moves() {
 
 #[test]
 fn bishop_moves() {
-    let s1 = gen("b6k/1Q6/8/8/8/8/8/K7 b - - 0 1", 4);
+    let s1 = gen_moves("b6k/1Q6/8/8/8/8/8/K7 b - - 0 1", 4);
     assert_eq!(
         s1.iter()
             .map(|s| s.bitboard.white_bishoplike.popcnt())
@@ -391,38 +391,38 @@ fn bishop_moves() {
 
 #[test]
 fn white_kingside_castling() {
-    gen("8/3k4/8/8/8/7p/7P/4K2R w K - 0 1", 5 + 1 + 2);
-    gen("8/3k4/8/8/6r1/7p/7P/4K2R w K - 0 1", 5 + 2 + 1);
-    gen("8/3k4/8/8/5r2/7p/7P/4K2R w - - 0 1", 5 + 2);
+    gen_moves("8/3k4/8/8/8/7p/7P/4K2R w K - 0 1", 5 + 1 + 2);
+    gen_moves("8/3k4/8/8/6r1/7p/7P/4K2R w K - 0 1", 5 + 2 + 1);
+    gen_moves("8/3k4/8/8/5r2/7p/7P/4K2R w - - 0 1", 5 + 2);
 }
 
 #[test]
 fn white_queenside_castling() {
-    gen("8/8/3k4/8/8/8/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5);
-    gen("8/8/3k4/8/8/1r6/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5);
-    gen("8/8/3k4/8/8/2r5/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5);
-    gen("8/8/3k4/8/8/3r4/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5 - 1);
+    gen_moves("8/8/3k4/8/8/8/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5);
+    gen_moves("8/8/3k4/8/8/1r6/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5);
+    gen_moves("8/8/3k4/8/8/2r5/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5);
+    gen_moves("8/8/3k4/8/8/3r4/8/R3K2R w KQ - 0 1", 2 + 5 + 2 * 7 + 5 - 1);
 }
 
 #[test]
 fn black_castling() {
-    gen("r3k2r/8/8/8/8/8/8/3K4 b kq - 0 1", 5 + 5 + 2 * 7 + 2);
-    gen("r3k2r/8/8/8/8/8/8/3K4 b q - 0 1", 5 + 5 + 2 * 7 + 1);
-    gen("r3k2r/8/8/8/8/8/8/3K4 b k - 0 1", 5 + 5 + 2 * 7 + 1);
+    gen_moves("r3k2r/8/8/8/8/8/8/3K4 b kq - 0 1", 5 + 5 + 2 * 7 + 2);
+    gen_moves("r3k2r/8/8/8/8/8/8/3K4 b q - 0 1", 5 + 5 + 2 * 7 + 1);
+    gen_moves("r3k2r/8/8/8/8/8/8/3K4 b k - 0 1", 5 + 5 + 2 * 7 + 1);
 }
 
 #[test]
 fn pawn_promotion() {
-    gen("2k5/5P2/8/8/8/8/8/K7 w - g6 0 1", 3 + 4);
-    gen("2k2r2/5P2/8/8/8/8/8/K7 w - g6 0 1", 3);
-    gen("2k5/5P2/8/8/8/8/3p4/K7 b - - 0 1", 5 + 4);
-    gen("2k5/5P2/8/8/8/8/3p4/3K4 b - - 0 1", 5);
-    gen("r3k2r/4P3/8/8/8/8/8/3K4 w q - 0 1", 5);
+    gen_moves("2k5/5P2/8/8/8/8/8/K7 w - g6 0 1", 3 + 4);
+    gen_moves("2k2r2/5P2/8/8/8/8/8/K7 w - g6 0 1", 3);
+    gen_moves("2k5/5P2/8/8/8/8/3p4/K7 b - - 0 1", 5 + 4);
+    gen_moves("2k5/5P2/8/8/8/8/3p4/3K4 b - - 0 1", 5);
+    gen_moves("r3k2r/4P3/8/8/8/8/8/3K4 w q - 0 1", 5);
 }
 
 #[test]
 fn perft_pos5_regression() {
-    gen(
+    gen_moves(
         "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
         44,
     );

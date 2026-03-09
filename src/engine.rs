@@ -118,7 +118,7 @@ impl Board {
         states
     }
 
-    pub fn iter_successors(&self) -> SuccessorIter {
+    pub fn iter_successors(&self) -> SuccessorIter<'_> {
         SuccessorIter {
             board: self,
             buf: Vec::with_capacity(16),
