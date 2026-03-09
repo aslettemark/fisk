@@ -103,32 +103,57 @@ impl UciState {
             return;
         };
 
-        let mut depth = search_control
-            .and_then(|c| c.depth)
-            .unwrap_or(6);
+        // If UCI specifies an exact depth, use it directly
+        if let Some(depth) = search_control.and_then(|c| c.depth) {
+            let (_eval, best_move) = board.best_move(depth as usize);
+            writeln!(
+                output,
+                "bestmove {}",
+                fisk_move_to_uci_text(&best_move.unwrap())
+            )
+            .unwrap();
+            return;
+        }
 
-        if let Some(UciTimeControl::TimeLeft {
+        // Determine time budget for this move
+        let budget_ms = if let Some(UciTimeControl::TimeLeft {
             white_time,
             black_time,
             white_increment: _,
             black_increment: _,
-            moves_to_go: _,
+            moves_to_go,
         }) = time_control
-            && let Some(board) = self.board
         {
-            let white_to_move = board.white_to_move();
-            if white_to_move && let Some(wtime) = white_time && wtime.num_seconds() > 120 {
-                depth = 8;
-            } else if !white_to_move && let Some(btime) = black_time && btime.num_seconds() > 120 {
-                depth = 8;
+            let our_time = if board.white_to_move() {
+                white_time
+            } else {
+                black_time
+            };
+            let remaining_ms = our_time.map(|t| t.num_milliseconds()).unwrap_or(30_000);
+            let divisor = moves_to_go.unwrap_or(30) as i64;
+            remaining_ms / divisor
+        } else {
+            // No time info, use a generous default
+            5_000
+        };
+
+        // Iterative deepening: search even depths while we have time
+        let mut best_result = board.best_move(6);
+        let start = time::get_time();
+        for depth in (8..=10).step_by(2) {
+            let elapsed_ms = (time::get_time() - start).num_milliseconds();
+            // Stop if we've used more than 10% of the budget;
+            // the next depth typically takes 5-10x longer
+            if elapsed_ms > budget_ms / 10 {
+                break;
             }
+            best_result = board.best_move(depth);
         }
 
-        let (_eval, best_move) = board.best_move(depth as usize);
         writeln!(
             output,
             "bestmove {}",
-            fisk_move_to_uci_text(&best_move.unwrap())
+            fisk_move_to_uci_text(&best_result.1.unwrap())
         )
         .unwrap();
     }
