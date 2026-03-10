@@ -41,16 +41,16 @@ impl UciState {
                 }
                 UciMessage::Debug(dbg) => self.debug = dbg,
                 UciMessage::IsReady => writeln!(output, "readyok")?,
-                UciMessage::Register { .. } => todo!(),
+                UciMessage::Register { .. } => {}
                 UciMessage::Position {
                     startpos,
                     fen,
                     moves,
                 } => self.position(startpos, fen, moves),
-                UciMessage::SetOption { name: _, value: _ } => todo!(),
+                UciMessage::SetOption { .. } => {}
                 UciMessage::UciNewGame => self.board = None,
-                UciMessage::Stop => todo!(),
-                UciMessage::PonderHit => todo!(),
+                UciMessage::Stop => {}
+                UciMessage::PonderHit => {}
                 UciMessage::Quit => {
                     return Ok(());
                 }
@@ -58,7 +58,7 @@ impl UciState {
                     time_control,
                     search_control,
                 } => self.go(time_control, search_control, output),
-                UciMessage::Unknown(_, _) => todo!(),
+                UciMessage::Unknown(_, _) => {},
                 _ => {}
             }
         }
